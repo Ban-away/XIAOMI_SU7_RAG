@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-
 import os
 import pickle
 from src.parser.pdf_parse import load_pdf, texts_split
