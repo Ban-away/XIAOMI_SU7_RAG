@@ -30,28 +30,22 @@ wandb/
 mlruns/
 
 # ==============================================
-# 📊 2. 数据集 / 数据文件（绝对不上传）
+# 📊 2. 数据产物（可由代码生成或可下载）
 # ==============================================
-*.json
-*.csv
-*.tsv
-*.xlsx
-*.parquet
-*.arrow
-*.txt
-*.jsonl
-*.db
-*.sql
-*.sqlite
+# 解析/清洗/切分后的文档缓存
+data/processed_docs/
 
-# 数据文件夹
-data/
-dataset/
-datasets/
-raw_data/
-train_data/
-test_data/
-valid_data/
+# 检索索引与向量库文件
+data/saved_index/
+
+# 评测与训练生成的数据集
+data/rerank_data/
+data/summary_data/
+data/qa_pairs/train_data.json
+data/qa_pairs/test_qa_pair_pred.json
+
+# 解析PDF导出的图片资源
+data/saved_images/
 
 # ==============================================
 # 🛢️ 3. 数据库文件（Mongo/MySQL等）
