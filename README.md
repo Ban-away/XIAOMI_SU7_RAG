@@ -82,7 +82,7 @@ PDF 文本 + 图片抽取
 
 | 用途 | 模型 | 配置键 | 调用位置 |
 |:---:|:---:|:---:|:---:|
-| 🔤 语义切分 | `m3e-small` | `m3e_small_model_path` | `src\server\semantic_chunk.py` |
+| 🔤 语义切分 | `moka-ai/m3e-small` | `m3e_small_model_path` | `src\server\semantic_chunk.py` |
 | 📚 Dense检索 | `BAAI/bge-large-zh-v1.5` | `bge_large_zh_v1_5_model_path` | `src\retriever\milvus_retriever.py` |
 | 🎯 Sparse检索 | `naver/splade-cocondenser-ensembledistil` | `splade_v2_model_path` | `src\retriever\milvus_retriever.py` |
 | 🔎 向量备选 | `Qwen3-Embedding-0.6B` | `qwen3_embedding_model_path` | `src\retriever\qwen3_retriever.py` |
