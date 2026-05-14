@@ -298,15 +298,18 @@ XIAOMI_SU7_RAG/
 
 ## 🔄 端到端流程
 
+
 ### 📍 第 0 步：环境与服务准备
 
-| 步骤 | 命令 | 使用工具 | 产物 |
-|:---:|:---:|:---:|:---:|
-| **1️⃣ 启动语义切分服务** | `python src\server\semantic_chunk.py` | FastAPI + Uvicorn | `log\semantic_chunk.log` |
-| **2️⃣ 启动 vLLM 推理服务** | `python deploy\auto_vllm_server.py --model ... --port 8000` | vLLM (自动多卡) | `log\qwen3-7b.log` |
-| **3️⃣ 启动 MongoDB** | `mongodb-7.0.20\bin\mongod --dbpath data\mongodb\data --logpath data\mongodb\log\mongod.log` | MongoDB 7.0 | 数据库准备就绪 |
+| 步骤 | 命令（示例） | 说明 |
+|:---:|:---|:---|
+| **1️⃣ 安装 Python 依赖** | `pip install -r requirements.txt` | 安装项目运行所需的 Python 包 |
+| **2️⃣ 准备并导出微调模型（必需）** | 见下方“生成 Qwen3 SFT 与 Int4” | 训练/合并/导出得到 `LLaMA-Factory-main/output/qwen3_lora_sft` 和量化后的 `..._int4` |
+| **3️⃣ 启动语义切分服务** | `python src/server/semantic_chunk.py` | FastAPI + Uvicorn，用于语义切分 API |
+| **4️⃣ 启动 vLLM 推理服务** | `python deploy/auto_vllm_server.py --model LLaMA-Factory-main/output/qwen3_lora_sft_int4 --port 8000` | vLLM（本地推理，require: output 下存在量化模型） |
+| **5️⃣ 启动 MongoDB（可用系统安装或捆绑二进制）** | 参见下方“MongoDB 启动示例” | 官方安装或使用仓库内的 `mongodb-7.0.20` 二进制 |
 
-> ⚠️ **提前创建目录**：`data\processed_docs`、`data\saved_index`、`data\qa_pairs` 等，脚本本身不创建
+> ⚠️ **提前创建目录**：`data/processed_docs`、`data/saved_index`、`data/qa_pairs` 等，脚本默认不会创建这些目录。
 
 ---
 
@@ -377,6 +380,57 @@ python deploy/download_models.py
 mkdir -p data/{processed_docs,saved_index,qa_pairs,summary_data,rerank_data,saved_images,mongodb/{data,log}}
 mkdir -p log models
 ```
+
+### 生成 Qwen3 SFT 与 Int4
+
+项目期望在 `LLaMA-Factory-main/output/` 下存在导出模型（例如 `qwen3_lora_sft`）以及量化后模型 `qwen3_lora_sft_int4`。示例流程：
+
+1. 准备基础模型与 LoRA checkpoint
+   - 把基础模型放在 YAML 中 `model_name_or_path` 指定的位置（示例 `models/Qwen3-8B/` 或者按 `examples/merge_lora/*.yaml` 修改）。
+   - 把训练得到的 LoRA adapter 放在 `LLaMA-Factory-main/saves/...`（例如 `saves/qwen3-8b/lora/sft`）。
+
+2. 导出合并后的模型（生成 `output/qwen3_lora_sft`）
+```bash
+cd LLaMA-Factory-main
+# 使用项目自带的导出脚本（根据示例 YAML）
+./export.sh
+# 或者直接：
+llamafactory-cli export examples/merge_lora/qwen3_lora_sft.yaml
+```
+
+3. 量化为 int4（生成 `output/qwen3_lora_sft_int4`）
+```bash
+cd LLaMA-Factory-main
+# 确保已安装 awq 及其依赖
+python awq_quant.py
+```
+
+注意：`export.sh` / `awq_quant.py` 依赖本地模型路径和 `data/summary_data/train.json`（用于量化校准样本）。如果你没有训练产物，可以把相应的 `saves/...` 或 `output/...` 从远端下载到本地（不要将大二进制直接推到 GitHub）。
+
+### MongoDB 启动示例
+
+可选 A — 使用仓库内捆绑的二进制（已有 `mongodb-7.0.20` 但不推荐直接提交到 Git）：
+
+```powershell
+# Windows 直接运行（不要使用 --fork）
+.\mongodb-7.0.20\bin\mongod --dbpath data\mongodb\data --logpath data\mongodb\log\mongod.log --bind_ip 127.0.0.1
+```
+
+```bash
+# Linux / macOS（如果使用仓库内二进制，并支持 --fork）
+./mongodb-7.0.20/bin/mongod --dbpath data/mongodb/data --logpath data/mongodb/log/mongod.log --fork
+```
+
+可选 B — 推荐：从 MongoDB 官方下载安装并按照平台安装为服务，然后启动：
+
+```bash
+# Ubuntu 示例
+sudo apt-get install -y mongodb-org
+sudo systemctl start mongod
+sudo systemctl enable mongod
+```
+
+安全与合规：请确保你有权在公开仓库中重新发布二进制；通常更推荐把二进制放到 Release 或外部存储，并在仓库中保留下载/安装脚本。
 
 ### 🚀 启动服务
 
