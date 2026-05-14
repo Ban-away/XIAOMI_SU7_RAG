@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import os
+from dotenv import load_dotenv
+
+# 加载 .env 文件中的环境变量（如果存在）
+load_dotenv()
+
 from pprint import pprint
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure, ConfigurationError

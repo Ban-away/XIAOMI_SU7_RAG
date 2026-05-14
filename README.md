@@ -98,6 +98,7 @@ PDF 文本 + 图片抽取
 ```
 XIAOMI_SU7_RAG/
 ├─ README.md                                        # 本文档
+├─ .env.example                                     # 环境变量模板（复制后按需加载）
 ├─ requirements.txt                                 # 依赖清单
 ├─ config.ini                                       # 环境变量模板
 │
@@ -202,7 +203,8 @@ XIAOMI_SU7_RAG/
 │  └─ ... (检索模块训练与评估)
 │
 └─ 📂 deploy/                                    # 部署脚本
-   └─ auto_vllm_server.py       # 自动识别单/多卡启动脚本
+   ├─ auto_vllm_server.py       # 自动识别单/多卡启动脚本
+   └─ download_models.py        # 一键下载项目公开模型（core/all）
 ```
 
 #### 📌 Git 跟踪状态说明
@@ -294,7 +296,10 @@ cd XIAOMI_SU7_RAG
 # 2. 安装依赖
 pip install -r requirements.txt
 
-# 3. 创建必要目录结构
+# 3. 下载主流程所需模型（默认 core 预设）
+python deploy/download_models.py
+
+# 4. 创建必要目录结构
 mkdir -p data/{processed_docs,saved_index,qa_pairs,summary_data,rerank_data,saved_images,mongodb/{data,log}}
 mkdir -p log models
 ```
@@ -367,6 +372,8 @@ export MONGO_USERNAME=
 export MONGO_PASSWORD=
 export MONGO_AUTH_SOURCE=admin
 ```
+
+可直接参考 `.env.example` 中的完整变量模板。
 
 ### 🗂️ 核心路径配置
 
@@ -448,7 +455,7 @@ MIT License - 详见 LICENSE 文件
 ---
 
 <p align="center">
-  <b>🚗 Small SUV, Big RAG System 🚗</b>  
+  <b>🚗 Smart EV, Strong RAG System 🚗</b>  
   <br/>
   <em>为小米 SU7 量身定制的高效 RAG 问答系统</em>
 </p>

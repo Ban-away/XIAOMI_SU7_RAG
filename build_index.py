@@ -3,6 +3,11 @@
 
 import os
 import pickle
+from dotenv import load_dotenv
+
+# 加载 .env 文件中的环境变量（如果存在）
+load_dotenv()
+
 from src.parser.pdf_parse import load_pdf, texts_split
 from src.retriever.bm25_retriever import BM25
 from src.retriever.tfidf_retriever import TFIDF

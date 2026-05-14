@@ -1,7 +1,11 @@
 import argparse
 import os
+from dotenv import load_dotenv
 import subprocess
 import sys
+
+# 加载 .env 文件中的环境变量（如果存在）
+load_dotenv()
 
 
 def detect_gpu_count() -> int:

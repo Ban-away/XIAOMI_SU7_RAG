@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 """训练数据构建脚本：从 train_data 生成 summary/rerank 数据集。"""
 
+from dotenv import load_dotenv
+
+# 加载 .env 文件中的环境变量（如果存在）
+load_dotenv()
+
 import os
 import pickle
 import time
