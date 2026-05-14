@@ -374,6 +374,8 @@ pip install -r requirements.txt
 pip install av
 
 # 3. 下载主流程所需模型（默认 core 预设）
+# 设置 HF 国内镜像
+export HF_ENDPOINT=https://hf-mirror.com
 python deploy/download_models.py
 
 # 4. 创建必要目录结构
