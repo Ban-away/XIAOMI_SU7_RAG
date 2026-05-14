@@ -1,8 +1,4 @@
 # -*- coding: utf-8 -*-
-# --------------------------------------------
-# 项目名称: LLM任务型对话Agent
-# 版权所有  ©丁师兄大模型
-# --------------------------------------------
 
 
 import time
@@ -243,7 +239,7 @@ if __name__ == "__main__":
         metadata = {"unique_id": unique_id}
         docs.append(Document(page_content=text, metadata=metadata))
     retriever = MilvusRetriever(docs)
-    query = "Model3支持的钥匙类型"
+    query = "小米SU7支持的钥匙类型"
     results = retriever.retrieve_topk(query, 2)
     for res in results:
         print(res)
