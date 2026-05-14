@@ -6,12 +6,26 @@
 所有脚本（build_index / infer / final_score / 训练数据构造）都通过这里读取路径。
 """
 
+import os
+
 # =========================
 # 1) 项目根目录
 # =========================
-# 注意：这里默认是 Linux 训练机路径。
-# 如果你在本地 Windows 或其他环境运行，请先把 base_dir 改成你的绝对路径。
-base_dir = "/root/autodl-tmp/RAG/"
+# 支持三种配置方式（优先级从高到低）：
+# 1. 环境变量 RAG_BASE_DIR（推荐用于跨平台部署）
+# 2. 环境变量 XIAOMI_RAG_HOME（备选）
+# 3. 硬编码默认值（Linux 训练环境）
+base_dir = os.getenv(
+    "RAG_BASE_DIR",
+    os.getenv(
+        "XIAOMI_RAG_HOME",
+        "/root/autodl-tmp/RAG/"  # Linux 默认路径
+    )
+)
+
+# 确保路径以分隔符结尾
+if not base_dir.endswith(os.sep):
+    base_dir = base_dir + os.sep
 
 # =========================
 # 2) 原始数据与中间产物路径

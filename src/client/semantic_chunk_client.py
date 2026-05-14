@@ -10,7 +10,7 @@ from typing import List
 from src.constant import clean_docs_path
 
 
-URL = "http://0.0.0.0:6000/v1/semantic-chunks"
+URL = os.getenv("SEMANTIC_CHUNK_URL", "http://localhost:6000/v1/semantic-chunks")
 
 
 def request_semantic_chunk(sentences, group_size):

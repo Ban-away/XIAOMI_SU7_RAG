@@ -88,5 +88,8 @@ if __name__ == "__main__":
 
     res = request_chat(query, context, stream=True)
     for r in res:
-        print(r.choices[0].delta.content, end='')
+        uttr = r.choices[0].delta.content
+        # 处理流式响应中的 None 值
+        if uttr is not None:
+            print(uttr, end='')
     print()

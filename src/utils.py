@@ -86,14 +86,18 @@ def post_processing(response, docs):
     # 遍历每个引用编号，提取对应文档的页码与图片信息
     for index in cites:
         # 编号越界时跳过，避免索引错误
-        if index > len(docs):
+        if index > len(docs) or index < 1:
             continue
         # docs 中引用编号从 1 开始，所以访问时减 1
-        images = docs[index-1].metadata["images_info"]
-        pages.append(docs[index-1].metadata["page"])
+        doc_ref = docs[index-1]
+        # 确保元数据中存在 images_info 字段，避免 KeyError
+        images = doc_ref.metadata.get("images_info", [])
+        page = doc_ref.metadata.get("page")
+        if page is not None:
+            pages.append(page)
         for image in images:
             # 只保留能识别出标题的图片，提高结果可用性
-            if image["title"]:
+            if image.get("title"):
                 related_images.append(image)
 
     # 页码去重并排序，便于前端展示

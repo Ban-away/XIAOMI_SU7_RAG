@@ -24,6 +24,14 @@ LLM_CHAT_PROMPT = """
 
 # 初始化 OpenAI 兼容客户端（这里对接豆包或其他兼容服务）。
 # 认证信息从环境变量读取，便于不同部署环境切换。
+def _validate_doubao_config():
+    """验证豆包 API 配置"""
+    required_keys = ['DOUBAO_API_KEY', 'DOUBAO_BASE_URL', 'DOUBAO_MODEL_NAME']
+    missing_keys = [k for k in required_keys if not os.environ.get(k)]
+    if missing_keys:
+        raise RuntimeError(f"缺失必需环境变量: {', '.join(missing_keys)}\n请设置: {', '.join([f'export {k}=value' for k in missing_keys])}")
+
+_validate_doubao_config()
 llm_client = OpenAI(
     api_key=os.environ['DOUBAO_API_KEY'],
     base_url=os.environ['DOUBAO_BASE_URL']

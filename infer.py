@@ -60,8 +60,10 @@ while True:
     response = ""
     for r in res_handler:
         uttr = r.choices[0].delta.content
-        response += uttr 
-        print(uttr, end='')
+        # 处理流式响应中的 None 值（chunk 结束时 content 为 None）
+        if uttr is not None:
+            response += uttr 
+            print(uttr, end='')
     print("\n" + "="*100)
 
     # 后处理：抽取引用页码及相关图片
