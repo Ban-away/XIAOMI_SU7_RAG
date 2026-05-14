@@ -394,8 +394,8 @@ mkdir -p log models
 2. 导出合并后的模型（生成 `output/qwen3_lora_sft`）
 ```bash
 cd LLaMA-Factory-main
-# 使用项目自带的导出脚本（根据示例 YAML）
-./export.sh
+# 用 bash 运行项目自带的导出脚本（可绕过 noexec 或缺少 +x 的问题）
+bash export.sh
 # 或者直接：
 llamafactory-cli export examples/merge_lora/qwen3_lora_sft.yaml
 ```
