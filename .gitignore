@@ -93,3 +93,7 @@ result/
 results/
 tmp/
 temp/
+
+# 允许跟踪整个目录
+!LLaMA-Factory-main/
+!LLaMA-Factory-main/**
