@@ -91,71 +91,79 @@ PDF 文本 + 图片抽取
 | 💬 生成模型 | `Qwen3-8B-Instruct (SFT)` | `qwen3_8b_tune_model_name` | `src\client\llm_local_client.py` |
 | ☁️ 云端生成 | `Doubao` | `DOUBAO_MODEL_NAME` | `src\client\llm_chat_client.py` |
 
-#### 调用远程API的步骤
+#### ☁️ 调用远程 API 的步骤
 
-1. PDF文本清洗（build_index.py）
-   llm_clean_client.py
-   → 调用豆包API（DOUBAO_API_KEY）
-   → 把解析出的PDF原始文本整理成通顺的markdown格式
+1. **PDF 文本清洗**（`build_index.py`）  
+   `llm_clean_client.py`  
+   → 调用豆包 API（`DOUBAO_API_KEY`）  
+   → 把解析出的 PDF 原始文本整理成通顺的 Markdown 格式
 
-2. 生成QA训练数据（src/gen_qa/run.py）
-   → 调用豆包API
-   → 生成问题、泛化问题、抽关键词、QA质量打分
+2. **生成 QA 训练数据**（`src/gen_qa/run.py`）  
+   `llm_chat_client.py`  
+   → 调用豆包 API  
+   → 生成问题、泛化问题、抽关键词、QA 质量打分
 
-3. HyDE假设文档扩写（可选，final_score.py里HYDE=0关闭了）
-   llm_hyde_client.py
-   → 调用豆包API
-   → 把query扩写成假设答案，增强检索效果
+3. **HyDE 假设文档扩写**（`final_score.py`，可选，默认 `HYDE=0` 关闭）  
+   `llm_hyde_client.py`  
+   → 调用豆包 API  
+   → 把 query 扩写成假设答案，增强检索效果
 
-4. RAGas评估（final_score.py）
-   → 调用豆包API
-   → 用LLM评估召回精确率和召回率
+4. **RAGas 评估**（`final_score.py`）  
+   `ragas` + `langchain-openai`  
+   → 调用豆包 API  
+   → 用 LLM 评估上下文召回率与精确率
 
-#### 本地模型完成的步骤
+---
 
-1. 语义切分（semantic_chunk.py）
-   模型：m3e-small
-   作用：把句子向量化，聚类后语义切分
+#### 🖥️ 本地模型完成的步骤
 
-2. 向量化建索引（milvus_retriever.py）
-   模型：BGE-M3（本地）
-   作用：把文档编码成稠密+稀疏向量存入Milvus
+1. **语义切分**（`src/server/semantic_chunk.py`）  
+   模型：`m3e-small`  
+   作用：把句子向量化，聚类后语义感知切分
 
-3. 检索召回（infer.py）
-   模型：BGE-M3（本地）
-   作用：把query编码，做混合向量检索
+2. **向量化建索引**（`src/retriever/milvus_retriever.py`）  
+   模型：`BGE-Large-zh-v1.5`（Dense）+ `SPLADEv2`（Sparse）  
+   作用：把文档编码为稠密 + 稀疏向量存入 Milvus
 
-4. 重排序（bge_m3_reranker.py / qwen3_reranker.py）
-   模型：BGE-Reranker / Qwen3-Reranker（本地）
-   作用：对召回文档精排
+3. **检索召回**（`infer.py`）  
+   模型：`BGE-Large-zh-v1.5` + `SPLADEv2`  
+   作用：把 query 编码，做混合向量检索 Top-K
 
-5. 最终答案生成（llm_local_client.py）
-   模型：Qwen3-8B微调版（本地vLLM部署）
+4. **重排序**（`infer.py` → `bge_m3_reranker.py`）  
+   模型：`Jina-Reranker-v2`  
+   作用：Cross-Encoder 精排，筛出最终上下文
+
+5. **最终答案生成**（`src/client/llm_local_client.py`）  
+   模型：`Qwen3-8B`（SFT 微调，本地 vLLM 部署）  
    作用：根据召回文档生成答案
 
-6. 评测相似度（final_score.py）
-   模型：text2vec-base-chinese（本地）
-   作用：计算预测答案和标准答案的语义相似度
+6. **评测相似度**（`final_score.py` → `report_score()`）  
+   模型：`text2vec-base-chinese`  
+   作用：计算预测答案与标准答案的语义相似度
 
-#### 一张图总结
+---
 
+#### 🗺️ 全流程一览
+
+```
 阶段一：建索引（一次性）
-PDF → [豆包API清洗] → [m3e-small语义切分] → [BGE-M3向量化] → Milvus+MongoDB
+PDF → [☁️ 豆包API 清洗] → [🖥️ m3e-small 语义切分] → [🖥️ BGE-Large 向量化] → Milvus + MongoDB
 
 阶段二：生成训练数据（一次性）
-文档 → [豆包API生成QA] → [豆包API泛化问题] → 训练集/测试集
+文档 → [☁️ 豆包API 生成QA] → [☁️ 豆包API 泛化问题] → 训练集 / 测试集
 
 阶段三：模型训练（一次性）
-训练集 → LLaMA-Factory微调Qwen3-8B → 本地模型
+训练集 → LLaMA-Factory 微调 Qwen3-8B → 本地模型
 
 阶段四：日常推理（每次问答）
-query → [BGE-M3召回] → [Reranker精排] → [本地Qwen3-8B生成答案]
-         ↑本地             ↑本地              ↑本地
-全程不需要调用任何远程API
+query → [🖥️ BGE 召回] → [🖥️ Jina 精排] → [🖥️ Qwen3-8B 生成答案]
+          ↑本地               ↑本地                ↑本地
+全程不需要调用任何远程 API
 
-阶段五：评估（按需）
-预测结果 → [text2vec相似度] → [豆包API做RAGas] → 综合得分
-            ↑本地               ↑远程API
+阶段五：离线评估（按需）
+预测结果 → [🖥️ text2vec 相似度] → [☁️ 豆包API RAGas] → 综合得分
+              ↑本地                    ↑远程API
+```
 ---
 
 ## 📦 项目结构
