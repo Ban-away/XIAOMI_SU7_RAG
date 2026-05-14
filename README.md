@@ -295,6 +295,7 @@ cd XIAOMI_SU7_RAG
 
 # 2. 安装依赖
 pip install -r requirements.txt
+pip install av
 
 # 3. 下载主流程所需模型（默认 core 预设）
 python deploy/download_models.py
