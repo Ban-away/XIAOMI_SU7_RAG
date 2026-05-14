@@ -417,7 +417,16 @@ cd LLaMA-Factory-main
 bash export.sh
 ```
 
-5. 量化为 int4，生成 `output/qwen3_lora_sft_int4/`
+5. 先准备量化校准数据（生成 `data/summary_data/train.json` 和 `test.json`）
+
+```bash
+cd /root/autodl-tmp/XIAOMI_SU7_RAG
+mkdir -p data/summary_data
+cp LLaMA-Factory-main/data/summary_train.json data/summary_data/train.json
+cp LLaMA-Factory-main/data/summary_test.json data/summary_data/test.json
+```
+
+6. 量化为 int4，生成 `output/qwen3_lora_sft_int4/`
 ```bash
 cd LLaMA-Factory-main
 python awq_quant.py
