@@ -67,7 +67,7 @@ faiss_qwen_db_path = base_dir + "data/saved_index/faiss_qwen.db"
 # 4) 模型路径（按功能分类）
 # =========================
 # 语义切分服务 embedding 模型
-m3e_small_model_path = base_dir + "models/AI-ModelScope/m3e-small"
+m3e_small_model_path = base_dir + "models/moka-ai/m3e-small"
 
 # 检索阶段向量模型
 bge_m3_model_path = base_dir + "models/BAAI/bge-m3"
