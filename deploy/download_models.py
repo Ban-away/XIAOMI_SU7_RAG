@@ -38,7 +38,7 @@ class ModelSpec:
 
 MODEL_PRESETS: Dict[str, List[ModelSpec]] = {
     "core": [
-        ModelSpec("m3e-small", "AI-ModelScope/m3e-small", "models/AI-ModelScope/m3e-small"),
+        ModelSpec("m3e-small", "m3e-small", "models/AI-ModelScope/m3e-small"),
         ModelSpec("bge-large-zh-v1.5", "BAAI/bge-large-zh-v1.5", "models/BAAI/bge-large-zh-v1.5"),
         ModelSpec("splade-v2", "naver/splade-cocondenser-ensembledistil", "models/naver/splade-cocondenser-ensembledistil"),
         ModelSpec("bge-reranker-v2-m3", "BAAI/bge-reranker-v2-m3", "models/BAAI/bge-reranker-v2-m3"),
