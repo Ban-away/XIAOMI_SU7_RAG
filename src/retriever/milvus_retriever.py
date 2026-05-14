@@ -8,6 +8,7 @@
 import time
 import hashlib
 import pandas as pd
+import torch
 from pymilvus import (
     connections,
     utility,
@@ -16,26 +17,94 @@ from pymilvus import (
     DataType,
     Collection,
     AnnSearchRequest,
-    RRFRanker,
     WeightedRanker
 )
 from langchain_core.documents import Document
-from pymilvus.model.hybrid import BGEM3EmbeddingFunction
-from pymilvus.model.reranker import BGERerankFunction
+from transformers import AutoModel, AutoModelForMaskedLM, AutoTokenizer
 
 from src.fields.manual_images import ManualImages
-from src.constant import test_doc_path, bge_m3_model_path, milvus_db_path
+from src.constant import (
+    test_doc_path,
+    bge_large_zh_v1_5_model_path,
+    splade_v2_model_path,
+    milvus_db_path,
+)
 from src.client.mongodb_config import MongoConfig
 
 
 EMB_BATCH = 50
 MAX_TEXT_LENGTH = 512 
 ID_MAX_LENGTH = 100
-COL_NAME = "hybrid_bge_m3" 
+COL_NAME = "hybrid_bge_large_splade_v2" 
 
 mongo_collection = MongoConfig.get_collection("manual_text")
 connections.connect(uri=milvus_db_path)
-embedding_handler = BGEM3EmbeddingFunction(model_name=bge_m3_model_path, device="cuda")
+
+
+def _mean_pooling(last_hidden_state: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:
+    mask = attention_mask.unsqueeze(-1).expand(last_hidden_state.size()).float()
+    summed = (last_hidden_state * mask).sum(1)
+    counts = mask.sum(1).clamp(min=1e-9)
+    return summed / counts
+
+
+class HybridEmbeddingHandler:
+    def __init__(self, dense_model_path: str, splade_model_path: str, device: str | None = None):
+        if device is None:
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = device
+        self.dense_tokenizer = AutoTokenizer.from_pretrained(dense_model_path)
+        self.dense_model = AutoModel.from_pretrained(dense_model_path).to(device)
+        self.dense_model.eval()
+        self.sparse_tokenizer = AutoTokenizer.from_pretrained(splade_model_path)
+        self.sparse_model = AutoModelForMaskedLM.from_pretrained(splade_model_path).to(device)
+        self.sparse_model.eval()
+        self.dim = {"dense": self.dense_model.config.hidden_size}
+        self.sparse_topk = 200
+
+    def _encode_dense(self, texts: list[str]) -> list[list[float]]:
+        inputs = self.dense_tokenizer(texts, padding=True, truncation=True, return_tensors="pt").to(self.device)
+        with torch.no_grad():
+            outputs = self.dense_model(**inputs)
+        pooled = _mean_pooling(outputs.last_hidden_state, inputs["attention_mask"])
+        return pooled.cpu().detach().numpy().tolist()
+
+    def _encode_sparse(self, texts: list[str]) -> list[dict[int, float]]:
+        inputs = self.sparse_tokenizer(texts, padding=True, truncation=True, return_tensors="pt").to(self.device)
+        with torch.no_grad():
+            outputs = self.sparse_model(**inputs)
+        logits = outputs.logits
+        attn_mask = inputs["attention_mask"].unsqueeze(-1)
+        logits = logits.masked_fill(attn_mask == 0, float("-inf"))
+        weights = torch.log1p(torch.relu(logits)).amax(dim=1)
+
+        sparse_vectors: list[dict[int, float]] = []
+        for row in weights:
+            if self.sparse_topk and self.sparse_topk < row.numel():
+                values, indices = torch.topk(row, self.sparse_topk)
+                nonzero = values > 0
+                indices = indices[nonzero]
+                values = values[nonzero]
+            else:
+                indices = torch.nonzero(row > 0, as_tuple=False).squeeze(1)
+                values = row[indices]
+            sparse_vectors.append({int(i): float(v) for i, v in zip(indices, values)})
+        return sparse_vectors
+
+    def __call__(self, texts: list[str]) -> dict[str, list]:
+        return {
+            "dense": self._encode_dense(texts),
+            "sparse": self._encode_sparse(texts),
+        }
+
+    def encode_queries(self, queries: list[str]) -> dict[str, list]:
+        return self(queries)
+
+
+embedding_handler = HybridEmbeddingHandler(
+    dense_model_path=bge_large_zh_v1_5_model_path,
+    splade_model_path=splade_v2_model_path,
+)
 
 
 class MilvusRetriever:
@@ -128,8 +197,7 @@ class MilvusRetriever:
         sparse_req = AnnSearchRequest(
             [query_sparse_embedding], "sparse_vector", sparse_search_params, limit=limit
         )
-        # rerank = WeightedRanker(sparse_weight, dense_weight)
-        rerank = RRFRanker()
+        rerank = WeightedRanker(sparse_weight, dense_weight)
         res = self.col.hybrid_search(
             [sparse_req, dense_req],
             rerank=rerank,
@@ -147,7 +215,7 @@ class MilvusRetriever:
         # 检索Topk
         hybrid_results = self.hybrid_search(
             query_embeddings["dense"][0],
-            query_embeddings["sparse"][[0]],
+            query_embeddings["sparse"][0],
             sparse_weight=0.7,
             dense_weight=1.0,
             limit=topk

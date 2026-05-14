@@ -49,5 +49,5 @@ print("="*100)
 
 milvus_retriever = MilvusRetriever(split_docs) 
 candidate_docs = milvus_retriever.retrieve_topk("介绍一下离车后自动上锁功能", topk=3)
-print("BGE-M3召回样例:")
+print("BGE-Large-zh-v1.5 + SPLADEv2召回样例:")
 print(candidate_docs)

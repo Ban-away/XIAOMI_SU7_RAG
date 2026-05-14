@@ -2,6 +2,7 @@
 
 import re
 import fitz
+import pdfplumber
 import json
 import copy
 import hashlib
@@ -53,35 +54,40 @@ def sentence_split(text: str) -> list[str]:
 
 
 def load_pdf() -> list[Document]:
-    pdf = fitz.open(file_path)
     raw_docs = []
 
-    for idx, page_num in enumerate(tqdm(range(len(pdf)))):
-        # 过滤封面和目录
-        if idx < _min_filter_pages or idx > _max_filter_pages:
-            continue
+    with pdfplumber.open(file_path) as pdf:
+        fitz_pdf = fitz.open(file_path)
 
-        page = pdf.load_page(page_num)
-        crop = fitz.Rect(0, 0, page.rect.width, page.rect.height-_page_clip)
-        text = page.get_text(clip=crop)
-        images = page.get_images(full=True)
+        for idx, page in enumerate(tqdm(pdf.pages)):
+            # 过滤封面和目录
+            if idx < _min_filter_pages or idx > _max_filter_pages:
+                continue
 
-        manual_images_list: List[ManualImages] = []
-        for img_index, img in enumerate(images):
-            manual_image: ManualImages = image_handler.handle_image(img, img_index, page)
-            if manual_image:
-                manual_images_list.append(json.loads(manual_image.json()))
+            crop_box = (0, 0, page.width, page.height - _page_clip)
+            cropped_page = page.crop(crop_box)
+            text = cropped_page.extract_text() or ""
 
-        if text.strip():
-            unique_id = hashlib.md5(text.encode('utf-8')).hexdigest()
-            metadata = {
-                "unique_id": unique_id,
-                "source": file_path,
-                "page": page_num + 1,
-                "images_info": manual_images_list
-            }
+            manual_images_list: List[ManualImages] = []
+            fitz_page = fitz_pdf.load_page(idx)
+            images = fitz_page.get_images(full=True)
+            for img_index, img in enumerate(images):
+                manual_image: ManualImages = image_handler.handle_image(img, img_index, fitz_page)
+                if manual_image:
+                    manual_images_list.append(json.loads(manual_image.json()))
 
-            raw_docs.append(Document(page_content=text, metadata=metadata))
+            if text.strip():
+                unique_id = hashlib.md5(text.encode('utf-8')).hexdigest()
+                metadata = {
+                    "unique_id": unique_id,
+                    "source": file_path,
+                    "page": idx + 1,
+                    "images_info": manual_images_list
+                }
+
+                raw_docs.append(Document(page_content=text, metadata=metadata))
+
+        fitz_pdf.close()
 
     return raw_docs
 
