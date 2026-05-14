@@ -387,23 +387,39 @@ mkdir -p log models
 
 项目期望在 `LLaMA-Factory-main/output/` 下存在导出模型（例如 `qwen3_lora_sft`）以及量化后模型 `qwen3_lora_sft_int4`。示例流程：
 
-1. 准备基础模型与 LoRA checkpoint
-   - 把基础模型放在 YAML 中 `model_name_or_path` 指定的位置（示例 `models/Qwen3-8B/` 或者按 `examples/merge_lora/*.yaml` 修改）。
-   - 把训练得到的 LoRA adapter 放在 `LLaMA-Factory-main/saves/...`（例如 `saves/qwen3-8b/lora/sft`）。
+1. 安装 LLaMA-Factory 依赖
 
-2. 导出合并后的模型（生成 `output/qwen3_lora_sft`）
 ```bash
 cd LLaMA-Factory-main
-# 用 bash 运行项目自带的导出脚本（可绕过 noexec 或缺少 +x 的问题）
-bash export.sh
-# 或者直接：
-llamafactory-cli export examples/merge_lora/qwen3_lora_sft.yaml
+pip install -r requirements.txt
+pip install -e .
 ```
 
-3. 量化为 int4（生成 `output/qwen3_lora_sft_int4`）
+2. 先跑 LoRA 训练，生成 `saves/qwen3-8b/lora/sft/`
+
 ```bash
 cd LLaMA-Factory-main
-# 确保已安装 awq 及其依赖
+llamafactory-cli train examples/train_lora/qwen3_lora_sft.yaml
+```
+
+3. 放好基础模型，并确认 YAML 里的 `model_name_or_path` 指向它
+
+```bash
+cd LLaMA-Factory-main
+ls /root/autodl-tmp/XIAOMI_SU7_RAG/models/Qwen3-8B/
+sed -n '1,20p' examples/train_lora/qwen3_lora_sft.yaml
+```
+
+4. 导出合并模型，生成 `output/qwen3_lora_sft/`
+
+```bash
+cd LLaMA-Factory-main
+bash export.sh
+```
+
+5. 量化为 int4，生成 `output/qwen3_lora_sft_int4/`
+```bash
+cd LLaMA-Factory-main
 python awq_quant.py
 ```
 
