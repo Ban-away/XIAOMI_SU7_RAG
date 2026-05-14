@@ -12,7 +12,7 @@ astor==0.8.1
 attrs==25.3.0
 audioread==3.0.1
 autoawq==0.2.9
-av==14.4.0
+# av==14.4.0  # 后续单独安装 av  pip install av
 beautifulsoup4==4.13.4
 blake3==1.0.5
 cachetools==6.0.0
