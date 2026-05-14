@@ -23,7 +23,7 @@ base_dir = os.getenv(
     "RAG_BASE_DIR",
     os.getenv(
         "XIAOMI_RAG_HOME",
-        "/root/autodl-tmp/RAG/"  # Linux 默认路径
+        "/root/autodl-tmp/XIAOMI_SU7_RAG/"  # Linux 默认路径
     )
 )
 

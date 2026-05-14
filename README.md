@@ -381,7 +381,7 @@ export MONGO_AUTH_SOURCE=admin
 
 ```python
 # ❌ Linux (Azure autodl-tmp 环境)
-base_dir = "/root/autodl-tmp/RAG/"
+base_dir = "/root/autodl-tmp/XIAOMI_SU7_RAG/"
 
 # ✅ Windows (本地开发)
 base_dir = "D:\\Development\\Exercise\\0_personal_project\\XIAOMI_SU7_RAG\\"
