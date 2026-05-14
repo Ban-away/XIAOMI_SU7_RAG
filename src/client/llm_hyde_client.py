@@ -22,7 +22,7 @@ llm_client = OpenAI(
 
 
 def request_hyde(query):
-
+    """生成 HyDE 扩展文本，增强后续检索召回。"""
     prompt = LLM_HYDE_PROMPT.format(query=query) 
 
     completion = llm_client.chat.completions.create(
@@ -42,5 +42,5 @@ def request_hyde(query):
 
 if __name__ == "__main__":
     query = "介绍一下离车后自动上锁功能"
-    res = request_chat(query)
+    res = request_hyde(query)
     print(res)

@@ -12,9 +12,11 @@ class Qwen3ReRanker(object):
     def __init__(self, model_path, max_length=4096):
         # 加载 rerank 模型
 
+        # 这里使用 CausalLM 通过 yes/no 概率实现重排打分
         self.tokenizer = AutoTokenizer.from_pretrained(model_path, padding_side='left')
         self.model = AutoModelForCausalLM.from_pretrained(model_path).cuda().eval()
 
+        # 预取 yes/no 的 token id，用于提取末位分类概率
         self.token_false_id = self.tokenizer.convert_tokens_to_ids("no")
         self.token_true_id = self.tokenizer.convert_tokens_to_ids("yes")
         self.max_length = max_length 
@@ -34,23 +36,28 @@ class Qwen3ReRanker(object):
         return output
 
     def process_inputs(self, pairs):
+        # 先编码正文，再拼接 system/user 包装 token
         inputs = self.tokenizer(
             pairs, padding=False, truncation='longest_first',
             return_attention_mask=False, max_length=self.max_length - len(self.prefix_tokens) - len(self.suffix_tokens)
         )
         for i, ele in enumerate(inputs['input_ids']):
             inputs['input_ids'][i] = self.prefix_tokens + ele + self.suffix_tokens
+        # 统一 pad 成 batch tensor
         inputs = self.tokenizer.pad(inputs, padding=True, return_tensors="pt", max_length=self.max_length)
         for key in inputs:
+            # 全量搬到模型所在设备
             inputs[key] = inputs[key].to(self.model.device)
         return inputs
 
     @torch.no_grad()
     def compute_logits(self, inputs, **kwargs):
+        # 取最后一个 token 位的 logits，并抽取 yes/no 两个通道
         batch_scores = self.model(**inputs).logits[:, -1, :]
         true_vector = batch_scores[:, self.token_true_id]
         false_vector = batch_scores[:, self.token_false_id]
         batch_scores = torch.stack([false_vector, true_vector], dim=1)
+        # 归一化后取 yes 概率作为相关性分数
         batch_scores = torch.nn.functional.log_softmax(batch_scores, dim=1)
         scores = batch_scores[:, 1].exp().tolist()
         return scores
@@ -65,6 +72,7 @@ class Qwen3ReRanker(object):
         """
         scores = []
         for docc in candidate_docs:
+            # 逐条评分（显存受限场景更稳）
             documents = [docc.page_content]
             queries = [query]
 
@@ -72,12 +80,13 @@ class Qwen3ReRanker(object):
 
             # Tokenize the input texts
             inputs = self.process_inputs(pairs)
+            # 计算当前文档评分
             score = self.compute_logits(inputs)
             scores.append(score)
 
         pairs = [self.format_instruction(self.task, query, doc) for query, doc in zip(queries, documents)]
 
-        # Tokenize the input texts
+        # 统一再跑一次批量推理，得到可排序分数
         inputs = self.process_inputs(pairs)
         scores = self.compute_logits(inputs)
 

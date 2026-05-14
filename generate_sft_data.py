@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""训练数据构建脚本：从 train_data 生成 summary/rerank 数据集。"""
 
 import os
 import pickle
@@ -69,6 +70,7 @@ MAX_INPUT_SIZE = 4096
 RERANK_DEV_SIZE = 1000
 TEST_RATE = 0.08
 
+# 训练/测试输出文件句柄
 summary_train_handler = open("./data/summary_data/train.json", "w")
 summary_test_handler = open("./data/summary_data/test.json", "w")
 rerank_train_handler = open("./data/rerank_data/train.json", "w")
@@ -79,6 +81,8 @@ summary_train = []
 summary_test = []
 rerank_train = []
 rerank_test = []
+
+# 读取上游生成的 train_data，拆解引用并构建监督样本
 fd = open("data/qa_pairs/train_data.json")
 for line in fd:
     info = json.loads(line)
@@ -112,6 +116,7 @@ for line in fd:
         "output": format_answer
     }
     neg_docs = [doc for doc in info["merged_docs"] if doc not in info["context"]]
+    # 按固定比例切分 summary 训练/测试集
     if random.random() < TEST_RATE:
         summary_test.append(item)
 
@@ -124,7 +129,7 @@ for line in fd:
     else:
         summary_train.append(item)
 
-        # rerank
+        # 构建重排训练样本：正样本(2) / 次相关(1) / 负样本(0)
         if format_answer != "无答案":
             positive = info["context"][0]
             middle = random.choice(info["context"][-2:])

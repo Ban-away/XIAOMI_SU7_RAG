@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""离线建库入口：PDF解析、文本清洗、分层切分、检索索引构建。"""
 
 import os
 import pickle
@@ -11,7 +12,7 @@ from src.constant import raw_docs_path, clean_docs_path, split_docs_path
 from src.client.llm_clean_client import request_llm_clean
 
 
-# 解析pdf
+# 1) 解析 PDF 原始页面文档（若本地已有缓存则直接复用）
 if not os.path.exists(raw_docs_path):
     raw_docs = load_pdf()
     print("文档page数:", len(raw_docs))
@@ -20,7 +21,7 @@ else:
     raw_docs = pickle.load(open(raw_docs_path, "rb"))
     print("加载文档page数:", len(raw_docs))
 
-# 文本清洗和整理
+# 2) 文本清洗整理（若已有 clean 缓存则直接加载）
 if not os.path.exists(clean_docs_path):
     clean_docs = request_llm_clean(raw_docs)
     print("清洗后文档page数:", len(clean_docs))
@@ -29,7 +30,7 @@ else:
     clean_docs = pickle.load(open(clean_docs_path, "rb"))
     print("加载清洗文档page数:", len(clean_docs))
 
-# 文档切分
+# 3) 文档切分（语义父块 + 递归子块）
 if not os.path.exists(split_docs_path):
     split_docs = texts_split(clean_docs)
     print("解析后文档总数:", len(split_docs))
@@ -40,7 +41,7 @@ else:
     print("加载解析文档总数:", len(split_docs))
 
 
-# 索引入库
+# 4) 构建并写入检索索引（BM25 + Milvus Hybrid）
 bm25_retriever = BM25(split_docs) 
 candidate_docs = bm25_retriever.retrieve_topk("介绍一下离车后自动上锁功能", topk=3)
 print("BM25召回样例:")

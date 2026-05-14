@@ -24,8 +24,8 @@ from src.client.semantic_chunk_client import request_semantic_chunk
 # 全局配置
 _chunk_size = 256  # 每次切分的文本块最大长度（token 计数）
 _chunk_overlap = 50  # 块与块之间重叠的长度（防止句子被切断）
-_min_filter_pages = 4  # 从第 5 页开始保留（idx=4，因为页码从0开始），作用：跳过封面、扉页、目录前几页
-_max_filter_pages = 247  # 保留到第 248 页结束（idx=247），作用：跳过最后空白页、附录冗余页
+_min_filter_pages = 2  # 从第 3 页开始保留（idx=2，因为页码从0开始），作用：跳过封面、扉页、目录前几页
+_max_filter_pages = 278  # 保留到第 278 页结束（idx=278），作用：跳过最后空白页、附录冗余页
 _semantic_group_size = 10  # 语义分组大小（高级分块用）
 _max_parent_size = 512  # 父块最大长度（分层分块用）
 _page_clip = 50  # 页脚裁剪高度：50 pt（约1.76厘米）
@@ -128,68 +128,94 @@ def load_pdf() -> list[Document]:
 
 def texts_split(raw_docs: list[Document]) -> list[Document]:
     """句子级 + 语义感知切分"""
+    # 最终所有切分好的文档都会存在这里
     all_split_docs = []
 
+    # 遍历每一页PDF解析出来的文档，带进度条
     for doc in tqdm(raw_docs):
 
-        # 语义切分
+        # ===================== 第一步：语义切分 =====================
+        # 调用外部接口，把一整页文本按【语义】切成大段
+        # group_size=_semantic_group_size 是配置的：10
         grouped_chunks = request_semantic_chunk(doc.page_content, group_size=_semantic_group_size)
 
-        # 父doc
-        parent_docs = []
-        for group in grouped_chunks:
+        # ===================== 第二步：生成【父块】（大段、完整语义） =====================
+        parent_docs = []  # 存放所有父块
+        for group in grouped_chunks:  # 遍历每个语义大段，文档每页的每个语义段作为一个父块
+            # 给父块生成唯一ID（MD5）
             parent_id = hashlib.md5(group.encode('utf-8')).hexdigest()
+            
+            # 复制原文档的元数据（页码、文件路径、图片信息等）
             parent_metadata = copy.deepcopy(doc.metadata)
+            # 把唯一ID替换成父块ID
             parent_metadata["unique_id"] = parent_id 
+            
+            # 创建父块Document（大段文本+元数据）
             parent_doc = Document(page_content=group, metadata=parent_metadata)
-            parent_docs.append(parent_doc)
+            parent_docs.append(parent_doc)  # 加入父块列表
+            
+            # 如果这个父块长度 < 512，直接当成最终块保存
             if len(group) < _max_parent_size:
                 all_split_docs.append(parent_doc)
+
+        # 把所有父块保存到MongoDB
         save_2_mongo(parent_docs)
 
-        # 子doc
-        for chunk in parent_docs:
-            # 带overlap继续句子级切分
+        # ===================== 第三步：生成【子块】（小块、给AI检索用） =====================
+        for chunk in parent_docs:  # 遍历每个父块
+            # 用之前配置的 text_splitter 切成小块（256token，带重叠）
             split_docs = text_splitter.create_documents([chunk.page_content], metadatas=[chunk.metadata])
-            reid_split_docs = []
-            for child_doc in split_docs:
+            
+            reid_split_docs = []  # 重新处理ID后的子块
+            for child_doc in split_docs:  # 遍历每个切好的小块
+                # 给子块生成唯一ID
                 child_id = hashlib.md5(child_doc.page_content.encode('utf-8')).hexdigest()
+                
+                # 如果子块和父块一模一样，说明没切开，跳过
                 if child_doc.page_content == chunk.page_content:
                     continue
+                
+                # 复制父块的元数据
                 child_metadata = copy.deepcopy(chunk.metadata)
+                # 子块自己的ID
                 child_metadata["unique_id"] = child_id
+                # 关键：记录自己属于哪个父块（parent_id）
                 child_metadata["parent_id"] = chunk.metadata["unique_id"]
+                
+                # 重新包装子块
                 reid_child_doc = Document(page_content=child_doc.page_content, metadata=child_metadata)
                 reid_split_docs.append(reid_child_doc)
 
+            # 子块保存到MongoDB
             save_2_mongo(reid_split_docs)
+            # 子块加入最终返回列表
             all_split_docs.extend(reid_split_docs)
 
+    # 返回所有切好的块（父块+子块）
     return all_split_docs
 
 
 def save_2_mongo(split_docs):
+    # 遍历所有要入库的文档块
     for doc in split_docs:
-        # 从 metadata 中提取关键参数
+        # 拿到块的元数据（页码、ID、路径、图片信息等）
         metadata = doc.metadata
 
-        # 构造唯一性 unique_id
+        # 拿到唯一ID，没有ID就跳过
         unique_id = metadata.get("unique_id")
         if not unique_id:
             continue
 
-        # 创建文档记录对象
+        # 构造数据库模型对象 ManualInfo
         doc_record = ManualInfo(
             unique_id=unique_id,
             page_content=doc.page_content,
             metadata=metadata
         )
 
-        # 更新数据库操作
+        # ===================== 保存/更新到MongoDB =====================
         manual_text_collection.update_one(
-            {"unique_id": doc_record.unique_id},
-            {"$set": doc_record.model_dump()},
-            upsert=True
+            {"unique_id": doc_record.unique_id},  # 按unique_id查找
+            {"$set": doc_record.model_dump()},    # 有就更新，没有就插入
+            upsert=True                           # 不存在则新增
         )
-
-

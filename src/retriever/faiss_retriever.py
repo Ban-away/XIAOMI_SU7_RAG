@@ -15,18 +15,25 @@ from src.retriever.retriever import BaseRetriever
 
 class FaissRetriever(BaseRetriever):
     def __init__(self, docs, retrieve=False):
-        # 基于langchain的Faiss库
+        # 基于 langchain 封装的 FAISS 向量检索
         self.embeddings = HuggingFaceEmbeddings(
+            # BCE embedding 模型路径来自 constant.py
             model_name=bce_model_path,
+            # 当前实现默认用 GPU 编码
             model_kwargs={"device": "cuda"},
         )
 
         if retrieve and os.path.exists(faiss_db_path):
-            # 如果之前已经有向量化的结果，直接用
-            self.vector_store = FAISS.load_local(save_path, self.embeddings, allow_dangerous_deserialization=True)
+            # 如果本地已存在索引，直接加载，避免重复构建
+            self.vector_store = FAISS.load_local(
+                faiss_db_path,
+                self.embeddings,
+                allow_dangerous_deserialization=True
+            )
         else:
+            # 否则基于输入文档重新构建索引
             self.vector_store = FAISS.from_documents(docs, self.embeddings)
-            # 对向量结果做一个持久化
+            # 构建后持久化到本地目录
             self.vector_store.save_local(faiss_db_path)
 
         # 使用完模型后释放显存
@@ -35,6 +42,7 @@ class FaissRetriever(BaseRetriever):
 
     def retrieve_topk(self, query, topk):
         # 获取top-K分数最高的文档块
+        # 返回值格式为[(Document, score), ...]
         context = self.vector_store.similarity_search_with_score(query, k=topk)
         return context
 

@@ -33,11 +33,14 @@ MAX_TEXT_LENGTH = 512
 ID_MAX_LENGTH = 100
 COL_NAME = "hybrid_bge_large_splade_v2" 
 
+# 连接 Mongo 文本集合：用于把 Milvus 命中的 unique_id 回表成完整 Document
 mongo_collection = MongoConfig.get_collection("manual_text")
+# 连接 Milvus Lite 本地库（uri 指向 data/saved_index/milvus.db）
 connections.connect(uri=milvus_db_path)
 
 
 def _mean_pooling(last_hidden_state: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:
+    """BGE dense 向量池化：按 attention mask 做 mean pooling。"""
     mask = attention_mask.unsqueeze(-1).expand(last_hidden_state.size()).float()
     summed = (last_hidden_state * mask).sum(1)
     counts = mask.sum(1).clamp(min=1e-9)
@@ -46,36 +49,48 @@ def _mean_pooling(last_hidden_state: torch.Tensor, attention_mask: torch.Tensor)
 
 class HybridEmbeddingHandler:
     def __init__(self, dense_model_path: str, splade_model_path: str, device: str | None = None):
+        # 默认优先走 GPU，GPU 不可用时退化到 CPU
         if device is None:
             device = "cuda" if torch.cuda.is_available() else "cpu"
         self.device = device
+        # Dense 路径：BGE-Large
         self.dense_tokenizer = AutoTokenizer.from_pretrained(dense_model_path)
         self.dense_model = AutoModel.from_pretrained(dense_model_path).to(device)
         self.dense_model.eval()
+        # Sparse 路径：SPLADE
         self.sparse_tokenizer = AutoTokenizer.from_pretrained(splade_model_path)
         self.sparse_model = AutoModelForMaskedLM.from_pretrained(splade_model_path).to(device)
         self.sparse_model.eval()
+        # Dense 向量维度（用于 Milvus schema）
         self.dim = {"dense": self.dense_model.config.hidden_size}
+        # Sparse 向量每条保留的 topk 维度
         self.sparse_topk = 200
 
     def _encode_dense(self, texts: list[str]) -> list[list[float]]:
+        # 批量 token 化并送入 dense 模型
         inputs = self.dense_tokenizer(texts, padding=True, truncation=True, return_tensors="pt").to(self.device)
         with torch.no_grad():
             outputs = self.dense_model(**inputs)
+        # mean pooling 得到句向量
         pooled = _mean_pooling(outputs.last_hidden_state, inputs["attention_mask"])
+        # 转为 Python list，便于 Milvus 插入
         return pooled.cpu().detach().numpy().tolist()
 
     def _encode_sparse(self, texts: list[str]) -> list[dict[int, float]]:
+        # 批量 token 化并送入 SPLADE 模型
         inputs = self.sparse_tokenizer(texts, padding=True, truncation=True, return_tensors="pt").to(self.device)
         with torch.no_grad():
             outputs = self.sparse_model(**inputs)
         logits = outputs.logits
+        # padding 位置置为 -inf，避免被错误计入权重
         attn_mask = inputs["attention_mask"].unsqueeze(-1)
         logits = logits.masked_fill(attn_mask == 0, float("-inf"))
+        # SPLADE 常见做法：log1p(relu(logits)) 后按 token 维取 max
         weights = torch.log1p(torch.relu(logits)).amax(dim=1)
 
         sparse_vectors: list[dict[int, float]] = []
         for row in weights:
+            # 仅保留 topk 非零稀疏特征，减少存储与检索开销
             if self.sparse_topk and self.sparse_topk < row.numel():
                 values, indices = torch.topk(row, self.sparse_topk)
                 nonzero = values > 0
@@ -105,6 +120,7 @@ embedding_handler = HybridEmbeddingHandler(
 
 class MilvusRetriever:
     def __init__ (self, docs, retrieve=False):
+        # 定义 Milvus collection 字段（主键 + 原文 + 稀疏向量 + 稠密向量）
         fields = [
             # 构建查询ID，primary key
             FieldSchema(name="unique_id", dtype=DataType.VARCHAR, is_primary=True, max_length=ID_MAX_LENGTH),
@@ -115,10 +131,12 @@ class MilvusRetriever:
         ]
         schema = CollectionSchema(fields)
 
+        # 建库模式下，先清理同名 collection，确保索引内容与当前语料一致
         if not retrieve and utility.has_collection(COL_NAME):
             Collection(COL_NAME).drop()
         self.col = Collection(COL_NAME, schema, consistency_level="Strong")
 
+        # 为 sparse / dense 分别创建索引
         sparse_index = {"index_type": "SPARSE_INVERTED_INDEX", "metric_type": "IP"}
         dense_index = {"index_type": "AUTOINDEX", "metric_type": "IP"}
         self.col.create_index("sparse_vector", sparse_index)
@@ -132,6 +150,7 @@ class MilvusRetriever:
 
     def save_vectorstore(self, docs: list[str]): 
 
+        # 拆分出写库所需字段：文本与 unique_id
         raw_texts = [doc.page_content for doc in docs]
         unique_ids = [doc.metadata["unique_id"] for doc in docs]
 
@@ -140,6 +159,7 @@ class MilvusRetriever:
 
         # batch embedding 插入
         for i in range(0, len(docs), EMB_BATCH):
+            # Milvus 插入顺序需与 schema 字段顺序对应
             batched_entities = [
                 unique_ids[i : i + EMB_BATCH],
                 raw_texts[i : i + EMB_BATCH],
@@ -151,6 +171,7 @@ class MilvusRetriever:
 
 
     def dense_search(self, query_dense_embedding, limit):
+        # dense 单路检索（调试或 ablation 使用）
         search_params = {"metric_type": "IP", "params": {}}
         res = self.col.search(
             [query_dense_embedding],
@@ -163,6 +184,7 @@ class MilvusRetriever:
 
 
     def sparse_search(self, query_sparse_embedding, limit):
+        # sparse 单路检索（调试或 ablation 使用）
         search_params = {
             "metric_type": "IP",
             "params": {},
@@ -185,14 +207,17 @@ class MilvusRetriever:
         dense_weight=1.0,
         limit=10,
     ):
+        # 组装 dense 检索请求
         dense_search_params = {"metric_type": "IP", "params": {}}
         dense_req = AnnSearchRequest(
             [query_dense_embedding], "dense_vector", dense_search_params, limit=limit
         )
+        # 组装 sparse 检索请求
         sparse_search_params = {"metric_type": "IP", "params": {}}
         sparse_req = AnnSearchRequest(
             [query_sparse_embedding], "sparse_vector", sparse_search_params, limit=limit
         )
+        # 使用加权融合器（可通过 sparse_weight/dense_weight 调权）
         rerank = WeightedRanker(sparse_weight, dense_weight)
         res = self.col.hybrid_search(
             [sparse_req, dense_req],
@@ -204,7 +229,7 @@ class MilvusRetriever:
 
 
     def retrieve_topk(self, query, topk=10):
-        t1 = time.time()
+        # 编码 query：得到 dense + sparse 两路向量
         # 抽取query的embedding 
         query_embeddings = embedding_handler.encode_queries([query])
 
@@ -220,7 +245,11 @@ class MilvusRetriever:
         # 关联mongo数据
         related_docs = []
         for result in hybrid_results:
+            # result["id"] 对应 unique_id，回表拿 page_content 与 metadata
             search_res = mongo_collection.find_one({"unique_id": result["id"]})
+            # 防御：若回表为空，跳过该条
+            if not search_res:
+                continue
             #images_list = []
             #for image in search_res["metadata"]["images_info"]:
             #    images_list.append(ManualImages(**image))

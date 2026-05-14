@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""离线评估脚本：执行完整RAG推理并计算语义分与RAGAS指标。"""
 
 
 import os
@@ -31,7 +32,7 @@ from src.constant import text2vec_model_path
 from src.utils import merge_docs, post_processing
 
 
-# warmstart
+# 预热检索器、重排器、向量模型
 bm25_retriever = BM25(docs=None, retrieve=True)
 milvus_retriever = MilvusRetriever(docs=None, retrieve=True) 
 jina_reranker = JinaRerankerV2(model_path=jina_reranker_v2_model_path)
@@ -56,6 +57,7 @@ def calc_jaccard(list_a, list_b, threshold=0.3):
 
 
 def report_score(result):
+    """计算语义相似度与关键词加权得分。"""
     idx = 0
     for item in result:
         question = item["question"]
@@ -86,6 +88,7 @@ def report_score(result):
 fd = open("data/qa_pairs/test_qa_pair_verify.json")
 test_qa_pairs = json.load(fd)
 result = []
+# 执行整条推理链路并记录中间结果
 for item in test_qa_pairs:
     query = item["question"].strip()
     if HYDE:
@@ -121,10 +124,7 @@ print("\n")
 print(f"预测问题数：{len(results)}, 语义相似度+关键词加权得分：{final_score}")
 
 
-"""
-以下是RAG评估代码的扩展，利用Ragas框架来对问答系统输出的结果做评估。输入是query，生成的答案，参考答案，以及召回的上下文信息。
-评估采用了精确率和召回率两个指标
-"""
+# RAGAS 扩展评估：上下文召回率与精确率
 
 llm = ChatOpenAI(model=os.environ["DOUBAO_MODEL_NAME"], api_key=os.environ["DOUBAO_API_KEY"], base_url=os.environ["DOUBAO_BASE_URL"])
 

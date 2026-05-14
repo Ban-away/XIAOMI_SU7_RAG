@@ -8,6 +8,7 @@ from langchain_core.documents import Document
 from src.constant import qwen3_8b_tune_model_name
 
 
+# 本地推理提示词模板（对接 vLLM 的 OpenAI 兼容接口）
 LLM_CHAT_PROMPT = """
 ### 信息
 {context}
@@ -21,6 +22,8 @@ LLM_CHAT_PROMPT = """
 """
 
 
+# 本地 vLLM 服务通常无需真实 API Key（默认可用占位值）。
+# 只要 base_url 指向 vLLM 的 /v1 入口即可。
 llm_client = OpenAI(
     api_key="EMPTY",
     base_url="http://localhost:8000/v1"
@@ -28,30 +31,45 @@ llm_client = OpenAI(
 
 
 def request_chat(query, context, stream=False):
+    """
+    调用本地 vLLM 生成答案。
 
+    参数：
+    - query: 用户问题
+    - context: 检索上下文
+    - stream: 是否流式返回（True 返回迭代器；False 返回字符串）
+    """
+    # 统一用模板组织上下文与问题
     prompt = LLM_CHAT_PROMPT.format(context=context, query=query) 
 
+    # 发起本地聊天生成请求
     completion = llm_client.chat.completions.create(
+        # 本地模型名配置在 constant.py，便于脚本间复用
         model=qwen3_8b_tune_model_name,
         messages=[
             {"role": "system", "content": "你是一个有用的人工智能助手."},
             {"role": "user", "content": prompt}
         ],
+        # 生成参数：尽量降低随机性，提高可复现性
         max_tokens=4096,
         frequency_penalty=2.0,
         temperature=0.001,
         top_p=0.95,
+        # 是否启用流式返回
         stream=stream,
+        # vLLM 扩展参数：限制采样并关闭思维链显示
         extra_body={
             "top_k": 1,
             "chat_template_kwargs": {"enable_thinking": False}
         }
     )
+    # 非流式：直接取文本；流式：把迭代器交给上层消费
     if not stream:
         result = completion.choices[0].message.content
     else:
         result = completion
 
+    # 返回字符串或迭代器
     return result
 
 

@@ -14,6 +14,7 @@ URL = "http://0.0.0.0:6000/v1/semantic-chunks"
 
 
 def request_semantic_chunk(sentences, group_size):
+    """调用语义切分服务，将长文本切分为语义块列表。"""
     headers = {
         "Content-Type":"application/json"
     }
@@ -22,16 +23,21 @@ def request_semantic_chunk(sentences, group_size):
         "group_size": group_size
     })
     try:
+        # 调用本地语义切分服务，避免请求无上限等待
         response = requests.post(
             URL,
             headers=headers,
-            data=payload
+            data=payload,
+            timeout=30
         )
+        # 非 2xx 状态直接抛错，避免把错误页当作正常 JSON 解析
+        response.raise_for_status()
         res = response.json()
         text = res["chunks"]
     except Exception as e:
         print(f"call reject failed:{e}")
-        text = sentences
+        # 兜底返回列表，避免上游按“可迭代字符串”逐字符误切分
+        text = [sentences]
     return text
 
 
