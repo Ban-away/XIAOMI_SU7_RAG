@@ -131,11 +131,11 @@ def step2_generate_expanded_qa():
     
     print(f"📄 待扩展问题数: {len(question_docs)}")
     
-    # 扩展QA数据量较大，降低并发数
+    # 扩展QA使用适中的并发数（已分批处理，可适当提高）
     import src.gen_qa.run as gen_module
     original_workers = gen_module.MAX_WORKERS
-    gen_module.MAX_WORKERS = min(2, original_workers)  # 扩展QA使用更低的并发数
-    print(f"⚠️ 扩展QA数据量较大，降低并发数至 {gen_module.MAX_WORKERS}")
+    gen_module.MAX_WORKERS = min(15, original_workers)  # 分批处理下，并发数可提高到15
+    print(f"⚠️ 扩展QA已分批处理，设置并发数为 {gen_module.MAX_WORKERS}")
     
     # 分批处理配置
     BATCH_SIZE = 100  # 每批处理100条
