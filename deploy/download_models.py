@@ -43,6 +43,7 @@ MODEL_PRESETS: Dict[str, List[ModelSpec]] = {
         ModelSpec("splade-v2", "naver/splade-cocondenser-ensembledistil", "models/naver/splade-cocondenser-ensembledistil"),
         ModelSpec("bge-reranker-v2-m3", "BAAI/bge-reranker-v2-m3", "models/BAAI/bge-reranker-v2-m3"),
         ModelSpec("Qwen3-8B", "Qwen/Qwen3-8B", "models/Qwen3-8B"),
+        ModelSpec("Qwen3-Reranker-4B", "Qwen/Qwen3-Reranker-4B", "models/Qwen3-Reranker-4B", required=False),
         ModelSpec("text2vec-base-chinese", "shibing624/text2vec-base-chinese", "models/text2vec-base-chinese"),
     ],
     "all": [

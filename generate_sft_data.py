@@ -16,10 +16,10 @@ from tqdm import tqdm
 from src.retriever.bm25_retriever import BM25
 from src.retriever.milvus_retriever import MilvusRetriever 
 from src.client.llm_chat_client import request_chat
-# from src.reranker.bge_m3_reranker import BGEM3ReRanker 
-from src.reranker.qwen3_reranker_vllm import Qwen3ReRankervLLM 
+from src.reranker.bge_m3_reranker import BGEM3ReRanker 
+# from src.reranker.qwen3_reranker_vllm import Qwen3ReRankervLLM 
 from src.constant import bge_reranker_model_path
-from src.constant import qwen3_4b_reranker_model_path
+# from src.constant import qwen3_4b_reranker_model_path
 from src.utils import merge_docs, post_processing
 
 random.seed(42)
@@ -42,10 +42,10 @@ LLM_CHAT_PROMPT = """
 if not os.path.exists("data/qa_pairs/train_data.json"):
     print("[INFO] train_data.json 不存在，开始生成...")
     
-    # 加载检索器和重排器
+    # 加载检索器和重排器（使用轻量级 BGE-M3 重排器，避免 vLLM 多进程问题）
     bm25_retriever = BM25(docs=None, retrieve=True)
     milvus_retriever = MilvusRetriever(docs=None, retrieve=True) 
-    qwen3_reranker = Qwen3ReRankervLLM(model_path=qwen3_4b_reranker_model_path)
+    bge_m3_reranker = BGEM3ReRanker(model_path=bge_reranker_model_path)
     
     # 预热模型
     milvus_retriever.retrieve_topk("这是一条测试数据", topk=3)
@@ -63,7 +63,7 @@ if not os.path.exists("data/qa_pairs/train_data.json"):
             bm25_docs = bm25_retriever.retrieve_topk(query, topk=5)
             milvus_docs = milvus_retriever.retrieve_topk(query, topk=10)
             merged_docs = merge_docs(bm25_docs, milvus_docs)
-            ranked_docs = qwen3_reranker.rank(query, merged_docs, topk=5)
+            ranked_docs = bge_m3_reranker.rank(query, merged_docs, topk=5)
             context = "\n".join([str(idx+1) + "." + doc.page_content for idx, doc in enumerate(ranked_docs)])
             response = request_chat(query, context)
             answer = post_processing(response, ranked_docs)
