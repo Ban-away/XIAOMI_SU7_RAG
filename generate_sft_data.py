@@ -6,14 +6,25 @@ from dotenv import load_dotenv
 # 加载 .env 文件中的环境变量（如果存在）
 load_dotenv()
 
+# 设置环境变量避免 tokenizers 并行问题
 import os
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
+# 过滤各种警告
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", category=UserWarning)
+warnings.filterwarnings("ignore", message=".*BaseRetriever.get_relevant_documents.*")
+warnings.filterwarnings("ignore", message=".*Importing debug from langchain.*")
+warnings.filterwarnings("ignore", message=".*Asking to truncate to max_length.*")
 import pickle
 import time
 import json
 import re
 import random
 import concurrent.futures
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 from tqdm.contrib.concurrent import process_map
 from src.retriever.bm25_retriever import BM25
@@ -106,8 +117,8 @@ if not os.path.exists("data/qa_pairs/train_data.json"):
             
             print(f"\n🚀 处理批次 {batch_idx+1}/{total_batches} ({len(batch_items)} 条)")
             
-            # 使用进程池并发处理（更适合CPU密集型任务）
-            with ProcessPoolExecutor(max_workers=MAX_WORKERS) as executor:
+            # 使用线程池并发处理（避免CUDA多进程问题）
+            with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
                 futures = {executor.submit(process_item, item): item for item in batch_items}
                 
                 for future in tqdm(as_completed(futures), total=len(futures)):
