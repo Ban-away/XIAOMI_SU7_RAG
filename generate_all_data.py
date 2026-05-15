@@ -57,7 +57,7 @@ def step1_generate_raw_qa():
     print("\n" + "="*60)
     print("Step 1: 生成原始 QA 对")
     print("="*60)
-    print(f"📝 输出路径: {QA_PATH}")
+    print(f"输出路径: {QA_PATH}")
     
     # 检查切分文档是否存在
     if not os.path.exists(split_docs_path):
@@ -94,7 +94,7 @@ def step2_generate_expanded_qa():
     print("\n" + "="*60)
     print("Step 2: 生成扩展 QA 对")
     print("="*60)
-    print(f"📝 输出路径: {OUTPUT_PATH}")
+    print(f"输出路径: {OUTPUT_PATH}")
     
     # 检查是否跳过
     if args.skip_expand:
@@ -198,8 +198,8 @@ def step3_split_train_test():
     print("\n" + "="*60)
     print("Step 3: 切分训练集和测试集")
     print("="*60)
-    print(f"📝 训练集输出路径: {TRAIN_PATH}")
-    print(f"📝 测试集输出路径: {TEST_PATH}")
+    print(f"训练集输出路径: {TRAIN_PATH}")
+    print(f"测试集输出路径: {TEST_PATH}")
     
     # 检查是否已存在且非空
     if os.path.exists(TRAIN_PATH) and os.path.getsize(TRAIN_PATH) > 0 and \
@@ -309,8 +309,8 @@ def step4_generate_keywords():
     print("\n" + "="*60)
     print("Step 4: 生成关键词标注")
     print("="*60)
-    print(f"📝 关键词输出路径: {TEST_KEYWORDS_PATH}")
-    print(f"📝 测试集更新路径: {TEST_PATH}")
+    print(f"关键词输出路径: {TEST_KEYWORDS_PATH}")
+    print(f"测试集更新路径: {TEST_PATH}")
     
     # 检查是否已存在且非空
     if os.path.exists(TEST_KEYWORDS_PATH) and os.path.getsize(TEST_KEYWORDS_PATH) > 0 and not args.force:
@@ -366,7 +366,7 @@ def step5_prepare_verify():
     print("="*60)
     
     verify_path = "data/qa_pairs/test_qa_pair_verify.json"
-    print(f"📝 输出路径: {verify_path}")
+    print(f"输出路径: {verify_path}")
     
     # 检查是否已存在
     if os.path.exists(verify_path) and os.path.getsize(verify_path) > 0 and not args.force:
