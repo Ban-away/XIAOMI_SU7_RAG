@@ -138,8 +138,8 @@ rerank_train = []
 rerank_test = []
 
 # 读取上游生成的 train_data，拆解引用并构建监督样本
-fd = open("data/qa_pairs/train_data.json")
-for line in fd:
+def process_train_data(line):
+    """处理单行 train_data"""
     info = json.loads(line)
     response = info["response"]
     all_cites = re.findall("[【](.*?)[】]", response)
@@ -171,12 +171,45 @@ for line in fd:
         "output": format_answer
     }
     neg_docs = [doc for doc in info["merged_docs"] if doc not in info["context"]]
+    
+    result = {
+        "item": item,
+        "query": query,
+        "format_answer": format_answer,
+        "neg_docs": neg_docs,
+        "context": info["context"],
+        "merged_docs": info["merged_docs"]
+    }
+    return result
+
+# 批量并发处理 train_data
+fd = open("data/qa_pairs/train_data.json")
+lines = fd.readlines()
+fd.close()
+
+print(f"\n🚀 处理 train_data ({len(lines)} 条)...")
+processed_results = []
+
+with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+    futures = {executor.submit(process_train_data, line): line for line in lines}
+    for future in tqdm(concurrent.futures.as_completed(futures), total=len(futures)):
+        processed_results.append(future.result())
+
+# 构建训练/测试集
+for result in processed_results:
+    item = result["item"]
+    query = result["query"]
+    format_answer = result["format_answer"]
+    neg_docs = result["neg_docs"]
+    context = result["context"]
+    merged_docs = result["merged_docs"]
+    
     # 按固定比例切分 summary 训练/测试集
     if random.random() < TEST_RATE:
         summary_test.append(item)
 
         if format_answer != "无答案":
-            content_list = [info["context"][0], random.choice(info["context"][-2:])]
+            content_list = [context[0], random.choice(context[-2:])]
             if neg_docs:
                 content_list.append(random.choice(neg_docs))
             rerank_test.append({"query": query, "content": content_list})
@@ -186,15 +219,15 @@ for line in fd:
 
         # 构建重排训练样本：正样本(2) / 次相关(1) / 负样本(0)
         if format_answer != "无答案":
-            positive = info["context"][0]
-            middle = random.choice(info["context"][-2:])
+            positive = context[0]
+            middle = random.choice(context[-2:])
             rerank_train.append({"query": query, "content": positive, "label": 2})
             rerank_train.append({"query": query, "content": middle, "label": 1})
             if neg_docs:
                 negative = random.choice(neg_docs)
                 rerank_train.append({"query": query, "content": negative, "label": 0})
         else:
-            negative = random.choice(info["merged_docs"])
+            negative = random.choice(merged_docs)
             rerank_train.append({"query": query, "content": negative, "label": 0})
 
 rerank_train = [item for item in rerank_train if len(item["query"]) > 0 and len(item["content"]) > 0]
