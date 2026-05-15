@@ -13,6 +13,8 @@ import json
 import re
 import random
 import concurrent.futures
+from concurrent.futures import ProcessPoolExecutor, as_completed
+import os
 from tqdm import tqdm
 from src.retriever.bm25_retriever import BM25
 from src.retriever.milvus_retriever import MilvusRetriever 
@@ -41,7 +43,7 @@ LLM_CHAT_PROMPT = """
 
 # 批量处理配置（移到外面，确保总是被定义）
 BATCH_SIZE = 700  # 每批处理的样本数
-MAX_WORKERS = 50  # 并发数（增加以提高处理速度）
+MAX_WORKERS = min(64, os.cpu_count() * 2)  # 极致并发（使用所有CPU核心的2倍）
 
 # ==================== 自动生成 train_data.json ====================
 if not os.path.exists("data/qa_pairs/train_data.json"):
@@ -104,15 +106,15 @@ if not os.path.exists("data/qa_pairs/train_data.json"):
             
             print(f"\n🚀 处理批次 {batch_idx+1}/{total_batches} ({len(batch_items)} 条)")
             
-            # 使用线程池并发处理
-            with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-                futures = {executor.submit(process_item, item): item for item in batch_items}
-                
-                for future in tqdm(concurrent.futures.as_completed(futures), total=len(futures)):
-                    result = future.result()
-                    if result:
-                        f.write(json.dumps(result, ensure_ascii=False) + "\n")
-                        f.flush()  # 立即写入，防止内存累积
+            # 使用进程池并发处理（更适合CPU密集型任务）
+    with ProcessPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        futures = {executor.submit(process_item, item): item for item in batch_items}
+        
+        for future in tqdm(as_completed(futures), total=len(futures)):
+            result = future.result()
+            if result:
+                f.write(json.dumps(result, ensure_ascii=False) + "\n")
+                f.flush()  # 立即写入，防止内存累积
             
             # 批次之间等待（最后一批不需要等待）
             if batch_idx < total_batches - 1:
@@ -134,6 +136,7 @@ print(f"📝 摘要测试集: ./data/summary_data/test.json")
 print(f"📝 重排训练集: ./data/rerank_data/train.json")
 print(f"📝 重排验证集: ./data/rerank_data/dev.json")
 print(f"📝 重排测试集: ./data/rerank_data/test.json")
+print(f"🔧 并发数: {MAX_WORKERS}")
 
 # 训练/测试输出文件句柄
 summary_train_handler = open("./data/summary_data/train.json", "w")
@@ -192,17 +195,18 @@ def process_train_data(line):
     }
     return result
 
-# 批量并发处理 train_data
-fd = open("data/qa_pairs/train_data.json")
-lines = fd.readlines()
-fd.close()
+# 批量并发处理 train_data（极致优化）
+print(f"\n🚀 处理 train_data...")
+with open("data/qa_pairs/train_data.json", "r", encoding="utf-8") as f:
+    lines = [line.strip() for line in f if line.strip()]
 
-print(f"\n🚀 处理 train_data ({len(lines)} 条)...")
+print(f"📄 待处理训练样本数: {len(lines)}")
 processed_results = []
 
-with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+# 使用进程池并发处理（更适合CPU密集型任务）
+with ProcessPoolExecutor(max_workers=MAX_WORKERS) as executor:
     futures = {executor.submit(process_train_data, line): line for line in lines}
-    for future in tqdm(concurrent.futures.as_completed(futures), total=len(futures)):
+    for future in tqdm(as_completed(futures), total=len(futures)):
         processed_results.append(future.result())
 
 # 构建训练/测试集
