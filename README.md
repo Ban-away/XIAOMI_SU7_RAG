@@ -441,8 +441,8 @@ cd /root/autodl-tmp/XIAOMI_SU7_RAG
 # 注意：首次运行可能需要修复 setuptools 版本
 pip install --force-reinstall setuptools==69.0.0
 python build_index.py
-# 生成 QA 与 expand QA（会产出 data/qa_pairs/qa_pair.json 和 data/qa_pairs/expand_qa_pair.json）
-python scripts/generate_qa.py
+# 生成所有 QA 数据（qa_pair.json、expand_qa_pair.json、train_qa_pair.json、test_qa_pair.json 等）
+python generate_all_data.py
 # 根据 QA 生成 summary/rerank 数据
 python generate_sft_data.py
 cp data/summary_data/train.json LLaMA-Factory-main/data/summary_train.json
@@ -469,6 +469,18 @@ ls -l output/qwen3_lora_sft_int4
 ```
 
 注意：量化前需先完成第 4 步，确保 `output/qwen3_lora_sft/` 已存在。
+
+### 📊 数据文件说明
+
+| 文件 | 作用 | 生成时机 |
+|:---|:---|:---|
+| `qa_pair.json` | 原始 QA 对（每个文档生成5个问题） | Step 1 |
+| `expand_qa_pair.json` | 扩展 QA 对（每个问题生成5个同义问法） | Step 2 |
+| `train_qa_pair.json` | 训练集（90%数据） | Step 3 |
+| `test_qa_pair.json` | 测试集（10%数据，含关键词） | Step 3 |
+| `test_keywords_pair.json` | 测试集答案关键词标注 | Step 4 |
+| `test_qa_pair_verify.json` | 评估输入文件 | Step 5 |
+| `train_data.json` | SFT 训练数据（含检索上下文） | Step 6 |
 
 ### MongoDB 启动示例
 
