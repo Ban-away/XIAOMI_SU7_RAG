@@ -15,6 +15,7 @@ import random
 import concurrent.futures
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from tqdm import tqdm
+from tqdm.contrib.concurrent import process_map
 from src.retriever.bm25_retriever import BM25
 from src.retriever.milvus_retriever import MilvusRetriever 
 from src.client.llm_chat_client import request_chat
@@ -42,7 +43,7 @@ LLM_CHAT_PROMPT = """
 
 # 批量处理配置（移到外面，确保总是被定义）
 BATCH_SIZE = 700  # 每批处理的样本数
-MAX_WORKERS = min(64, os.cpu_count() * 2)  # 极致并发（使用所有CPU核心的2倍）
+MAX_WORKERS = min(32, os.cpu_count() * 2)  # 合理并发（使用所有CPU核心的2倍，最大32）
 
 # ==================== 自动生成 train_data.json ====================
 if not os.path.exists("data/qa_pairs/train_data.json"):
@@ -194,19 +195,22 @@ def process_train_data(line):
     }
     return result
 
-# 批量并发处理 train_data（极致优化）
+# 批量并发处理 train_data（使用 process_map 优化）
 print(f"\n🚀 处理 train_data...")
 with open("data/qa_pairs/train_data.json", "r", encoding="utf-8") as f:
     lines = [line.strip() for line in f if line.strip()]
 
 print(f"📄 待处理训练样本数: {len(lines)}")
-processed_results = []
 
-# 使用进程池并发处理（更适合CPU密集型任务）
-with ProcessPoolExecutor(max_workers=MAX_WORKERS) as executor:
-    futures = {executor.submit(process_train_data, line): line for line in lines}
-    for future in tqdm(as_completed(futures), total=len(futures)):
-        processed_results.append(future.result())
+# 使用 process_map 进行高效并行处理（自动处理函数序列化问题）
+print(f"🔧 使用 {min(MAX_WORKERS, 16)} 个并发进程处理...")
+processed_results = process_map(
+    process_train_data,
+    lines,
+    max_workers=min(MAX_WORKERS, 16),  # 限制最大进程数，避免资源竞争
+    chunksize=max(1, len(lines) // (min(MAX_WORKERS, 16) * 4)),  # 动态调整块大小
+    desc="Processing train_data"
+)
 
 # 构建训练/测试集
 for result in processed_results:
@@ -259,3 +263,10 @@ for item in rerank_test:
 print("Summary Train size:", len(summary_train), "Summary Test size:", len(summary_test))
 summary_train_handler.write(json.dumps(summary_train, ensure_ascii=False, indent=4))
 summary_test_handler.write(json.dumps(summary_test, ensure_ascii=False, indent=4))
+
+# 关闭文件句柄
+summary_train_handler.close()
+summary_test_handler.close()
+rerank_train_handler.close()
+rerank_dev_handler.close()
+rerank_test_handler.close()
