@@ -41,7 +41,7 @@ LLM_CHAT_PROMPT = """
 
 # 批量处理配置（移到外面，确保总是被定义）
 BATCH_SIZE = 700  # 每批处理的样本数
-MAX_WORKERS = 30  # 并发数
+MAX_WORKERS = 50  # 并发数（增加以提高处理速度）
 
 # ==================== 自动生成 train_data.json ====================
 if not os.path.exists("data/qa_pairs/train_data.json"):
