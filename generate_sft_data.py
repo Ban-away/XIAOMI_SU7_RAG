@@ -14,7 +14,6 @@ import re
 import random
 import concurrent.futures
 from concurrent.futures import ProcessPoolExecutor, as_completed
-import os
 from tqdm import tqdm
 from src.retriever.bm25_retriever import BM25
 from src.retriever.milvus_retriever import MilvusRetriever 
@@ -94,7 +93,7 @@ if not os.path.exists("data/qa_pairs/train_data.json"):
             print(f"⚠️ 处理失败: {e}")
             return None
 
-    # 分批并发处理（正确缩进）
+    # 分批并发处理
     with open(output_path, "w", encoding="utf-8") as f:
         total_batches = (len(train_qa_pairs) + BATCH_SIZE - 1) // BATCH_SIZE
         wait_time = 5  # 批次之间等待时间（秒）
@@ -107,14 +106,14 @@ if not os.path.exists("data/qa_pairs/train_data.json"):
             print(f"\n🚀 处理批次 {batch_idx+1}/{total_batches} ({len(batch_items)} 条)")
             
             # 使用进程池并发处理（更适合CPU密集型任务）
-    with ProcessPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        futures = {executor.submit(process_item, item): item for item in batch_items}
-        
-        for future in tqdm(as_completed(futures), total=len(futures)):
-            result = future.result()
-            if result:
-                f.write(json.dumps(result, ensure_ascii=False) + "\n")
-                f.flush()  # 立即写入，防止内存累积
+            with ProcessPoolExecutor(max_workers=MAX_WORKERS) as executor:
+                futures = {executor.submit(process_item, item): item for item in batch_items}
+                
+                for future in tqdm(as_completed(futures), total=len(futures)):
+                    result = future.result()
+                    if result:
+                        f.write(json.dumps(result, ensure_ascii=False) + "\n")
+                        f.flush()  # 立即写入，防止内存累积
             
             # 批次之间等待（最后一批不需要等待）
             if batch_idx < total_batches - 1:
