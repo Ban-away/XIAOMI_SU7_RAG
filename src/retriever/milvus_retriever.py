@@ -30,7 +30,7 @@ from src.client.mongodb_config import MongoConfig
 
 
 EMB_BATCH = 32  # 减小批处理大小，降低显存占用
-MAX_TEXT_LENGTH = 512 
+MAX_TEXT_LENGTH = 2048  # 增加最大文本长度限制
 ID_MAX_LENGTH = 100
 COL_NAME = "hybrid_bge_large_splade_v2"
 
@@ -194,6 +194,9 @@ class MilvusRetriever:
         # 拆分出写库所需字段：文本与 unique_id
         raw_texts = [doc.page_content for doc in docs]
         unique_ids = [doc.metadata["unique_id"] for doc in docs]
+        
+        # 截断过长的文本，确保不超过 Milvus schema 的最大长度限制
+        raw_texts = [text[:MAX_TEXT_LENGTH] for text in raw_texts]
 
         print(f"开始编码 {len(raw_texts)} 条文档...")
         
