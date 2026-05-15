@@ -172,6 +172,18 @@ def chat(prompt, max_retry=3, debug=False, temperature=0.85, top_p=0.95):
 def gen_qa(splitted_docs, prompt_tmpl, qa_ckpt_filename, expand=False):
     qa_ckpt = {}
     file_lock = threading.Lock()
+    
+    # 过滤已处理的文档
+    if os.path.exists(qa_ckpt_filename):
+        with open(qa_ckpt_filename, 'r', encoding='utf-8') as f:
+            for line in f:
+                try:
+                    info = json.loads(line)
+                    qa_ckpt[info['unique_id']] = info
+                except:
+                    pass
+        print(f"[INFO] 已存在 {len(qa_ckpt)} 条记录，跳过...")
+    
     with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         if expand:
             futures = {doc.page_content: executor.submit(chat, build_qa_prompt(
@@ -182,20 +194,29 @@ def gen_qa(splitted_docs, prompt_tmpl, qa_ckpt_filename, expand=False):
                 prompt_tmpl, doc.page_content), 3, True) for doc in splitted_docs
                        if len(doc.page_content.replace('\n', '')) >= MINMAL_CHUNK_SIZE and
                            doc.metadata['unique_id'] not in qa_ckpt}
+        
+        print(f"[INFO] 待处理 {len(futures)} 条...")
+        
         for unique_id in tqdm(futures):
             future = futures[unique_id]
-            result = future.result()
+            try:
+                result = future.result(timeout=120)  # 设置超时时间
+            except concurrent.futures.TimeoutError:
+                print(f"[WARN] 处理 '{unique_id}' 超时，跳过")
+                continue
+            except Exception as e:
+                print(f"[WARN] 处理 '{unique_id}' 出错: {e}")
+                continue
+            
             if result is None:
                 continue
 
             item = {'unique_id': unique_id, 'raw_resp': result}
             qa_ckpt[unique_id] = item
 
-            # global file_lock
             file_lock.acquire()
-
             try:
-                with open(qa_ckpt_filename, 'a') as f:
+                with open(qa_ckpt_filename, 'a', encoding='utf-8') as f:
                     f.write(json.dumps(item, ensure_ascii=False) + '\n')
             except Exception as e:
                 print(e)
