@@ -529,7 +529,7 @@ ls -l output/qwen3_lora_sft_int4
 
 | 文件 | 作用 | 生成时机 |
 |:---|:---|:---|
-| `qa_pair.json` | 原始 QA 对（每个文档生成5个问题） | Step 1 |
+| `qa_pair.json` | 原始 QA 对（每个语义块生成5个问题） | Step 1 |
 | `expand_qa_pair.json` | 扩展 QA 对（每个问题生成5个同义问法） | Step 2 |
 | `train_qa_pair.json` | 训练集（90%数据） | Step 3 |
 | `test_qa_pair.json` | 测试集（10%数据，含关键词） | Step 3 |
