@@ -18,9 +18,11 @@ import pickle
 import hashlib
 import random
 import argparse
+import time
 from tqdm import tqdm
 from dotenv import load_dotenv
 from langchain_core.documents import Document
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # 加载环境变量
 load_dotenv()
@@ -387,7 +389,14 @@ def step6_generate_train_data():
     print("Step 6: 生成 SFT 训练数据")
     print("="*60)
     
+    # 打印输出路径
     output_path = "data/qa_pairs/train_data.json"
+    print(f"训练数据路径: data/qa_pairs/train_data.json", flush=True)
+    print(f"摘要训练集: ./data/summary_data/train.json", flush=True)
+    print(f"摘要测试集: ./data/summary_data/test.json", flush=True)
+    print(f"重排训练集: ./data/rerank_data/train.json", flush=True)
+    print(f"重排验证集: ./data/rerank_data/dev.json", flush=True)
+    print(f"重排测试集: ./data/rerank_data/test.json", flush=True)
     
     # 检查是否已存在且非空
     if os.path.exists(output_path) and os.path.getsize(output_path) > 0 and not args.force:
@@ -414,35 +423,64 @@ def step6_generate_train_data():
     
     print(f"📄 待处理训练样本数: {len(train_qa_pairs)}")
     
-    # 生成 train_data.json
+    # 批处理配置
+    BATCH_SIZE = 700
+    MAX_WORKERS = min(32, os.cpu_count() * 2)
+    total_batches = (len(train_qa_pairs) + BATCH_SIZE - 1) // BATCH_SIZE
+    wait_time = 5
+    
+    # 处理函数
+    def process_item(item):
+        try:
+            query = item["question"].strip()
+            
+            # 检索
+            bm25_docs = bm25_retriever.retrieve_topk(query, topk=5)
+            milvus_docs = milvus_retriever.retrieve_topk(query, topk=10)
+            merged_docs = merge_docs(bm25_docs, milvus_docs)
+            
+            # 重排
+            ranked_docs = bge_m3_reranker.rank(query, merged_docs, topk=5)
+            
+            # 生成答案
+            context = "\n".join([str(idx+1) + "." + doc.page_content for idx, doc in enumerate(ranked_docs)])
+            response = request_chat(query, context)
+            
+            # 返回结果
+            info = {
+                "query": query,
+                "context": [doc.page_content for doc in ranked_docs],
+                "response": response,
+                "merged_docs": [doc.page_content for doc in merged_docs]
+            }
+            return info
+        except Exception as e:
+            print(f"⚠️ 处理失败: {e}")
+            return None
+    
+    # 生成 train_data.json（批量并发处理）
     with open(output_path, "w", encoding="utf-8") as f:
-        for item in tqdm(train_qa_pairs):
-            try:
-                query = item["question"].strip()
+        for batch_idx in range(total_batches):
+            start_idx = batch_idx * BATCH_SIZE
+            end_idx = min(start_idx + BATCH_SIZE, len(train_qa_pairs))
+            batch_items = train_qa_pairs[start_idx:end_idx]
+            
+            print(f"\n🚀 处理批次 {batch_idx+1}/{total_batches} ({len(batch_items)} 条)")
+            
+            # 使用线程池并发处理（避免CUDA多进程问题）
+            with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+                futures = {executor.submit(process_item, item): item for item in batch_items}
                 
-                # 检索
-                bm25_docs = bm25_retriever.retrieve_topk(query, topk=5)
-                milvus_docs = milvus_retriever.retrieve_topk(query, topk=10)
-                merged_docs = merge_docs(bm25_docs, milvus_docs)
-                
-                # 重排
-                ranked_docs = bge_m3_reranker.rank(query, merged_docs, topk=5)
-                
-                # 生成答案
-                context = "\n".join([str(idx+1) + "." + doc.page_content for idx, doc in enumerate(ranked_docs)])
-                response = request_chat(query, context)
-                
-                # 保存
-                info = {
-                    "query": query,
-                    "context": [doc.page_content for doc in ranked_docs],
-                    "response": response,
-                    "merged_docs": [doc.page_content for doc in merged_docs]
-                }
-                f.write(json.dumps(info, ensure_ascii=False) + "\n")
-            except Exception as e:
-                print(f"⚠️ 处理失败: {e}")
-                continue
+                for future in tqdm(as_completed(futures), total=len(futures)):
+                    result = future.result()
+                    if result:
+                        f.write(json.dumps(result, ensure_ascii=False) + "\n")
+                        f.flush()  # 立即写入，防止内存累积
+            
+            # 批次之间等待（最后一批不需要等待）
+            if batch_idx < total_batches - 1:
+                print(f"⏳ 等待 {wait_time} 秒...")
+                time.sleep(wait_time)
     
     print(f"✅ SFT 训练数据已生成: {output_path}")
     return True
