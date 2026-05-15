@@ -417,10 +417,29 @@ cd LLaMA-Factory-main
 bash export.sh
 ```
 
-5. 生成小米 SU7 的 `summary_train.json`、`summary_test.json`
+5. 安装并启动 MongoDB（生成数据前必需）
+```bash
+# 下载 MongoDB 7.0.20
+wget https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-ubuntu2204-7.0.20.tgz
+
+# 解压并移动到安装目录
+tar -zxvf mongodb-linux-x86_64-ubuntu2204-7.0.20.tgz
+mv mongodb-linux-x86_64-ubuntu2204-7.0.20 /usr/local/mongodb
+
+# 创建数据和日志目录
+mkdir -p /data/db
+mkdir -p /var/log/mongodb
+
+# 启动 MongoDB（后台运行）
+/usr/local/mongodb/bin/mongod --dbpath /data/db --logpath /var/log/mongodb/mongod.log --bind_ip_all --fork
+```
+
+6. 生成小米 SU7 的 `summary_train.json`、`summary_test.json`
 ```bash
 cd /root/autodl-tmp/XIAOMI_SU7_RAG
 # 先生成或加载 split_docs.pkl（run build_index.py）
+# 注意：首次运行可能需要修复 setuptools 版本
+pip install --force-reinstall setuptools==69.0.0
 python build_index.py
 # 生成 QA 与 expand QA（会产出 data/qa_pairs/qa_pair.json 和 data/qa_pairs/expand_qa_pair.json）
 python scripts/generate_qa.py
@@ -430,19 +449,19 @@ cp data/summary_data/train.json LLaMA-Factory-main/data/summary_train.json
 cp data/summary_data/test.json LLaMA-Factory-main/data/summary_test.json
 ```
 
-6. 生成 `summary_test_pred.json`
+7. 生成 `summary_test_pred.json`
 ```bash
 cd /root/autodl-tmp/XIAOMI_SU7_RAG/LLaMA-Factory-main
 python predict.py
 ```
 
-7. 校验 3 个 summary 文件
+8. 校验 3 个 summary 文件
 ```bash
 cd /root/autodl-tmp/XIAOMI_SU7_RAG/LLaMA-Factory-main
 ls -l data/summary_train.json data/summary_test.json data/summary_test_pred.json
 ```
 
-8. 生成量化模型（`output/qwen3_lora_sft_int4/`）
+9. 生成量化模型（`output/qwen3_lora_sft_int4/`）
 ```bash
 cd /root/autodl-tmp/XIAOMI_SU7_RAG/LLaMA-Factory-main
 python awq_quant.py
@@ -479,16 +498,17 @@ sudo systemctl enable mongod
 ### 🚀 启动服务
 
 ```bash
-# 终端 1：启动语义切分服务
+# 终端 1：启动 MongoDB（必需，需先安装）
+/usr/local/mongodb/bin/mongod --dbpath /data/db --logpath /var/log/mongodb/mongod.log --bind_ip_all --fork
+
+# 终端 2：启动语义切分服务
 python src/server/semantic_chunk.py
 
-# 终端 2：启动 vLLM（自动识别单卡/多卡）
+# 终端 3：启动 vLLM（自动识别单卡/多卡）
 python deploy/auto_vllm_server.py --model LLaMA-Factory-main/output/qwen3_lora_sft_int4 --port 8000
 
-# 终端 3：启动 MongoDB
-mongodb-7.0.20/bin/mongod --dbpath data/mongodb/data --logpath data/mongodb/log/mongod.log --fork
-
 # 终端 4：构建索引
+pip install --force-reinstall setuptools==69.0.0
 python build_index.py
 
 # 终端 5：在线问答
