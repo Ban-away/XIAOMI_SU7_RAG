@@ -63,15 +63,23 @@ class HybridEmbeddingHandler:
         self.dense_device = f"cuda:0" if NUM_GPUS >= 1 else device
         print(f"BGE-Large 模型加载到: {self.dense_device}")
         self.dense_tokenizer = AutoTokenizer.from_pretrained(dense_model_path)
-        self.dense_model = AutoModel.from_pretrained(dense_model_path).to(self.dense_device)
-        self.dense_model.eval()
+        # 使用FP16精度加载模型，大幅减少显存占用
+        self.dense_model = AutoModel.from_pretrained(
+            dense_model_path, 
+            torch_dtype=torch.float16,
+            device_map=self.dense_device
+        ).eval()
         
         # Sparse 路径：SPLADE → GPU 1（如果有第二个GPU）
         self.sparse_device = f"cuda:1" if NUM_GPUS >= 2 else (f"cuda:0" if NUM_GPUS >= 1 else device)
         print(f"SPLADE 模型加载到: {self.sparse_device}")
         self.sparse_tokenizer = AutoTokenizer.from_pretrained(splade_model_path)
-        self.sparse_model = AutoModelForMaskedLM.from_pretrained(splade_model_path).to(self.sparse_device)
-        self.sparse_model.eval()
+        # 使用FP16精度加载模型
+        self.sparse_model = AutoModelForMaskedLM.from_pretrained(
+            splade_model_path,
+            torch_dtype=torch.float16,
+            device_map=self.sparse_device
+        ).eval()
         
         # Dense 向量维度（用于 Milvus schema）
         self.dim = {"dense": self.dense_model.config.hidden_size}
@@ -114,10 +122,28 @@ class HybridEmbeddingHandler:
             sparse_vectors.append({int(i): float(v) for i, v in zip(indices, values)})
         return sparse_vectors
 
-    def __call__(self, texts: list[str]) -> dict[str, list]:
+    def __call__(self, texts: list[str], batch_size: int = EMB_BATCH) -> dict[str, list]:
+        """分批编码文本，避免一次性占用过多显存。"""
+        dense_embeddings = []
+        sparse_embeddings = []
+        
+        for i in range(0, len(texts), batch_size):
+            batch_texts = texts[i:i + batch_size]
+            print(f"编码批次 {i//batch_size + 1}/{(len(texts)-1)//batch_size + 1}, 文本数: {len(batch_texts)}")
+            
+            # 分别编码 dense 和 sparse
+            dense_batch = self._encode_dense(batch_texts)
+            sparse_batch = self._encode_sparse(batch_texts)
+            
+            dense_embeddings.extend(dense_batch)
+            sparse_embeddings.extend(sparse_batch)
+            
+            # 清理显存
+            torch.cuda.empty_cache()
+        
         return {
-            "dense": self._encode_dense(texts),
-            "sparse": self._encode_sparse(texts),
+            "dense": dense_embeddings,
+            "sparse": sparse_embeddings,
         }
 
     def encode_queries(self, queries: list[str]) -> dict[str, list]:
@@ -161,14 +187,20 @@ class MilvusRetriever:
 
 
     def save_vectorstore(self, docs: list[str]): 
-
+        # 设置环境变量优化显存分配
+        os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+        
         # 拆分出写库所需字段：文本与 unique_id
         raw_texts = [doc.page_content for doc in docs]
         unique_ids = [doc.metadata["unique_id"] for doc in docs]
 
-        # 计算embedding
-        texts_embeddings = embedding_handler(raw_texts)
+        print(f"开始编码 {len(raw_texts)} 条文档...")
+        
+        # 计算embedding（分批处理）
+        texts_embeddings = embedding_handler(raw_texts, batch_size=EMB_BATCH)
 
+        print(f"编码完成，开始插入 Milvus...")
+        
         # batch embedding 插入
         for i in range(0, len(docs), EMB_BATCH):
             # Milvus 插入顺序需与 schema 字段顺序对应
@@ -179,6 +211,9 @@ class MilvusRetriever:
                 texts_embeddings["dense"][i : i + EMB_BATCH],
             ]
             self.col.insert(batched_entities)
+            # 每批次插入后清理显存
+            torch.cuda.empty_cache()
+        
         print("索引构建完成，插入了{}条数据:".format(self.col.num_entities))
 
 
