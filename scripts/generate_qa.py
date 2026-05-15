@@ -8,10 +8,17 @@ This script expects `data/processed_docs/split_docs.pkl` to exist (run `python b
 It writes `data/qa_pairs/qa_pair.json` and `data/qa_pairs/expand_qa_pair.json`.
 """
 import os
+import sys
 import pickle
 import json
 
 from langchain_core.documents import Document
+
+# 添加项目根目录到 Python 路径
+script_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(script_dir)
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
 from src.gen_qa import run as gen_module
 
