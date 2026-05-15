@@ -434,34 +434,49 @@ mkdir -p /var/log/mongodb
 /usr/local/mongodb/bin/mongod --dbpath /data/db --logpath /var/log/mongodb/mongod.log --bind_ip_all --fork
 ```
 
-6. 生成小米 SU7 的 `summary_train.json`、`summary_test.json`
+6. 生成小米 SU7 的数据（QA、训练集、测试集）
 ```bash
 cd /root/autodl-tmp/XIAOMI_SU7_RAG
 # 先生成或加载 split_docs.pkl（run build_index.py）
 # 注意：首次运行可能需要修复 setuptools 版本
 pip install --force-reinstall setuptools==69.0.0
 python build_index.py
-# 生成所有 QA 数据（qa_pair.json、expand_qa_pair.json、train_qa_pair.json、test_qa_pair.json 等）
+
+# 生成所有 QA 数据
+# 默认模式：跳过已存在的文件，不会覆盖
 python generate_all_data.py
+
+# 可选参数：
+# --force    : 强制重新生成所有文件（覆盖已存在的）
+# --skip-expand : 跳过扩展 QA 生成（加快速度）
+python generate_all_data.py --skip-expand  # 快速模式
+python generate_all_data.py --force        # 强制覆盖模式
+```
+
+7. 生成 `summary_train.json`、`summary_test.json`
+```bash
+cd /root/autodl-tmp/XIAOMI_SU7_RAG
 # 根据 QA 生成 summary/rerank 数据
 python generate_sft_data.py
+
+# 复制到 LLaMA-Factory 目录
 cp data/summary_data/train.json LLaMA-Factory-main/data/summary_train.json
 cp data/summary_data/test.json LLaMA-Factory-main/data/summary_test.json
 ```
 
-7. 生成 `summary_test_pred.json`
+8. 生成 `summary_test_pred.json`
 ```bash
 cd /root/autodl-tmp/XIAOMI_SU7_RAG/LLaMA-Factory-main
 python predict.py
 ```
 
-8. 校验 3 个 summary 文件
+9. 校验 4 个 summary 文件
 ```bash
 cd /root/autodl-tmp/XIAOMI_SU7_RAG/LLaMA-Factory-main
 ls -l data/summary_train.json data/summary_test.json data/summary_test_pred.json
 ```
 
-9. 生成量化模型（`output/qwen3_lora_sft_int4/`）
+10. 生成量化模型（`output/qwen3_lora_sft_int4/`）
 ```bash
 cd /root/autodl-tmp/XIAOMI_SU7_RAG/LLaMA-Factory-main
 python awq_quant.py
@@ -469,6 +484,8 @@ ls -l output/qwen3_lora_sft_int4
 ```
 
 注意：量化前需先完成第 4 步，确保 `output/qwen3_lora_sft/` 已存在。
+
+
 
 ### 📊 数据文件说明
 
