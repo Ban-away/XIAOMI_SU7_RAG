@@ -39,6 +39,10 @@ LLM_CHAT_PROMPT = """
 """
 
 
+# 批量处理配置（移到外面，确保总是被定义）
+BATCH_SIZE = 700  # 每批处理的样本数
+MAX_WORKERS = 30  # 并发数
+
 # ==================== 自动生成 train_data.json ====================
 if not os.path.exists("data/qa_pairs/train_data.json"):
     print("[INFO] train_data.json 不存在，开始生成...")
@@ -50,10 +54,6 @@ if not os.path.exists("data/qa_pairs/train_data.json"):
     
     # 预热模型
     milvus_retriever.retrieve_topk("这是一条测试数据", topk=3)
-    
-    # 批量处理配置
-    BATCH_SIZE = 700  # 每批处理的样本数
-    MAX_WORKERS = 30  # 并发数
     
     # 读取 train_qa_pair.json
     fd = open("data/qa_pairs/train_qa_pair.json")
