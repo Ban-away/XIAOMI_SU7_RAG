@@ -123,14 +123,22 @@ class HybridEmbeddingHandler:
             sparse_vectors.append({int(i): float(v) for i, v in zip(indices, values)})
         return sparse_vectors
 
-    def __call__(self, texts: list[str], batch_size: int = EMB_BATCH) -> dict[str, list]:
-        """分批编码文本，避免一次性占用过多显存。"""
+    def __call__(self, texts: list[str], batch_size: int = EMB_BATCH, verbose: bool = False) -> dict[str, list]:
+        """分批编码文本，避免一次性占用过多显存。
+        
+        Args:
+            texts: 待编码的文本列表
+            batch_size: 每批处理的文本数
+            verbose: 是否打印进度信息（默认False，查询时不打印）
+        """
         dense_embeddings = []
         sparse_embeddings = []
+        total_batches = (len(texts) + batch_size - 1) // batch_size
         
         for i in range(0, len(texts), batch_size):
             batch_texts = texts[i:i + batch_size]
-            print(f"编码批次 {i//batch_size + 1}/{(len(texts)-1)//batch_size + 1}, 文本数: {len(batch_texts)}")
+            if verbose:
+                print(f"编码批次 {i//batch_size + 1}/{total_batches}, 文本数: {len(batch_texts)}")
             
             # 分别编码 dense 和 sparse
             dense_batch = self._encode_dense(batch_texts)
