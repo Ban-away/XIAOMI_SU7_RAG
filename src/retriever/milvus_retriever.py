@@ -28,10 +28,14 @@ from src.constant import (
 from src.client.mongodb_config import MongoConfig
 
 
-EMB_BATCH = 50
+EMB_BATCH = 32  # 减小批处理大小，降低显存占用
 MAX_TEXT_LENGTH = 512 
 ID_MAX_LENGTH = 100
-COL_NAME = "hybrid_bge_large_splade_v2" 
+COL_NAME = "hybrid_bge_large_splade_v2"
+
+# 多GPU配置：自动检测可用GPU数量
+NUM_GPUS = torch.cuda.device_count()
+print(f"检测到 {NUM_GPUS} 个可用 GPU") 
 
 # 连接 Mongo 文本集合：用于把 Milvus 命中的 unique_id 回表成完整 Document
 mongo_collection = MongoConfig.get_collection("manual_text")
@@ -53,22 +57,30 @@ class HybridEmbeddingHandler:
         if device is None:
             device = "cuda" if torch.cuda.is_available() else "cpu"
         self.device = device
-        # Dense 路径：BGE-Large
+        
+        # 多GPU分配策略：将两个模型分别放到不同GPU上
+        # Dense 路径：BGE-Large → GPU 0
+        self.dense_device = f"cuda:0" if NUM_GPUS >= 1 else device
+        print(f"BGE-Large 模型加载到: {self.dense_device}")
         self.dense_tokenizer = AutoTokenizer.from_pretrained(dense_model_path)
-        self.dense_model = AutoModel.from_pretrained(dense_model_path).to(device)
+        self.dense_model = AutoModel.from_pretrained(dense_model_path).to(self.dense_device)
         self.dense_model.eval()
-        # Sparse 路径：SPLADE
+        
+        # Sparse 路径：SPLADE → GPU 1（如果有第二个GPU）
+        self.sparse_device = f"cuda:1" if NUM_GPUS >= 2 else (f"cuda:0" if NUM_GPUS >= 1 else device)
+        print(f"SPLADE 模型加载到: {self.sparse_device}")
         self.sparse_tokenizer = AutoTokenizer.from_pretrained(splade_model_path)
-        self.sparse_model = AutoModelForMaskedLM.from_pretrained(splade_model_path).to(device)
+        self.sparse_model = AutoModelForMaskedLM.from_pretrained(splade_model_path).to(self.sparse_device)
         self.sparse_model.eval()
+        
         # Dense 向量维度（用于 Milvus schema）
         self.dim = {"dense": self.dense_model.config.hidden_size}
         # Sparse 向量每条保留的 topk 维度
         self.sparse_topk = 200
 
     def _encode_dense(self, texts: list[str]) -> list[list[float]]:
-        # 批量 token 化并送入 dense 模型
-        inputs = self.dense_tokenizer(texts, padding=True, truncation=True, return_tensors="pt").to(self.device)
+        # 批量 token 化并送入 dense 模型（使用 dense_device）
+        inputs = self.dense_tokenizer(texts, padding=True, truncation=True, return_tensors="pt").to(self.dense_device)
         with torch.no_grad():
             outputs = self.dense_model(**inputs)
         # mean pooling 得到句向量
@@ -77,8 +89,8 @@ class HybridEmbeddingHandler:
         return pooled.cpu().detach().numpy().tolist()
 
     def _encode_sparse(self, texts: list[str]) -> list[dict[int, float]]:
-        # 批量 token 化并送入 SPLADE 模型
-        inputs = self.sparse_tokenizer(texts, padding=True, truncation=True, return_tensors="pt").to(self.device)
+        # 批量 token 化并送入 SPLADE 模型（使用 sparse_device）
+        inputs = self.sparse_tokenizer(texts, padding=True, truncation=True, return_tensors="pt").to(self.sparse_device)
         with torch.no_grad():
             outputs = self.sparse_model(**inputs)
         logits = outputs.logits
@@ -273,5 +285,3 @@ if __name__ == "__main__":
     for res in results:
         print(res)
         print("="*100)
-
-
