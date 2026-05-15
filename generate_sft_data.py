@@ -38,37 +38,46 @@ LLM_CHAT_PROMPT = """
 """
 
 
-"""
-# warmstart
-bm25_retriever = BM25(docs=None, retrieve=True)
-milvus_retriever = MilvusRetriever(docs=None, retrieve=True) 
-# bge_m3_reranker = BGEM3ReRanker(model_path=bge_reranker_model_path)
-qwen3_reranker = Qwen3ReRankervLLM(model_path=qwen3_4b_reranker_model_path)
-milvus_retriever.retrieve_topk("这是一条测试数据", topk=3)
-
-
-fd = open("data/qa_pairs/train_qa_pair.json")
-test_qa_pairs = json.load(fd)
-output_handler = open("data/qa_pairs/train_data.json", "w")
-for item in tqdm(test_qa_pairs):
-    #try:
-        query = item["question"].strip()
-        bm25_docs = bm25_retriever.retrieve_topk(query, topk=5)
-        milvus_docs = milvus_retriever.retrieve_topk(query, topk=10)
-        merged_docs = merge_docs(bm25_docs, milvus_docs)
-        ranked_docs = qwen3_reranker.rank(query, merged_docs, topk=5)
-        context = "\n".join([str(idx+1) + "." + doc.page_content for idx, doc in enumerate(ranked_docs)])
-        response = request_chat(query, context)
-        answer = post_processing(response, ranked_docs)
-        context = [q.page_content for q in ranked_docs]
-        all_docs = [q.page_content for q in merged_docs]
-        info = {"query": query, "context": context, "response": response, "merged_docs": all_docs}
-        info = json.dumps(info, ensure_ascii=False)
-        output_handler.write(info+'\n')
-        output_handler.flush()
-    #except:
-    #    pass
-"""
+# ==================== 自动生成 train_data.json ====================
+if not os.path.exists("data/qa_pairs/train_data.json"):
+    print("[INFO] train_data.json 不存在，开始生成...")
+    
+    # 加载检索器和重排器
+    bm25_retriever = BM25(docs=None, retrieve=True)
+    milvus_retriever = MilvusRetriever(docs=None, retrieve=True) 
+    qwen3_reranker = Qwen3ReRankervLLM(model_path=qwen3_4b_reranker_model_path)
+    
+    # 预热模型
+    milvus_retriever.retrieve_topk("这是一条测试数据", topk=3)
+    
+    # 读取 train_qa_pair.json
+    fd = open("data/qa_pairs/train_qa_pair.json")
+    test_qa_pairs = json.load(fd)
+    fd.close()
+    
+    # 生成 train_data.json
+    output_handler = open("data/qa_pairs/train_data.json", "w")
+    for item in tqdm(test_qa_pairs):
+        try:
+            query = item["question"].strip()
+            bm25_docs = bm25_retriever.retrieve_topk(query, topk=5)
+            milvus_docs = milvus_retriever.retrieve_topk(query, topk=10)
+            merged_docs = merge_docs(bm25_docs, milvus_docs)
+            ranked_docs = qwen3_reranker.rank(query, merged_docs, topk=5)
+            context = "\n".join([str(idx+1) + "." + doc.page_content for idx, doc in enumerate(ranked_docs)])
+            response = request_chat(query, context)
+            answer = post_processing(response, ranked_docs)
+            context = [q.page_content for q in ranked_docs]
+            all_docs = [q.page_content for q in merged_docs]
+            info = {"query": query, "context": context, "response": response, "merged_docs": all_docs}
+            info = json.dumps(info, ensure_ascii=False)
+            output_handler.write(info+'\n')
+            output_handler.flush()
+        except Exception as e:
+            print(f"[ERROR] 处理问题 '{query}' 时出错: {e}")
+            continue
+    output_handler.close()
+    print("[INFO] train_data.json 生成完成")
 
 
 MAX_INPUT_SIZE = 4096
