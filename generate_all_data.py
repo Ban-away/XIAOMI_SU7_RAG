@@ -78,7 +78,7 @@ def step1_generate_raw_qa():
     
     # 生成原始 QA
     print(f"🚀 正在生成 QA -> {QA_PATH}")
-    result = gen_qa(splitted_docs, CONTEXT_PROMPT_TPL, QA_PATH, expand=False)
+    result = gen_qa(splitted_docs, CONTEXT_PROMPT_TPL, QA_PATH, expand=False, force=args.force)
     
     # 统计结果（使用 gen_qa 返回的结果）
     if result:
@@ -133,7 +133,7 @@ def step2_generate_expanded_qa():
     
     # 生成扩展 QA
     print(f"🚀 正在生成扩展 QA -> {OUTPUT_PATH}")
-    result = gen_qa(question_docs, GENERALIZE_PROMPT_TPL, OUTPUT_PATH, expand=True)
+    result = gen_qa(question_docs, GENERALIZE_PROMPT_TPL, OUTPUT_PATH, expand=True, force=args.force)
     
     # 统计结果（使用 gen_qa 返回的结果）
     if result:
@@ -277,7 +277,7 @@ def step4_generate_keywords():
     
     # 生成关键词
     answer_docs = [Document(page_content=ans, metadata={"unique_id": str(i)}) for i, ans in enumerate(unique_answers)]
-    result = gen_qa(answer_docs, KEYWORDS_PROMPT_TPL, TEST_KEYWORDS_PATH, expand=True)
+    result = gen_qa(answer_docs, KEYWORDS_PROMPT_TPL, TEST_KEYWORDS_PATH, expand=True, force=args.force)
     
     # 将关键词添加到测试集
     if result and os.path.exists(TEST_KEYWORDS_PATH):

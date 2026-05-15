@@ -169,12 +169,12 @@ def chat(prompt, max_retry=3, debug=False, temperature=0.85, top_p=0.95):
             time.sleep(sleep_seconds)
     return None
 
-def gen_qa(splitted_docs, prompt_tmpl, qa_ckpt_filename, expand=False):
+def gen_qa(splitted_docs, prompt_tmpl, qa_ckpt_filename, expand=False, force=False):
     qa_ckpt = {}
     file_lock = threading.Lock()
     
-    # 过滤已处理的文档
-    if os.path.exists(qa_ckpt_filename):
+    # 过滤已处理的文档（除非强制重新生成）
+    if os.path.exists(qa_ckpt_filename) and not force:
         with open(qa_ckpt_filename, 'r', encoding='utf-8') as f:
             for line in f:
                 try:
