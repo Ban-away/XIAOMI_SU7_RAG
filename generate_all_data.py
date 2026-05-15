@@ -134,11 +134,11 @@ def step2_generate_expanded_qa():
     # 扩展QA使用适中的并发数（已分批处理，可适当提高）
     import src.gen_qa.run as gen_module
     original_workers = gen_module.MAX_WORKERS
-    gen_module.MAX_WORKERS = min(15, original_workers)  # 分批处理下，并发数可提高到15
+    gen_module.MAX_WORKERS = 25  # 直接设置为25（参考原始QA的20并发成功经验）
     print(f"⚠️ 扩展QA已分批处理，设置并发数为 {gen_module.MAX_WORKERS}")
     
     # 分批处理配置
-    BATCH_SIZE = 400  # 每批处理400条
+    BATCH_SIZE = 800  # 每批处理800条
     BASE_WAIT_SECONDS = 5  # 基础等待时间（秒）
     MAX_WAIT_SECONDS = 60  # 最大等待时间（秒）
     
