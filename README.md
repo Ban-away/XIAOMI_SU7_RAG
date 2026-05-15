@@ -417,22 +417,39 @@ cd LLaMA-Factory-main
 bash export.sh
 ```
 
-5. 先准备量化校准数据（生成 `data/summary_data/train.json` 和 `test.json`）
-
+5. 生成小米 SU7 的 `summary_train.json`、`summary_test.json`
 ```bash
 cd /root/autodl-tmp/XIAOMI_SU7_RAG
-mkdir -p data/summary_data
-cp LLaMA-Factory-main/data/summary_train.json data/summary_data/train.json
-cp LLaMA-Factory-main/data/summary_test.json data/summary_data/test.json
+# 先生成或加载 split_docs.pkl（run build_index.py）
+python build_index.py
+# 生成 QA 与 expand QA（会产出 data/qa_pairs/qa_pair.json 和 data/qa_pairs/expand_qa_pair.json）
+python scripts/generate_qa.py
+# 根据 QA 生成 summary/rerank 数据
+python generate_sft_data.py
+cp data/summary_data/train.json LLaMA-Factory-main/data/summary_train.json
+cp data/summary_data/test.json LLaMA-Factory-main/data/summary_test.json
 ```
 
-6. 量化为 int4，生成 `output/qwen3_lora_sft_int4/`
+6. 生成 `summary_test_pred.json`
 ```bash
-cd LLaMA-Factory-main
-python awq_quant.py
+cd /root/autodl-tmp/XIAOMI_SU7_RAG/LLaMA-Factory-main
+python predict.py
 ```
 
-注意：`export.sh` / `awq_quant.py` 依赖本地模型路径和 `data/summary_data/train.json`（用于量化校准样本）。如果你没有训练产物，可以把相应的 `saves/...` 或 `output/...` 从远端下载到本地（不要将大二进制直接推到 GitHub）。
+7. 校验 3 个 summary 文件
+```bash
+cd /root/autodl-tmp/XIAOMI_SU7_RAG/LLaMA-Factory-main
+ls -l data/summary_train.json data/summary_test.json data/summary_test_pred.json
+```
+
+8. 生成量化模型（`output/qwen3_lora_sft_int4/`）
+```bash
+cd /root/autodl-tmp/XIAOMI_SU7_RAG/LLaMA-Factory-main
+python awq_quant.py
+ls -l output/qwen3_lora_sft_int4
+```
+
+注意：量化前需先完成第 4 步，确保 `output/qwen3_lora_sft/` 已存在。
 
 ### MongoDB 启动示例
 

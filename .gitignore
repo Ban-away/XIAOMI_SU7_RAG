@@ -41,8 +41,11 @@ data/saved_index/
 # 评测与训练生成的数据集
 data/rerank_data/
 data/summary_data/
+data/qa_pairs/
 data/qa_pairs/train_data.json
 data/qa_pairs/test_qa_pair_pred.json
+data/ut/test_doc2.txt
+data/ut/test_docs.txt
 
 # 解析PDF导出的图片资源
 data/saved_images/
