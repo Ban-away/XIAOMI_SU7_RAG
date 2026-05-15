@@ -19,6 +19,7 @@ import hashlib
 import random
 import argparse
 import time
+import warnings
 from tqdm import tqdm
 from dotenv import load_dotenv
 from langchain_core.documents import Document
@@ -26,6 +27,17 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # 加载环境变量
 load_dotenv()
+
+# 设置环境变量避免 tokenizers 并行问题
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
+# 过滤各种警告
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", category=UserWarning)
+warnings.filterwarnings("ignore", message=".*BaseRetriever.get_relevant_documents.*")
+warnings.filterwarnings("ignore", message=".*Importing debug from langchain.*")
+warnings.filterwarnings("ignore", message=".*Asking to truncate to max_length.*")
 
 # 命令行参数解析
 parser = argparse.ArgumentParser(description='生成小米 SU7 RAG 项目的所有数据文件')
