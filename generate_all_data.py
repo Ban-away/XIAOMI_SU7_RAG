@@ -89,7 +89,7 @@ def step1_generate_raw_qa():
 
 
 def step2_generate_expanded_qa():
-    """Step 2: 生成扩展 QA 对（同义问题）"""
+    """Step 2: 生成扩展 QA 对（同义问题）- 分批处理版本"""
     print("\n" + "="*60)
     print("Step 2: 生成扩展 QA 对")
     print("="*60)
@@ -131,14 +131,64 @@ def step2_generate_expanded_qa():
     
     print(f"📄 待扩展问题数: {len(question_docs)}")
     
-    # 生成扩展 QA
-    print(f"🚀 正在生成扩展 QA -> {OUTPUT_PATH}")
-    result = gen_qa(question_docs, GENERALIZE_PROMPT_TPL, OUTPUT_PATH, expand=True, force=args.force)
+    # 扩展QA数据量较大，降低并发数
+    import src.gen_qa.run as gen_module
+    original_workers = gen_module.MAX_WORKERS
+    gen_module.MAX_WORKERS = min(2, original_workers)  # 扩展QA使用更低的并发数
+    print(f"⚠️ 扩展QA数据量较大，降低并发数至 {gen_module.MAX_WORKERS}")
     
-    # 统计结果（使用 gen_qa 返回的结果）
-    if result:
-        count = len(result)
-        print(f"✅ 生成完成，共 {count} 条记录")
+    # 分批处理配置
+    BATCH_SIZE = 100  # 每批处理100条
+    BASE_WAIT_SECONDS = 30  # 基础等待时间（秒）
+    MAX_WAIT_SECONDS = 120  # 最大等待时间（秒）
+    
+    # 检查是否有已处理的记录（断点续传）
+    processed_ids = set()
+    if os.path.exists(OUTPUT_PATH) and os.path.getsize(OUTPUT_PATH) > 0:
+        with open(OUTPUT_PATH, "r", encoding="utf-8") as f:
+            for line in f:
+                try:
+                    info = json.loads(line)
+                    processed_ids.add(info["unique_id"])
+                except:
+                    pass
+        print(f"📌 已处理 {len(processed_ids)} 条，继续剩余部分...")
+    
+    # 过滤已处理的问题
+    remaining_docs = [doc for doc in question_docs if doc.metadata["unique_id"] not in processed_ids]
+    print(f"📄 剩余待处理: {len(remaining_docs)} 条")
+    
+    # 分批处理
+    total_batches = (len(remaining_docs) + BATCH_SIZE - 1) // BATCH_SIZE
+    print(f"📦 共 {total_batches} 批，每批 {BATCH_SIZE} 条")
+    print(f"⏱️ 基础等待时间: {BASE_WAIT_SECONDS}秒，最大等待时间: {MAX_WAIT_SECONDS}秒")
+    
+    import time
+    for batch_idx in range(total_batches):
+        start_idx = batch_idx * BATCH_SIZE
+        end_idx = min(start_idx + BATCH_SIZE, len(remaining_docs))
+        batch_docs = remaining_docs[start_idx:end_idx]
+        
+        # 自适应等待时间：随着批次增加逐渐延长（避免累计限流）
+        wait_time = min(BASE_WAIT_SECONDS + batch_idx * 5, MAX_WAIT_SECONDS)
+        
+        print(f"\n🚀 处理批次 {batch_idx+1}/{total_batches} ({len(batch_docs)} 条)")
+        
+        # 生成扩展 QA（追加模式）
+        result = gen_qa(batch_docs, GENERALIZE_PROMPT_TPL, OUTPUT_PATH, expand=True, force=False)
+        
+        # 等待一段时间（最后一批不需要等待）
+        if batch_idx < total_batches - 1:
+            print(f"⏳ 等待 {wait_time} 秒...")
+            time.sleep(wait_time)
+    
+    # 恢复原始并发数
+    gen_module.MAX_WORKERS = original_workers
+    
+    # 统计最终结果
+    if os.path.exists(OUTPUT_PATH):
+        count = sum(1 for _ in open(OUTPUT_PATH))
+        print(f"\n✅ 生成完成，共 {count} 条记录")
         return True
     return False
 
