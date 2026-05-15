@@ -139,7 +139,7 @@ def step2_generate_expanded_qa():
     
     # 分批处理配置
     BATCH_SIZE = 100  # 每批处理100条
-    BASE_WAIT_SECONDS = 30  # 基础等待时间（秒）
+    BASE_WAIT_SECONDS = 5  # 基础等待时间（秒）
     MAX_WAIT_SECONDS = 120  # 最大等待时间（秒）
     
     # 检查是否有已处理的记录（断点续传）
