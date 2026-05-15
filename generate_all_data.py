@@ -192,18 +192,31 @@ def step3_split_train_test():
     # 生成训练集和测试集
     train_qa_pairs = []
     test_qa_pairs = []
+    skipped_count = 0
     
     for unique_id, info in qa_dict.items():
         try:
             resp = json.loads(info["raw_resp"])
         except:
+            skipped_count += 1
             continue
         
         for qa in resp:
+            # 检查必需字段是否存在
+            if "question" not in qa or "answer" not in qa:
+                skipped_count += 1
+                continue
+            
             question = qa["question"].strip()
             answer = qa["answer"].strip()
             
+            # 检查空值
+            if not question or not answer:
+                skipped_count += 1
+                continue
+            
             if "无法准确" in answer or "未提及" in answer:
+                skipped_count += 1
                 continue
             
             # 合并原始问题和扩展问题
@@ -220,6 +233,10 @@ def step3_split_train_test():
                     train_qa_pairs.append(item)
                 else:
                     test_qa_pairs.append(item)
+    
+    # 打印跳过信息
+    if skipped_count > 0:
+        print(f"⚠️ 跳过 {skipped_count} 条无效或不完整的 QA")
     
     # 写入文件
     with open(TRAIN_PATH, "w", encoding="utf-8") as f:
@@ -418,4 +435,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
