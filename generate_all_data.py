@@ -17,12 +17,19 @@ import json
 import pickle
 import hashlib
 import random
+import argparse
 from tqdm import tqdm
 from dotenv import load_dotenv
 from langchain_core.documents import Document
 
 # 加载环境变量
 load_dotenv()
+
+# 命令行参数解析
+parser = argparse.ArgumentParser(description='生成小米 SU7 RAG 项目的所有数据文件')
+parser.add_argument('--force', '-f', action='store_true', help='强制重新生成所有文件（覆盖已存在的）')
+parser.add_argument('--skip-expand', action='store_true', help='跳过扩展 QA 生成（加快速度）')
+args = parser.parse_args()
 
 # 导入核心模块
 from src.gen_qa.run import (
@@ -57,6 +64,12 @@ def step1_generate_raw_qa():
         print("请先运行: python build_index.py")
         return False
     
+    # 检查是否已存在且非空
+    if os.path.exists(QA_PATH) and os.path.getsize(QA_PATH) > 0 and not args.force:
+        count = sum(1 for _ in open(QA_PATH))
+        print(f"✅ {QA_PATH} 已存在 ({count} 条记录)，跳过...")
+        return True
+    
     # 加载切分后的文档
     with open(split_docs_path, "rb") as f:
         splitted_docs = pickle.load(f)
@@ -65,11 +78,11 @@ def step1_generate_raw_qa():
     
     # 生成原始 QA
     print(f"🚀 正在生成 QA -> {QA_PATH}")
-    gen_qa(splitted_docs, CONTEXT_PROMPT_TPL, QA_PATH, expand=False)
+    result = gen_qa(splitted_docs, CONTEXT_PROMPT_TPL, QA_PATH, expand=False)
     
-    # 统计结果
-    if os.path.exists(QA_PATH):
-        count = sum(1 for _ in open(QA_PATH))
+    # 统计结果（使用 gen_qa 返回的结果）
+    if result:
+        count = len(result)
         print(f"✅ 生成完成，共 {count} 条记录")
         return True
     return False
@@ -81,9 +94,24 @@ def step2_generate_expanded_qa():
     print("Step 2: 生成扩展 QA 对")
     print("="*60)
     
+    # 检查是否跳过
+    if args.skip_expand:
+        print("⏭️ 跳过扩展 QA 生成（--skip-expand）")
+        # 如果文件不存在，创建空文件
+        if not os.path.exists(OUTPUT_PATH):
+            with open(OUTPUT_PATH, "w") as f:
+                pass
+        return True
+    
     if not os.path.exists(QA_PATH):
         print(f"❌ 错误：{QA_PATH} 不存在")
         return False
+    
+    # 检查是否已存在且非空
+    if os.path.exists(OUTPUT_PATH) and os.path.getsize(OUTPUT_PATH) > 0 and not args.force:
+        count = sum(1 for _ in open(OUTPUT_PATH))
+        print(f"✅ {OUTPUT_PATH} 已存在 ({count} 条记录)，跳过...")
+        return True
     
     # 从原始 QA 中提取问题
     question_docs = []
@@ -105,11 +133,11 @@ def step2_generate_expanded_qa():
     
     # 生成扩展 QA
     print(f"🚀 正在生成扩展 QA -> {OUTPUT_PATH}")
-    gen_qa(question_docs, GENERALIZE_PROMPT_TPL, OUTPUT_PATH, expand=True)
+    result = gen_qa(question_docs, GENERALIZE_PROMPT_TPL, OUTPUT_PATH, expand=True)
     
-    # 统计结果
-    if os.path.exists(OUTPUT_PATH):
-        count = sum(1 for _ in open(OUTPUT_PATH))
+    # 统计结果（使用 gen_qa 返回的结果）
+    if result:
+        count = len(result)
         print(f"✅ 生成完成，共 {count} 条记录")
         return True
     return False
@@ -120,6 +148,16 @@ def step3_split_train_test():
     print("\n" + "="*60)
     print("Step 3: 切分训练集和测试集")
     print("="*60)
+    
+    # 检查是否已存在且非空
+    if os.path.exists(TRAIN_PATH) and os.path.getsize(TRAIN_PATH) > 0 and \
+       os.path.exists(TEST_PATH) and os.path.getsize(TEST_PATH) > 0 and not args.force:
+        with open(TRAIN_PATH) as f:
+            train_count = len(json.load(f))
+        with open(TEST_PATH) as f:
+            test_count = len(json.load(f))
+        print(f"✅ {TRAIN_PATH} ({train_count} 条) 和 {TEST_PATH} ({test_count} 条) 已存在，跳过...")
+        return True
     
     if not os.path.exists(QA_PATH):
         print(f"❌ 错误：{QA_PATH} 不存在")
@@ -134,7 +172,7 @@ def step3_split_train_test():
     
     # 加载扩展 QA（如果存在）
     expand_qa_pairs = {}
-    if os.path.exists(OUTPUT_PATH):
+    if os.path.exists(OUTPUT_PATH) and os.path.getsize(OUTPUT_PATH) > 0:
         with open(OUTPUT_PATH) as f:
             for line in f:
                 try:
@@ -147,6 +185,9 @@ def step3_split_train_test():
                         expand_qa_pairs[question] = expand_questions
                 except:
                     continue
+    
+    print(f"📄 原始 QA 数: {len(qa_dict)}")
+    print(f"📄 扩展问题映射数: {len(expand_qa_pairs)}")
     
     # 生成训练集和测试集
     train_qa_pairs = []
@@ -200,6 +241,11 @@ def step4_generate_keywords():
     print("Step 4: 生成关键词标注")
     print("="*60)
     
+    # 检查是否已存在且非空
+    if os.path.exists(TEST_KEYWORDS_PATH) and os.path.getsize(TEST_KEYWORDS_PATH) > 0 and not args.force:
+        print(f"✅ {TEST_KEYWORDS_PATH} 已存在，跳过...")
+        return True
+    
     if not os.path.exists(TEST_PATH):
         print(f"❌ 错误：{TEST_PATH} 不存在")
         return False
@@ -214,10 +260,10 @@ def step4_generate_keywords():
     
     # 生成关键词
     answer_docs = [Document(page_content=ans, metadata={"unique_id": str(i)}) for i, ans in enumerate(unique_answers)]
-    gen_qa(answer_docs, KEYWORDS_PROMPT_TPL, TEST_KEYWORDS_PATH, expand=True)
+    result = gen_qa(answer_docs, KEYWORDS_PROMPT_TPL, TEST_KEYWORDS_PATH, expand=True)
     
     # 将关键词添加到测试集
-    if os.path.exists(TEST_KEYWORDS_PATH):
+    if result and os.path.exists(TEST_KEYWORDS_PATH):
         keywords_mapping = {}
         with open(TEST_KEYWORDS_PATH, "r", encoding="utf-8") as f:
             for line in f:
@@ -236,7 +282,7 @@ def step4_generate_keywords():
         with open(TEST_PATH, "w", encoding="utf-8") as f:
             json.dump(updated_test, f, ensure_ascii=False, indent=2)
         
-        print("✅ 关键词标注完成")
+        print(f"✅ 关键词标注完成，共 {len(result)} 条")
         return True
     return False
 
@@ -248,6 +294,11 @@ def step5_prepare_verify():
     print("="*60)
     
     verify_path = "data/qa_pairs/test_qa_pair_verify.json"
+    
+    # 检查是否已存在
+    if os.path.exists(verify_path) and os.path.getsize(verify_path) > 0 and not args.force:
+        print(f"✅ {verify_path} 已存在，跳过...")
+        return True
     
     if os.path.exists(TEST_PATH):
         import shutil
@@ -262,6 +313,14 @@ def step6_generate_train_data():
     print("\n" + "="*60)
     print("Step 6: 生成 SFT 训练数据")
     print("="*60)
+    
+    output_path = "data/qa_pairs/train_data.json"
+    
+    # 检查是否已存在且非空
+    if os.path.exists(output_path) and os.path.getsize(output_path) > 0 and not args.force:
+        count = sum(1 for _ in open(output_path))
+        print(f"✅ {output_path} 已存在 ({count} 条)，跳过...")
+        return True
     
     if not os.path.exists(TRAIN_PATH):
         print(f"❌ 错误：{TRAIN_PATH} 不存在")
@@ -283,7 +342,6 @@ def step6_generate_train_data():
     print(f"📄 待处理训练样本数: {len(train_qa_pairs)}")
     
     # 生成 train_data.json
-    output_path = "data/qa_pairs/train_data.json"
     with open(output_path, "w", encoding="utf-8") as f:
         for item in tqdm(train_qa_pairs):
             try:
@@ -360,3 +418,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
