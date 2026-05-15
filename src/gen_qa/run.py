@@ -24,7 +24,7 @@ from langchain_core.documents import Document
 random.seed(42)
 
 MINMAL_CHUNK_SIZE = 100
-MAX_WORKERS = 20
+MAX_WORKERS = 2
 INPUT_PATH = './data/processed_docs/clean_docs.pkl'
 QA_PATH = "./data/qa_pairs/qa_pair.json"
 CHATS_PATH = "./data/ut/raw_general_chats.txt"
