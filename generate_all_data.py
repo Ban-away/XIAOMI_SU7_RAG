@@ -138,9 +138,9 @@ def step2_generate_expanded_qa():
     print(f"⚠️ 扩展QA已分批处理，设置并发数为 {gen_module.MAX_WORKERS}")
     
     # 分批处理配置
-    BATCH_SIZE = 100  # 每批处理100条
+    BATCH_SIZE = 400  # 每批处理400条
     BASE_WAIT_SECONDS = 5  # 基础等待时间（秒）
-    MAX_WAIT_SECONDS = 120  # 最大等待时间（秒）
+    MAX_WAIT_SECONDS = 60  # 最大等待时间（秒）
     
     # 检查是否有已处理的记录（断点续传）
     processed_ids = set()
@@ -174,8 +174,9 @@ def step2_generate_expanded_qa():
         
         print(f"\n🚀 处理批次 {batch_idx+1}/{total_batches} ({len(batch_docs)} 条)")
         
-        # 生成扩展 QA（追加模式）
-        result = gen_qa(batch_docs, GENERALIZE_PROMPT_TPL, OUTPUT_PATH, expand=True, force=False)
+        # 生成扩展 QA（分批处理时强制重新生成，跳过内部断点续传检查）
+        # 因为我们已经在外部做了断点续传过滤
+        result = gen_qa(batch_docs, GENERALIZE_PROMPT_TPL, OUTPUT_PATH, expand=True, force=True)
         
         # 等待一段时间（最后一批不需要等待）
         if batch_idx < total_batches - 1:
