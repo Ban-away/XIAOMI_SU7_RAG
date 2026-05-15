@@ -360,6 +360,46 @@ XIAOMI_SU7_RAG/
 
 ---
 
+## ⚙️ 配置要点
+
+### 📌 环境变量
+
+创建 `.env` 或在 Shell 中设置：
+
+```bash
+# Doubao API 配置 (云端)
+export DOUBAO_API_KEY=sk-xxx
+export DOUBAO_BASE_URL=https://api.doubao.com/v1
+export DOUBAO_MODEL_NAME=doubao-pro-4k
+
+# MongoDB 配置
+export MONGO_HOST=localhost
+export MONGO_PORT=27017
+export MONGO_DB_NAME=mydatabase
+export MONGO_USERNAME=
+export MONGO_PASSWORD=
+export MONGO_AUTH_SOURCE=admin
+```
+
+可直接参考 `.env.example` 中的完整变量模板。
+
+### 🗂️ 核心路径配置
+
+编辑 `src\constant.py` 中的路径（当前默认为 Linux 路径）：
+
+```python
+# ❌ Linux (Azure autodl-tmp 环境)
+base_dir = "/root/autodl-tmp/XIAOMI_SU7_RAG/"
+
+# ✅ Windows (本地开发)
+base_dir = "D:\\Development\\Exercise\\0_personal_project\\XIAOMI_SU7_RAG\\"
+
+# ✅ Linux (本地开发)
+base_dir = "/home/user/XIAOMI_SU7_RAG/"
+```
+
+---
+
 ## ⚡ 快速运行
 
 ### 📥 环境准备
@@ -485,8 +525,6 @@ ls -l output/qwen3_lora_sft_int4
 
 注意：量化前需先完成第 4 步，确保 `output/qwen3_lora_sft/` 已存在。
 
-
-
 ### 📊 数据文件说明
 
 | 文件 | 作用 | 生成时机 |
@@ -499,32 +537,7 @@ ls -l output/qwen3_lora_sft_int4
 | `test_qa_pair_verify.json` | 评估输入文件 | Step 5 |
 | `train_data.json` | SFT 训练数据（含检索上下文） | Step 6 |
 
-### MongoDB 启动示例
-
-可选 A — 使用仓库内捆绑的二进制（已有 `mongodb-7.0.20` 但不推荐直接提交到 Git）：
-
-```powershell
-# Windows 直接运行（不要使用 --fork）
-.\mongodb-7.0.20\bin\mongod --dbpath data\mongodb\data --logpath data\mongodb\log\mongod.log --bind_ip 127.0.0.1
-```
-
-```bash
-# Linux / macOS（如果使用仓库内二进制，并支持 --fork）
-./mongodb-7.0.20/bin/mongod --dbpath data/mongodb/data --logpath data/mongodb/log/mongod.log --fork
-```
-
-可选 B — 推荐：从 MongoDB 官方下载安装并按照平台安装为服务，然后启动：
-
-```bash
-# Ubuntu 示例
-sudo apt-get install -y mongodb-org
-sudo systemctl start mongod
-sudo systemctl enable mongod
-```
-
-安全与合规：请确保你有权在公开仓库中重新发布二进制；通常更推荐把二进制放到 Release 或外部存储，并在仓库中保留下载/安装脚本。
-
-### 🚀 启动服务
+### 🚀 启动在线服务
 
 ```bash
 # 终端 1：启动 MongoDB（必需，需先安装）
@@ -536,7 +549,7 @@ python src/server/semantic_chunk.py
 # 终端 3：启动 vLLM（自动识别单卡/多卡）
 python deploy/auto_vllm_server.py --model LLaMA-Factory-main/output/qwen3_lora_sft_int4 --port 8000
 
-# 终端 4：构建索引
+# 终端 4：构建索引（如果尚未构建）
 pip install --force-reinstall setuptools==69.0.0
 python build_index.py
 
@@ -544,7 +557,7 @@ python build_index.py
 python infer.py
 ```
 
-### 🔍 自动识别单卡/多卡启动 vLLM
+#### vLLM 启动参数说明
 
 ```bash
 python deploy/auto_vllm_server.py \
@@ -571,55 +584,7 @@ python deploy/auto_vllm_server.py \
 python final_score.py
 ```
 
----
-
-## ⚙️ 配置要点
-
-### 📌 环境变量
-
-创建 `.env` 或在 Shell 中设置：
-
-```bash
-# Doubao API 配置 (云端)
-export DOUBAO_API_KEY=sk-xxx
-export DOUBAO_BASE_URL=https://api.doubao.com/v1
-export DOUBAO_MODEL_NAME=doubao-pro-4k
-
-# MongoDB 配置
-export MONGO_HOST=localhost
-export MONGO_PORT=27017
-export MONGO_DB_NAME=mydatabase
-export MONGO_USERNAME=
-export MONGO_PASSWORD=
-export MONGO_AUTH_SOURCE=admin
-```
-
-可直接参考 `.env.example` 中的完整变量模板。
-
-### 🗂️ 核心路径配置
-
-编辑 `src\constant.py` 中的路径（当前默认为 Linux 路径）：
-
-```python
-# ❌ Linux (Azure autodl-tmp 环境)
-base_dir = "/root/autodl-tmp/XIAOMI_SU7_RAG/"
-
-# ✅ Windows (本地开发)
-base_dir = "D:\\Development\\Exercise\\0_personal_project\\XIAOMI_SU7_RAG\\"
-
-# ✅ Linux (本地开发)
-base_dir = "/home/user/XIAOMI_SU7_RAG/"
-```
-
-### 📋 模型路径配置
-
-`src\constant.py` 中预定义的模型路径：
-
-```python
-m3e_small_model_path = os.path.join(base_dir, "models", "m3e-small")
-bge_large_zh_v1_5_model_path = os.path.join(base_dir, "models", "bge-large-zh-v1.5")
-# ... 其他模型路径
-```
+评估结果将输出到控制台，包括 BLEU 分数、ROUGE 分数和关键词匹配准确率。
 
 ---
 

@@ -12,6 +12,7 @@ import time
 import json
 import re
 import random
+import concurrent.futures
 from tqdm import tqdm
 from src.retriever.bm25_retriever import BM25
 from src.retriever.milvus_retriever import MilvusRetriever 
@@ -50,33 +51,73 @@ if not os.path.exists("data/qa_pairs/train_data.json"):
     # 预热模型
     milvus_retriever.retrieve_topk("这是一条测试数据", topk=3)
     
+    # 批量处理配置
+    BATCH_SIZE = 700  # 每批处理的样本数
+    MAX_WORKERS = 30  # 并发数
+    
     # 读取 train_qa_pair.json
     fd = open("data/qa_pairs/train_qa_pair.json")
-    test_qa_pairs = json.load(fd)
+    train_qa_pairs = json.load(fd)  # 修正变量名
     fd.close()
     
-    # 生成 train_data.json
-    output_handler = open("data/qa_pairs/train_data.json", "w")
-    for item in tqdm(test_qa_pairs):
+    # 生成 train_data.json（批量并发处理）
+    output_path = "data/qa_pairs/train_data.json"
+
+    def process_item(item):
+        """处理单个样本"""
         try:
             query = item["question"].strip()
+            
+            # 检索
             bm25_docs = bm25_retriever.retrieve_topk(query, topk=5)
             milvus_docs = milvus_retriever.retrieve_topk(query, topk=10)
             merged_docs = merge_docs(bm25_docs, milvus_docs)
+            
+            # 重排
             ranked_docs = bge_m3_reranker.rank(query, merged_docs, topk=5)
+            
+            # 生成答案
             context = "\n".join([str(idx+1) + "." + doc.page_content for idx, doc in enumerate(ranked_docs)])
             response = request_chat(query, context)
-            answer = post_processing(response, ranked_docs)
-            context = [q.page_content for q in ranked_docs]
-            all_docs = [q.page_content for q in merged_docs]
-            info = {"query": query, "context": context, "response": response, "merged_docs": all_docs}
-            info = json.dumps(info, ensure_ascii=False)
-            output_handler.write(info+'\n')
-            output_handler.flush()
+            
+            # 返回结果
+            info = {
+                "query": query,
+                "context": [doc.page_content for doc in ranked_docs],
+                "response": response,
+                "merged_docs": [doc.page_content for doc in merged_docs]
+            }
+            return info
         except Exception as e:
-            print(f"[ERROR] 处理问题 '{query}' 时出错: {e}")
-            continue
-    output_handler.close()
+            print(f"⚠️ 处理失败: {e}")
+            return None
+
+    # 分批并发处理（正确缩进）
+    with open(output_path, "w", encoding="utf-8") as f:
+        total_batches = (len(train_qa_pairs) + BATCH_SIZE - 1) // BATCH_SIZE
+        wait_time = 5  # 批次之间等待时间（秒）
+        
+        for batch_idx in range(total_batches):
+            start_idx = batch_idx * BATCH_SIZE
+            end_idx = min(start_idx + BATCH_SIZE, len(train_qa_pairs))
+            batch_items = train_qa_pairs[start_idx:end_idx]
+            
+            print(f"\n🚀 处理批次 {batch_idx+1}/{total_batches} ({len(batch_items)} 条)")
+            
+            # 使用线程池并发处理
+            with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+                futures = {executor.submit(process_item, item): item for item in batch_items}
+                
+                for future in tqdm(concurrent.futures.as_completed(futures), total=len(futures)):
+                    result = future.result()
+                    if result:
+                        f.write(json.dumps(result, ensure_ascii=False) + "\n")
+                        f.flush()  # 立即写入，防止内存累积
+            
+            # 批次之间等待（最后一批不需要等待）
+            if batch_idx < total_batches - 1:
+                print(f"⏳ 等待 {wait_time} 秒...")
+                time.sleep(wait_time)
     print("[INFO] train_data.json 生成完成")
 
 
