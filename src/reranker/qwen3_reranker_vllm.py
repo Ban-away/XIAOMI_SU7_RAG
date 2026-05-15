@@ -29,7 +29,8 @@ class Qwen3ReRankervLLM(CrossEncoder):
     def __init__(self, model_path, instruction="Given the user query, retrieval the relevant passages", **kwargs):
         number_of_gpu=torch.cuda.device_count()
         self.instruction = instruction
-        self.tokenizer = AutoTokenizer.from_pretrained(model_path)
+        # 添加 local_files_only=True 强制从本地路径加载，避免被误认为是 Hugging Face Hub repo id
+        self.tokenizer = AutoTokenizer.from_pretrained(model_path, local_files_only=True)
         self.tokenizer.padding_side = "left"
         self.tokenizer.pad_token = self.tokenizer.eos_token
         self.suffix = "<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n"
