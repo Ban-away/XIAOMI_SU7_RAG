@@ -25,8 +25,14 @@ class DoubaoLangChainLLM(LLM):
     api_key: str = ""
     base_url: str = "https://ark.cn-beijing.volces.com/api/v3"
     
-    def __init__(self):
+    def __init__(self, model: str = None, api_key: str = None, base_url: str = None):
         super().__init__()
+        if model is not None:
+            self.model = model
+        if api_key is not None:
+            self.api_key = api_key
+        if base_url is not None:
+            self.base_url = base_url
         self._client = None
         self._async_client = None
     
