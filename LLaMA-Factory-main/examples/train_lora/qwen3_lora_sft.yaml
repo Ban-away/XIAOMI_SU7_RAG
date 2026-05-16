@@ -22,7 +22,7 @@ dataloader_num_workers: 4
 
 ### output
 output_dir: saves/qwen3-8b/lora/sft
-logging_steps: 15
+logging_steps: 10
 save_steps: 100
 eval_steps: 100
 plot_loss: true
