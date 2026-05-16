@@ -17,8 +17,8 @@ template: qwen3
 cutoff_len: 4500 
 max_samples: 1000
 overwrite_cache: true
-preprocessing_num_workers: 16
-dataloader_num_workers: 4
+preprocessing_num_workers: 32
+dataloader_num_workers: 8
 
 ### output
 output_dir: saves/qwen3-8b/lora/sft
@@ -31,13 +31,15 @@ save_only_model: false
 report_to: none  # choices: [none, wandb, tensorboard, swanlab, mlflow]
 
 ### train
-per_device_train_batch_size: 1
-per_device_eval_batch_size: 1
-gradient_accumulation_steps: 8
+per_device_train_batch_size: 2
+per_device_eval_batch_size: 2
+gradient_accumulation_steps: 4
 learning_rate: 2.0e-5
 num_train_epochs: 3.0
 lr_scheduler_type: cosine
 warmup_ratio: 0.1
 bf16: true
+optim: adamw_torch_fused
+attn_implementation: flash_attention_2
 ddp_timeout: 180000000
 resume_from_checkpoint: null
