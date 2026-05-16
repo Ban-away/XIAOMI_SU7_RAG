@@ -1,6 +1,7 @@
 {
   "faq_summary": {
-    "file_name": "summary_train.json"
+    "file_name": "summary_train.json",
+    "eval_file_name": "summary_test.json"
   },
   "identity": {
     "file_name": "identity.json"
