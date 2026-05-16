@@ -12,8 +12,17 @@ try:
     from llmcompressor import oneshot
     from llmcompressor.modifiers.quantization import AWQModifier
 except ImportError:
-    print("❌ 请先安装 llmcompressor: pip install llmcompressor")
-    sys.exit(1)
+    print("⚠️ llmcompressor 未安装，尝试自动安装...")
+    try:
+        import subprocess
+        subprocess.run([sys.executable, "-m", "pip", "install", "llmcompressor", "-q"], check=True)
+        print("✅ llmcompressor 安装成功！")
+        from llmcompressor import oneshot
+        from llmcompressor.modifiers.quantization import AWQModifier
+    except Exception as e:
+        print(f"❌ 安装失败: {str(e)}")
+        print("请手动安装: python -m pip install llmcompressor")
+        sys.exit(1)
 
 # 定义路径
 model_path = "output/qwen3_lora_sft"
