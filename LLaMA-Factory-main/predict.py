@@ -46,42 +46,47 @@ client = OpenAI(
 )
 
 test_data_path = os.path.join(os.getcwd(), "data", "summary_test.json")
-test_data = json.load(open(test_data_path))
-
-print("\n[INFO] ========== 开始预测任务 ==========")
-print(f"[INFO] 预测模型: 本地 vLLM 服务 (qwen3_lora_sft_int4)")
-print(f"[INFO] 服务地址: {openai_api_base}")
-print(f"[INFO] 预测数据: {len(test_data)} 条")
-
-for info in tqdm(test_data):
-    # 构建模型的完整路径 - 在 LLaMA-Factory-main 目录下
-    model_path = os.path.join(os.getcwd(), "output", "qwen3_lora_sft_int4")
-    model_path = os.path.abspath(model_path)
-    
-    chat_response = client.chat.completions.create(
-        model=model_path,
-        messages=[
-            {
-                "role": "user",
-                "content": info["instruction"]
-            }
-        ],
-        max_tokens=4096,
-        frequency_penalty=2.0,
-        temperature=0.001,
-        top_p=0.95,
-        extra_body={
-            "top_k": 1,
-            "chat_template_kwargs": {"enable_thinking": False},
-        },
-    )
-    info["response"] = chat_response.choices[0].message.content
-
 pred_data_path = os.path.join(os.getcwd(), "data", "summary_test_pred.json")
-with open(pred_data_path, "w") as fd:
-    fd.write(json.dumps(test_data, ensure_ascii=False, indent=4))
 
-test_data = json.load(open(pred_data_path))
+# 检查预测文件是否已存在
+if os.path.exists(pred_data_path):
+    print(f"\n[INFO] 检测到已存在预测文件: {pred_data_path}")
+    print("[INFO] 将跳过预测阶段，直接加载已有预测结果进行评估")
+    test_data = json.load(open(pred_data_path))
+else:
+    test_data = json.load(open(test_data_path))
+
+    print("\n[INFO] ========== 开始预测任务 ==========")
+    print(f"[INFO] 预测模型: 本地 vLLM 服务 (qwen3_lora_sft_int4)")
+    print(f"[INFO] 服务地址: {openai_api_base}")
+    print(f"[INFO] 预测数据: {len(test_data)} 条")
+
+    for info in tqdm(test_data):
+        # 构建模型的完整路径 - 在 LLaMA-Factory-main 目录下
+        model_path = os.path.join(os.getcwd(), "output", "qwen3_lora_sft_int4")
+        model_path = os.path.abspath(model_path)
+        
+        chat_response = client.chat.completions.create(
+            model=model_path,
+            messages=[
+                {
+                    "role": "user",
+                    "content": info["instruction"]
+                }
+            ],
+            max_tokens=4096,
+            frequency_penalty=2.0,
+            temperature=0.001,
+            top_p=0.95,
+            extra_body={
+                "top_k": 1,
+                "chat_template_kwargs": {"enable_thinking": False},
+            },
+        )
+        info["response"] = chat_response.choices[0].message.content
+
+    with open(pred_data_path, "w") as fd:
+        fd.write(json.dumps(test_data, ensure_ascii=False, indent=4))
 
 
 """
