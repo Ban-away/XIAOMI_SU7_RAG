@@ -15,13 +15,14 @@ except ImportError:
     print("⚠️ llmcompressor 未安装，尝试自动安装...")
     try:
         import subprocess
-        subprocess.run([sys.executable, "-m", "pip", "install", "llmcompressor", "-q"], check=True)
+        # 安装兼容版本的 llmcompressor 和 transformers
+        subprocess.run([sys.executable, "-m", "pip", "install", "llmcompressor", "transformers==4.52.3", "-q"], check=True)
         print("✅ llmcompressor 安装成功！")
         from llmcompressor import oneshot
         from llmcompressor.modifiers.quantization import AWQModifier
     except Exception as e:
         print(f"❌ 安装失败: {str(e)}")
-        print("请手动安装: python -m pip install llmcompressor")
+        print("请手动安装: python -m pip install llmcompressor transformers==4.52.3")
         sys.exit(1)
 
 # 定义路径
