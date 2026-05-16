@@ -507,8 +507,7 @@ cp data/summary_data/test.json LLaMA-Factory-main/data/summary_test.json
 8. 启动 vLLM 推理服务（新终端）
 ```bash
 cd /root/autodl-tmp/XIAOMI_SU7_RAG/LLaMA-Factory-main
-python -m vllm.entrypoints.openai.api_server \
-  --model output/qwen3_lora_sft_int4 \
+vllm serve output/qwen3_lora_sft_int4 \
   --port 8000 \
   --tensor-parallel-size 1
 ```
