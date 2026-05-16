@@ -183,13 +183,17 @@ for g in test_data:
 evaluation_dataset = EvaluationDataset.from_list(dataset)
 
 import logging
-# 设置日志级别以减少输出
+# 设置日志级别以减少数据样本输出，但保留进度条
 logging.getLogger("ragas").setLevel(logging.WARNING)
 logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("ragas.evaluation").setLevel(logging.ERROR)
 
+# 执行评估，只显示进度条，不打印数据样本
 result = evaluate(
     dataset=evaluation_dataset,
     metrics=[LLMContextRecall(), LLMContextPrecisionWithReference()],
-    llm=evaluator_llm
+    llm=evaluator_llm,
+    show_progress=True,
+    raise_exceptions=False
 )
 print("评估结果：", result)
