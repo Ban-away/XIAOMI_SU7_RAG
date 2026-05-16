@@ -148,6 +148,9 @@ class DoubaoLangChainLLM(LLM):
             "base_url": self.base_url,
         }
 
+    def set_run_config(self, run_config):
+        pass
+
 
 def main():
     print("[INFO] 已从 .env 文件加载环境变量")
