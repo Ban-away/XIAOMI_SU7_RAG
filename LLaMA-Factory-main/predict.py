@@ -26,8 +26,7 @@ client = OpenAI(
 test_data = json.load(open("./data/summary_test.json"))
 for info in tqdm(test_data):
     chat_response = client.chat.completions.create(
-        model="output/qwen3_lora_sft",
-        # model="output/qwen3_lora_sft_int4",
+        model="qwen3_lora_sft_int4",
         messages=[
             {
                 "role": "user",
