@@ -165,9 +165,11 @@ def main():
     print(f"[INFO] 评估模型: 豆包 API ({llm.model})")
 
     print("[INFO] 加载评估数据集...")
+    data_file = "data/summary_test_pred.json"
     try:
-        with open("data/ragas_test_data.json", "r", encoding="utf-8") as f:
+        with open(data_file, "r", encoding="utf-8") as f:
             test_data = json.load(f)
+        print(f"[INFO] 成功加载数据集: {data_file}")
         print(f"[INFO] 评估数据: {len(test_data)} 条")
     except Exception as e:
         print(f"[ERROR] 加载数据集失败: {e}")
@@ -187,7 +189,7 @@ def main():
         dataset_dict["answer"].append(item.get("answer", ""))
         dataset_dict["ground_truth"].append([item.get("ground_truth", "")])
     
-    dataset = load_dataset("json", data_files={"train": "data/ragas_test_data.json"})["train"]
+    dataset = load_dataset("json", data_files={"train": data_file})["train"]
     
     print("[INFO] 初始化评估指标...")
     metrics = [
