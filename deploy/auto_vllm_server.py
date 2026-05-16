@@ -64,6 +64,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Disable auto tensor parallel even when multiple GPUs are detected.",
     )
     parser.add_argument(
+        "--quantization",
+        default=None,
+        help="Quantization method: bitsandbytes/awq/gptq/none.",
+    )
+    parser.add_argument(
         "extra_args",
         nargs=argparse.REMAINDER,
         help="Extra args passed through to `vllm serve`.",
@@ -98,6 +103,14 @@ def main() -> None:
         args.dtype,
         "--trust-remote-code",
     ]
+
+    # 添加量化参数
+    if args.quantization:
+        if args.quantization.lower() != "none":
+            command.extend(["--quantization", args.quantization])
+            print(f"[INFO] Using quantization: {args.quantization}")
+        else:
+            print("[INFO] No quantization (using pre-quantized model)")
 
     if gpu_count > 1 and not args.disable_auto_tp:
         command.extend(["--tensor-parallel-size", str(gpu_count)])
