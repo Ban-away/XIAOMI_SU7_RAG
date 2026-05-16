@@ -504,19 +504,28 @@ cp data/summary_data/train.json LLaMA-Factory-main/data/summary_train.json
 cp data/summary_data/test.json LLaMA-Factory-main/data/summary_test.json
 ```
 
-8. 生成 `summary_test_pred.json`
+8. 启动 vLLM 推理服务（新终端）
+```bash
+cd /root/autodl-tmp/XIAOMI_SU7_RAG/LLaMA-Factory-main
+python -m vllm.entrypoints.openai.api_server \
+  --model output/qwen3_lora_sft_int4 \
+  --port 8000 \
+  --tensor-parallel-size 1
+```
+
+9. 生成 `summary_test_pred.json`
 ```bash
 cd /root/autodl-tmp/XIAOMI_SU7_RAG/LLaMA-Factory-main
 python predict.py
 ```
 
-9. 校验 4 个 summary 文件
+10. 校验 summary 文件
 ```bash
 cd /root/autodl-tmp/XIAOMI_SU7_RAG/LLaMA-Factory-main
 ls -l data/summary_train.json data/summary_test.json data/summary_test_pred.json
 ```
 
-10. 生成量化模型（`output/qwen3_lora_sft_int4/`）
+11. 生成量化模型（`output/qwen3_lora_sft_int4/`）
 ```bash
 cd /root/autodl-tmp/XIAOMI_SU7_RAG/LLaMA-Factory-main
 python awq_quant.py
@@ -550,6 +559,7 @@ ls -l output/qwen3_lora_sft_int4
 |:---|:---|:---|
 | `LLaMA-Factory-main/data/summary_train.json` | 摘要训练数据（用于 LLaMA-Factory 训练） | 复制自 `data/summary_data/train.json` |
 | `LLaMA-Factory-main/data/summary_test.json` | 摘要测试数据（用于 LLaMA-Factory 评估） | 复制自 `data/summary_data/test.json` |
+| `LLaMA-Factory-main/data/summary_test_pred.json` | 摘要测试预测结果（模型推理输出） | 运行 `predict.py` 生成 |
 | `LLaMA-Factory-main/data/rerank_train.json` | 重排训练数据（用于交叉熵损失训练） | 复制自 `data/rerank_data/train.json` |
 | `LLaMA-Factory-main/data/rerank_dev.json` | 重排验证数据（用于训练验证） | 复制自 `data/rerank_data/dev.json` |
 | `LLaMA-Factory-main/data/rerank_test.json` | 重排测试数据（用于离线评估） | 复制自 `data/rerank_data/test.json` |
