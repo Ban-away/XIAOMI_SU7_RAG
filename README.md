@@ -511,18 +511,18 @@ ls -l output/qwen3_lora_sft_int4
 
 注意：量化前需先完成第 6 步，确保 `output/qwen3_lora_sft/` 已存在。
 
-8. 启动 vLLM 推理服务（新终端）
-
-```bash
-cd /root/autodl-tmp/XIAOMI_SU7_RAG
-python deploy/auto_vllm_server.py --model LLaMA-Factory-main/output/qwen3_lora_sft_int4 --port 8000
-```
-
-9. 生成 `summary_test_pred.json`
+8. 生成 `summary_test_pred.json`
 
 ```bash
 cd /root/autodl-tmp/XIAOMI_SU7_RAG/LLaMA-Factory-main
 python predict.py
+```
+
+9. 启动 vLLM 推理服务（新终端）
+
+```bash
+cd /root/autodl-tmp/XIAOMI_SU7_RAG
+python deploy/auto_vllm_server.py --model LLaMA-Factory-main/output/qwen3_lora_sft_int4 --port 8000
 ```
 
 10. 校验 summary 文件
