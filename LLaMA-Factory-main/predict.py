@@ -53,6 +53,8 @@ def main():
         with open(data_file, "r", encoding="utf-8") as f:
             test_data = json.load(f)
         print(f"[INFO] 原始数据: {len(test_data)} 条")
+        print("[DEBUG] 第一条数据字段:", list(test_data[0].keys()))
+        print("[DEBUG] 第一条数据示例:", json.dumps(test_data[0], ensure_ascii=False, indent=2)[:500])
     except Exception as e:
         print(f"[ERROR] 加载数据集失败: {e}")
         raise
