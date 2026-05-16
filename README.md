@@ -507,11 +507,16 @@ cp data/summary_data/test.json LLaMA-Factory-main/data/summary_test.json
 8. 生成量化模型（`output/qwen3_lora_sft_int4/`）
 ```bash
 cd /root/autodl-tmp/XIAOMI_SU7_RAG/LLaMA-Factory-main
-python awq_quant.py
+python -m vllm.entrypoints.quantization awq \
+  --model output/qwen3_lora_sft \
+  --output output/qwen3_lora_sft_int4 \
+  --quantization awq \
+  --awq-bits 4 \
+  --awq-group-size 128
 ls -l output/qwen3_lora_sft_int4
 ```
 
-注意：量化前需先完成第 4 步，确保 `output/qwen3_lora_sft/` 已存在。
+注意：量化前需先完成第 4 步，确保 `output/qwen3_lora_sft/` 已存在。使用 vLLM 内置的 AWQ 量化功能，避免版本兼容性问题。
 
 9. 启动 vLLM 推理服务（新终端）
 ```bash
