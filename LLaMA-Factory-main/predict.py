@@ -1,17 +1,15 @@
 import os
 import json
 import logging
-import sys
-from contextlib import redirect_stderr, redirect_stdout
-from ragas.metrics import LLMContextRecall, LLMContextPrecisionWithReference
-from ragas import evaluate
-from ragas import EvaluationDataset
-from openai import OpenAI
-from openai import AsyncOpenAI
-from tqdm import tqdm
-from typing import List
+from typing import Any, List, Mapping, Optional
 
-# 尝试从 .env 文件加载环境变量
+from langchain_core.language_models.llms import LLM
+from openai import OpenAI, AsyncOpenAI
+from ragas import evaluate, EvaluationDataset
+from ragas.metrics import LLMContextRecall, LLMContextPrecisionWithReference
+from tqdm import tqdm
+
+
 try:
     from dotenv import load_dotenv
     load_dotenv()
@@ -20,121 +18,108 @@ except ImportError:
     print("[WARNING] 未安装 python-dotenv，将使用系统环境变量")
 
 
-class DoubaoRagasWrapper:
-    """自定义 LLM wrapper，适配豆包 API 的输出格式"""
+class DoubaoLangChainLLM(LLM):
+    """使用 LangChain LLM 基类包装豆包 API，确保与 Ragas 兼容"""
     
-    def __init__(self, model: str, api_key: str, base_url: str):
-        self.client = OpenAI(
-            api_key=api_key,
-            base_url=base_url,
-        )
-        self.async_client = AsyncOpenAI(
-            api_key=api_key,
-            base_url=base_url,
-        )
-        self.model = model
-        self.run_config = None
+    model: str = "doubao-1-5-lite-32k-250115"
+    api_key: str = ""
+    base_url: str = "https://ark.cn-beijing.volces.com/api/v3"
     
-    def set_run_config(self, config):
-        """设置运行配置（Ragas 要求的方法）"""
-        self.run_config = config
-    
-    def generate(self, prompts: List[str], **kwargs) -> List[str]:
-        """生成响应，将豆包 API 的 JSON 输出转换为 Ragas 期望的格式"""
-        results = []
-        for prompt in prompts:
-            try:
-                # 处理不同类型的 prompt 对象，确保转换为字符串
-                if hasattr(prompt, 'text'):
-                    prompt_text = prompt.text
-                elif hasattr(prompt, 'to_string'):
-                    prompt_text = prompt.to_string()
-                elif isinstance(prompt, str):
-                    prompt_text = prompt
-                else:
-                    prompt_text = str(prompt)
-                
-                response = self.client.chat.completions.create(
-                    model=self.model,
-                    messages=[{"role": "user", "content": prompt_text}],
-                    temperature=0.01,
-                )
-                content = response.choices[0].message.content
-                
-                # 尝试解析豆包 API 返回的 JSON 格式
-                try:
-                    json_output = json.loads(content)
-                    if "classifications" in json_output:
-                        # 将分类结果转换为 Ragas 期望的格式
-                        classification_str = "\n".join([
-                            f"{i+1}. Statement: {item.get('statement', '')}"
-                            for i, item in enumerate(json_output["classifications"])
-                        ])
-                        results.append(classification_str)
-                    else:
-                        results.append(content)
-                except json.JSONDecodeError:
-                    # 如果不是 JSON 格式，直接返回原始内容
-                    results.append(content)
-            except Exception as e:
-                print(f"[ERROR] API 调用失败: {e}")
-                results.append("")
-        return results
-    
-    async def agenerate(self, prompts: List[str], **kwargs) -> List[str]:
-        """异步生成响应"""
-        # 异步处理每个 prompt
-        results = []
-        for prompt in prompts:
-            try:
-                # 处理不同类型的 prompt 对象，确保转换为字符串
-                if hasattr(prompt, 'text'):
-                    prompt_text = prompt.text
-                elif hasattr(prompt, 'to_string'):
-                    prompt_text = prompt.to_string()
-                elif isinstance(prompt, str):
-                    prompt_text = prompt
-                else:
-                    prompt_text = str(prompt)
-                
-                # 使用异步客户端
-                response = await self.async_client.chat.completions.create(
-                    model=self.model,
-                    messages=[{"role": "user", "content": prompt_text}],
-                    temperature=0.01,
-                )
-                content = response.choices[0].message.content
-                
-                # 尝试解析豆包 API 返回的 JSON 格式
-                try:
-                    json_output = json.loads(content)
-                    if "classifications" in json_output:
-                        # 将分类结果转换为 Ragas 期望的格式
-                        classification_str = "\n".join([
-                            f"{i+1}. Statement: {item.get('statement', '')}"
-                            for i, item in enumerate(json_output["classifications"])
-                        ])
-                        results.append(classification_str)
-                    else:
-                        results.append(content)
-                except json.JSONDecodeError:
-                    # 如果不是 JSON 格式，直接返回原始内容
-                    results.append(content)
-            except Exception as e:
-                print(f"[ERROR] API 调用失败: {e}")
-                results.append("")
-        return results
+    def __init__(self):
+        super().__init__()
+        self._client = None
+        self._async_client = None
     
     @property
-    def llm(self):
-        return self
+    def _client_instance(self) -> OpenAI:
+        if self._client is None:
+            self._client = OpenAI(api_key=self.api_key, base_url=self.base_url)
+        return self._client
+    
+    @property
+    def _async_client_instance(self) -> AsyncOpenAI:
+        if self._async_client is None:
+            self._async_client = AsyncOpenAI(api_key=self.api_key, base_url=self.base_url)
+        return self._async_client
+    
+    @property
+    def _llm_type(self) -> str:
+        return "doubao"
+    
+    def _call(
+        self,
+        prompt: str,
+        stop: Optional[List[str]] = None,
+        **kwargs: Any,
+    ) -> str:
+        """同步调用豆包 API"""
+        try:
+            response = self._client_instance.chat.completions.create(
+                model=self.model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.01,
+            )
+            content = response.choices[0].message.content
+            
+            try:
+                json_output = json.loads(content)
+                if "classifications" in json_output:
+                    classification_str = "\n".join([
+                        f"{i+1}. Statement: {item.get('statement', '')}"
+                        for i, item in enumerate(json_output["classifications"])
+                    ])
+                    return classification_str
+                else:
+                    return content
+            except json.JSONDecodeError:
+                return content
+        except Exception as e:
+            print(f"[ERROR] 同步 API 调用失败: {e}")
+            return ""
+    
+    async def _acall(
+        self,
+        prompt: str,
+        stop: Optional[List[str]] = None,
+        **kwargs: Any,
+    ) -> str:
+        """异步调用豆包 API"""
+        try:
+            response = await self._async_client_instance.chat.completions.create(
+                model=self.model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.01,
+            )
+            content = response.choices[0].message.content
+            
+            try:
+                json_output = json.loads(content)
+                if "classifications" in json_output:
+                    classification_str = "\n".join([
+                        f"{i+1}. Statement: {item.get('statement', '')}"
+                        for i, item in enumerate(json_output["classifications"])
+                    ])
+                    return classification_str
+                else:
+                    return content
+            except json.JSONDecodeError:
+                return content
+        except Exception as e:
+            print(f"[ERROR] 异步 API 调用失败: {e}")
+            return ""
+    
+    @property
+    def _identifying_params(self) -> Mapping[str, Any]:
+        return {
+            "model": self.model,
+            "base_url": self.base_url,
+        }
 
 
-# 本地 vLLM 服务配置
 openai_api_key = "EMPTY"
 openai_api_base = "http://localhost:8000/v1"
 
-# 检查豆包 API 环境变量
+
 print("\n[INFO] 检查豆包 API 配置...")
 doubao_config = {
     "model": os.environ.get("DOUBAO_MODEL_NAME"),
@@ -162,13 +147,15 @@ client = OpenAI(
 test_data_path = os.path.join(os.getcwd(), "data", "summary_test.json")
 pred_data_path = os.path.join(os.getcwd(), "data", "summary_test_pred.json")
 
-# 检查预测文件是否已存在
+
 if os.path.exists(pred_data_path):
     print(f"\n[INFO] 检测到已存在预测文件: {pred_data_path}")
     print("[INFO] 将跳过预测阶段，直接加载已有预测结果进行评估")
-    test_data = json.load(open(pred_data_path))
+    with open(pred_data_path, "r", encoding="utf-8") as f:
+        test_data = json.load(f)
 else:
-    test_data = json.load(open(test_data_path))
+    with open(test_data_path, "r", encoding="utf-8") as f:
+        test_data = json.load(f)
 
     print("\n[INFO] ========== 开始预测任务 ==========")
     print(f"[INFO] 预测模型: 本地 vLLM 服务 (qwen3_lora_sft_int4)")
@@ -176,7 +163,6 @@ else:
     print(f"[INFO] 预测数据: {len(test_data)} 条")
 
     for info in tqdm(test_data):
-        # 构建模型的完整路径 - 在 LLaMA-Factory-main 目录下
         model_path = os.path.join(os.getcwd(), "output", "qwen3_lora_sft_int4")
         model_path = os.path.abspath(model_path)
         
@@ -199,22 +185,17 @@ else:
         )
         info["response"] = chat_response.choices[0].message.content
 
-    with open(pred_data_path, "w") as fd:
-        fd.write(json.dumps(test_data, ensure_ascii=False, indent=4))
+    with open(pred_data_path, "w", encoding="utf-8") as fd:
+        json.dump(test_data, fd, ensure_ascii=False, indent=4)
 
-
-"""
-以下是RAG评估代码的扩展，利用Ragas框架来对问答系统输出的结果做评估。输入是query，生成的答案，参考答案，以及召回的上下文信息。
-评估采用了精确率和召回率两个指标
-"""
 
 print("\n[INFO] ========== 开始 RAG 评估 ==========")
 print(f"[INFO] 评估模型: 豆包 API ({doubao_config['model']})")
 print(f"[INFO] 评估数据: {len(test_data)} 条")
 print("[INFO] 评估指标: LLMContextRecall, LLMContextPrecisionWithReference")
 
-# 创建自定义的豆包 API wrapper
-evaluator_llm = DoubaoRagasWrapper(
+
+evaluator_llm = DoubaoLangChainLLM(
     model=doubao_config["model"],
     api_key=doubao_config["api_key"],
     base_url=doubao_config["base_url"]
@@ -222,11 +203,10 @@ evaluator_llm = DoubaoRagasWrapper(
 
 dataset = []
 for g in test_data:
-    # 确保字段名一致性，使用预测部分对应的字段
-    query = g.get("query", g.get("instruction", ""))  # 尝试获取query或instruction作为输入问题
-    reference = g.get("output", "")  # 参考答案
-    response = g.get("response", "")  # 生成的答案
-    context = [g.get("context", "")]  # 上下文，如果不存在则使用空字符串
+    query = g.get("query", g.get("instruction", ""))
+    reference = g.get("output", "")
+    response = g.get("response", "")
+    context = [g.get("context", "")]
     
     dataset.append(
         {
@@ -239,18 +219,18 @@ for g in test_data:
 
 evaluation_dataset = EvaluationDataset.from_list(dataset)
 
-# 设置日志级别以完全抑制数据样本输出，但保留进度条
+
 logging.getLogger("ragas").setLevel(logging.ERROR)
 logging.getLogger("httpx").setLevel(logging.ERROR)
 logging.getLogger("ragas.evaluation").setLevel(logging.ERROR)
 logging.getLogger("ragas.metrics").setLevel(logging.ERROR)
 logging.getLogger("ragas.executor").setLevel(logging.ERROR)
 
-# 设置环境变量来进一步抑制输出
+
 os.environ["RAGAS_VERBOSE"] = "false"
 os.environ["RAGAS_DEBUG"] = "false"
 
-# 执行评估，只显示进度条，不打印数据样本
+
 result = evaluate(
     dataset=evaluation_dataset,
     metrics=[LLMContextRecall(), LLMContextPrecisionWithReference()],
