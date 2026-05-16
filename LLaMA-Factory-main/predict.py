@@ -58,7 +58,7 @@ class DoubaoLangChainLLM(LLM):
         stop: Optional[List[str]] = None,
         **kwargs: Any,
     ) -> str:
-        """同步调用豆包 API - 将 JSON 格式转换为 Ragas 期望的 SUPPORTED/NOT_SUPPORTED 格式"""
+        """同步调用豆包 API - 将 JSON 格式转换为 Ragas 期望的格式"""
         try:
             response = self._client_instance.chat.completions.create(
                 model=self.model,
@@ -74,18 +74,26 @@ class DoubaoLangChainLLM(LLM):
                     for item in json_output["classifications"]:
                         statement = item.get("statement", "")
                         attributed = item.get("attributed", 0)
+                        if statement.strip() in ["无答案", "没有答案", "无", "-"]:
+                            continue
                         if attributed:
                             result_lines.append(f"SUPPORTED {statement}")
                         else:
                             result_lines.append(f"NOT_SUPPORTED {statement}")
-                    return "\n".join(result_lines)
+                    if result_lines:
+                        return "\n".join(result_lines)
+                    else:
+                        return "NOT_SUPPORTED No relevant information"
                 else:
                     return content
             except json.JSONDecodeError:
+                content = content.strip()
+                if content in ["无答案", "没有答案", "无", "-", ""]:
+                    return "NOT_SUPPORTED No relevant information"
                 return content
         except Exception as e:
             print(f"[ERROR] 同步 API 调用失败: {e}")
-            return ""
+            return "NOT_SUPPORTED No relevant information"
     
     async def _acall(
         self,
@@ -93,7 +101,7 @@ class DoubaoLangChainLLM(LLM):
         stop: Optional[List[str]] = None,
         **kwargs: Any,
     ) -> str:
-        """异步调用豆包 API - 将 JSON 格式转换为 Ragas 期望的 SUPPORTED/NOT_SUPPORTED 格式"""
+        """异步调用豆包 API - 将 JSON 格式转换为 Ragas 期望的格式"""
         try:
             response = await self._async_client_instance.chat.completions.create(
                 model=self.model,
@@ -109,18 +117,26 @@ class DoubaoLangChainLLM(LLM):
                     for item in json_output["classifications"]:
                         statement = item.get("statement", "")
                         attributed = item.get("attributed", 0)
+                        if statement.strip() in ["无答案", "没有答案", "无", "-"]:
+                            continue
                         if attributed:
                             result_lines.append(f"SUPPORTED {statement}")
                         else:
                             result_lines.append(f"NOT_SUPPORTED {statement}")
-                    return "\n".join(result_lines)
+                    if result_lines:
+                        return "\n".join(result_lines)
+                    else:
+                        return "NOT_SUPPORTED No relevant information"
                 else:
                     return content
             except json.JSONDecodeError:
+                content = content.strip()
+                if content in ["无答案", "没有答案", "无", "-", ""]:
+                    return "NOT_SUPPORTED No relevant information"
                 return content
         except Exception as e:
             print(f"[ERROR] 异步 API 调用失败: {e}")
-            return ""
+            return "NOT_SUPPORTED No relevant information"
     
     @property
     def _identifying_params(self) -> Mapping[str, Any]:
