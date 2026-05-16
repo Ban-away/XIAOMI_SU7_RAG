@@ -432,34 +432,13 @@ mkdir -p log models
 1. 安装 LLaMA-Factory 依赖
 
 ```bash
-cd LLaMA-Factory-main
+cd /root/autodl-tmp/XIAOMI_SU7_RAG/LLaMA-Factory-main
 pip install -r requirements.txt
 pip install -e .
 ```
 
-2. 先跑 LoRA 训练，生成 `saves/qwen3-8b/lora/sft/`
+2. 安装并启动 MongoDB（生成数据前必需）
 
-```bash
-cd LLaMA-Factory-main
-llamafactory-cli train examples/train_lora/qwen3_lora_sft.yaml
-```
-
-3. 放好基础模型，并确认 YAML 里的 `model_name_or_path` 指向它
-
-```bash
-cd LLaMA-Factory-main
-ls /root/autodl-tmp/XIAOMI_SU7_RAG/models/Qwen3-8B/
-sed -n '1,20p' examples/train_lora/qwen3_lora_sft.yaml
-```
-
-4. 导出合并模型，生成 `output/qwen3_lora_sft/`
-
-```bash
-cd LLaMA-Factory-main
-bash export.sh
-```
-
-5. 安装并启动 MongoDB（生成数据前必需）
 ```bash
 # 下载 MongoDB 7.0.20
 wget https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-ubuntu2204-7.0.20.tgz
@@ -476,7 +455,8 @@ mkdir -p /var/log/mongodb
 /usr/local/mongodb/bin/mongod --dbpath /data/db --logpath /var/log/mongodb/mongod.log --bind_ip_all --fork
 ```
 
-6. 生成小米 SU7 的数据（QA、训练集、测试集）
+3. 生成小米 SU7 的数据（QA、训练集、测试集）
+
 ```bash
 cd /root/autodl-tmp/XIAOMI_SU7_RAG
 # 先生成或加载 split_docs.pkl（run build_index.py）
@@ -495,7 +475,8 @@ python generate_all_data.py --skip-expand  # 快速模式
 python generate_all_data.py --force        # 强制覆盖模式
 ```
 
-7. 生成 `summary_train.json`、`summary_test.json`
+4. 生成 `summary_train.json`、`summary_test.json`
+
 ```bash
 cd /root/autodl-tmp/XIAOMI_SU7_RAG
 # 根据 QA 生成 summary/rerank 数据
@@ -506,28 +487,46 @@ cp data/summary_data/train.json LLaMA-Factory-main/data/summary_train.json
 cp data/summary_data/test.json LLaMA-Factory-main/data/summary_test.json
 ```
 
-8. 生成量化模型（`output/qwen3_lora_sft_int4/`）
+5. LoRA 训练，生成 `saves/qwen3-8b/lora/sft/`
+
+```bash
+cd /root/autodl-tmp/XIAOMI_SU7_RAG/LLaMA-Factory-main
+llamafactory-cli train examples/train_lora/qwen3_lora_sft.yaml
+```
+
+6. 导出合并模型，生成 `output/qwen3_lora_sft/`
+
+```bash
+cd /root/autodl-tmp/XIAOMI_SU7_RAG/LLaMA-Factory-main
+bash export.sh
+```
+
+7. 生成量化模型（`output/qwen3_lora_sft_int4/`）
+
 ```bash
 cd /root/autodl-tmp/XIAOMI_SU7_RAG/LLaMA-Factory-main
 python awq_quant.py
 ls -l output/qwen3_lora_sft_int4
 ```
 
-注意：量化前需先完成第 4 步，确保 `output/qwen3_lora_sft/` 已存在。
+注意：量化前需先完成第 6 步，确保 `output/qwen3_lora_sft/` 已存在。
 
-9. 启动 vLLM 推理服务（新终端）
+8. 启动 vLLM 推理服务（新终端）
+
 ```bash
 cd /root/autodl-tmp/XIAOMI_SU7_RAG
 python deploy/auto_vllm_server.py --model LLaMA-Factory-main/output/qwen3_lora_sft_int4 --port 8000
 ```
 
-10. 生成 `summary_test_pred.json`
+9. 生成 `summary_test_pred.json`
+
 ```bash
 cd /root/autodl-tmp/XIAOMI_SU7_RAG/LLaMA-Factory-main
 python predict.py
 ```
 
-11. 校验 summary 文件
+10. 校验 summary 文件
+
 ```bash
 cd /root/autodl-tmp/XIAOMI_SU7_RAG/LLaMA-Factory-main
 ls -l data/summary_train.json data/summary_test.json data/summary_test_pred.json
