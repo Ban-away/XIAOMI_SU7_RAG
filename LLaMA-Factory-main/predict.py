@@ -58,6 +58,10 @@ class DoubaoLangChainLLM(LLM):
         **kwargs: Any,
     ) -> str:
         try:
+            from langchain_core.prompt_values import StringPromptValue
+            if isinstance(prompt, StringPromptValue):
+                prompt = prompt.to_string()
+            
             response = self._client_instance.chat.completions.create(
                 model=self.model,
                 messages=[{"role": "user", "content": prompt}],
@@ -103,6 +107,10 @@ class DoubaoLangChainLLM(LLM):
         **kwargs: Any,
     ) -> str:
         try:
+            from langchain_core.prompt_values import StringPromptValue
+            if isinstance(prompt, StringPromptValue):
+                prompt = prompt.to_string()
+            
             response = await self._async_client_instance.chat.completions.create(
                 model=self.model,
                 messages=[{"role": "user", "content": prompt}],
