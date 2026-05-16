@@ -67,22 +67,21 @@ def main():
     ragas_data = []
     skip_count = 0
     for item in test_data:
-        answer    = item.get("answer", "").strip()
-        reference = item.get("ground_truth", "").strip()
+        response  = item.get("response", "").strip()   # 模型预测答案
+        reference = item.get("output", "").strip()     # 标准答案
         context   = item.get("context", "").strip()
 
-        if not answer or not reference or not context:
+        if not response or not reference or not context:
             skip_count += 1
             continue
-        if answer in NO_ANSWER_SET or reference in NO_ANSWER_SET:
+        if response in NO_ANSWER_SET or reference in NO_ANSWER_SET:
             skip_count += 1
             continue
 
-        # RAGas EvaluationDataset 要求字段名为 response，不是 answer
         ragas_data.append({
-            "user_input":         item.get("question", ""),
+            "user_input":         item.get("query", ""),
             "retrieved_contexts": [context],
-            "response":           answer,
+            "response":           response,
             "reference":          reference,
         })
 
