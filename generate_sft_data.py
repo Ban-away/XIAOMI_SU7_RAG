@@ -132,6 +132,7 @@ if not os.path.exists("data/qa_pairs/train_data.json"):
                 print(f"⏳ 等待 {wait_time} 秒...")
                 time.sleep(wait_time)
     print("[INFO] train_data.json 生成完成")
+    print(f"训练数据路径: data/qa_pairs/train_data.json", flush=True)
 
 
 MAX_INPUT_SIZE = 4096
@@ -139,15 +140,13 @@ RERANK_DEV_SIZE = 1000
 TEST_RATE = 0.08
 
 print("\n" + "="*60)
-print("Step 6: 生成 SFT 训练数据")
+print("生成 Summary/Rerank 数据集")
 print("="*60)
-print(f"训练数据路径: data/qa_pairs/train_data.json", flush=True)
 print(f"摘要训练集: ./data/summary_data/train.json", flush=True)
 print(f"摘要测试集: ./data/summary_data/test.json", flush=True)
 print(f"重排训练集: ./data/rerank_data/train.json", flush=True)
 print(f"重排验证集: ./data/rerank_data/dev.json", flush=True)
 print(f"重排测试集: ./data/rerank_data/test.json", flush=True)
-print(f"并发数: {MAX_WORKERS}", flush=True)
 
 # 训练/测试输出文件句柄
 summary_train_handler = open("./data/summary_data/train.json", "w")

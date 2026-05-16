@@ -536,6 +536,11 @@ ls -l output/qwen3_lora_sft_int4
 | `test_keywords_pair.json` | 测试集答案关键词标注 | Step 4 |
 | `test_qa_pair_verify.json` | 评估输入文件 | Step 5 |
 | `train_data.json` | SFT 训练数据（含检索上下文） | Step 6 |
+| `summary_data/train.json` | 摘要训练集 | `generate_sft_data.py` |
+| `summary_data/test.json` | 摘要测试集 | `generate_sft_data.py` |
+| `rerank_data/train.json` | 重排训练集 | `generate_sft_data.py` |
+| `rerank_data/dev.json` | 重排验证集 | `generate_sft_data.py` |
+| `rerank_data/test.json` | 重排测试集 | `generate_sft_data.py` |
 
 ### 🚀 启动在线服务
 

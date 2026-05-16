@@ -401,14 +401,9 @@ def step6_generate_train_data():
     print("Step 6: 生成 SFT 训练数据")
     print("="*60)
     
-    # 打印输出路径
+    # 打印输出路径（只打印本脚本生成的文件）
     output_path = "data/qa_pairs/train_data.json"
-    print(f"训练数据路径: data/qa_pairs/train_data.json", flush=True)
-    print(f"摘要训练集: ./data/summary_data/train.json", flush=True)
-    print(f"摘要测试集: ./data/summary_data/test.json", flush=True)
-    print(f"重排训练集: ./data/rerank_data/train.json", flush=True)
-    print(f"重排验证集: ./data/rerank_data/dev.json", flush=True)
-    print(f"重排测试集: ./data/rerank_data/test.json", flush=True)
+    print(f"训练数据路径: {output_path}", flush=True)
     
     # 检查是否已存在且非空
     if os.path.exists(output_path) and os.path.getsize(output_path) > 0 and not args.force:
