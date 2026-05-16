@@ -57,7 +57,6 @@ class DoubaoLangChainLLM(LLM):
         stop: Optional[List[str]] = None,
         **kwargs: Any,
     ) -> str:
-        """同步调用豆包 API - 将 JSON 格式转换为 Ragas 期望的格式"""
         try:
             response = self._client_instance.chat.completions.create(
                 model=self.model,
@@ -103,7 +102,6 @@ class DoubaoLangChainLLM(LLM):
         stop: Optional[List[str]] = None,
         **kwargs: Any,
     ) -> str:
-        """异步调用豆包 API - 将 JSON 格式转换为 Ragas 期望的格式"""
         try:
             response = await self._async_client_instance.chat.completions.create(
                 model=self.model,
@@ -201,7 +199,7 @@ def main():
             "user_input": item.get("question", ""),
             "retrieved_contexts": [item.get("context", "")],
             "answer": item.get("answer", ""),
-            "reference": [item.get("ground_truth", "")]
+            "reference": item.get("ground_truth", "")
         })
     
     df = pd.DataFrame(ragas_data)
