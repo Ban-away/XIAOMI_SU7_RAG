@@ -1,12 +1,15 @@
 import os
 import json
-from langchain_openai import ChatOpenAI
+import logging
+import sys
+from contextlib import redirect_stderr, redirect_stdout
 from ragas.metrics import LLMContextRecall, LLMContextPrecisionWithReference
 from ragas import evaluate
 from ragas import EvaluationDataset
 from openai import OpenAI
+from openai import AsyncOpenAI
 from tqdm import tqdm
-from typing import Any, List, Optional, Dict, Union
+from typing import List
 
 # 尝试从 .env 文件加载环境变量
 try:
@@ -22,6 +25,10 @@ class DoubaoRagasWrapper:
     
     def __init__(self, model: str, api_key: str, base_url: str):
         self.client = OpenAI(
+            api_key=api_key,
+            base_url=base_url,
+        )
+        self.async_client = AsyncOpenAI(
             api_key=api_key,
             base_url=base_url,
         )
@@ -76,7 +83,47 @@ class DoubaoRagasWrapper:
     
     async def agenerate(self, prompts: List[str], **kwargs) -> List[str]:
         """异步生成响应"""
-        return self.generate(prompts, **kwargs)
+        # 异步处理每个 prompt
+        results = []
+        for prompt in prompts:
+            try:
+                # 处理不同类型的 prompt 对象，确保转换为字符串
+                if hasattr(prompt, 'text'):
+                    prompt_text = prompt.text
+                elif hasattr(prompt, 'to_string'):
+                    prompt_text = prompt.to_string()
+                elif isinstance(prompt, str):
+                    prompt_text = prompt
+                else:
+                    prompt_text = str(prompt)
+                
+                # 使用异步客户端
+                response = await self.async_client.chat.completions.create(
+                    model=self.model,
+                    messages=[{"role": "user", "content": prompt_text}],
+                    temperature=0.01,
+                )
+                content = response.choices[0].message.content
+                
+                # 尝试解析豆包 API 返回的 JSON 格式
+                try:
+                    json_output = json.loads(content)
+                    if "classifications" in json_output:
+                        # 将分类结果转换为 Ragas 期望的格式
+                        classification_str = "\n".join([
+                            f"{i+1}. Statement: {item.get('statement', '')}"
+                            for i, item in enumerate(json_output["classifications"])
+                        ])
+                        results.append(classification_str)
+                    else:
+                        results.append(content)
+                except json.JSONDecodeError:
+                    # 如果不是 JSON 格式，直接返回原始内容
+                    results.append(content)
+            except Exception as e:
+                print(f"[ERROR] API 调用失败: {e}")
+                results.append("")
+        return results
     
     @property
     def llm(self):
@@ -191,11 +238,6 @@ for g in test_data:
     )
 
 evaluation_dataset = EvaluationDataset.from_list(dataset)
-
-import logging
-import sys
-from contextlib import redirect_stderr, redirect_stdout
-import os
 
 # 设置日志级别以完全抑制数据样本输出，但保留进度条
 logging.getLogger("ragas").setLevel(logging.ERROR)
