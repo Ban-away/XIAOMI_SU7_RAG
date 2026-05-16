@@ -411,6 +411,8 @@ cd XIAOMI_SU7_RAG
 
 # 2. 安装依赖
 pip install -r requirements.txt
+> 或切换成国内阿里云加速源
+pip install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host mirrors.aliyun.com
 pip install av
 
 # 3. 下载主流程所需模型（默认 core 预设）
