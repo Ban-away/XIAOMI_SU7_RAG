@@ -504,25 +504,7 @@ cp data/summary_data/train.json LLaMA-Factory-main/data/summary_train.json
 cp data/summary_data/test.json LLaMA-Factory-main/data/summary_test.json
 ```
 
-8. 启动 vLLM 推理服务（新终端）
-```bash
-cd /root/autodl-tmp/XIAOMI_SU7_RAG
-python deploy/auto_vllm_server.py --model LLaMA-Factory-main/output/qwen3_lora_sft_int4 --port 8000
-```
-
-9. 生成 `summary_test_pred.json`
-```bash
-cd /root/autodl-tmp/XIAOMI_SU7_RAG/LLaMA-Factory-main
-python predict.py
-```
-
-10. 校验 summary 文件
-```bash
-cd /root/autodl-tmp/XIAOMI_SU7_RAG/LLaMA-Factory-main
-ls -l data/summary_train.json data/summary_test.json data/summary_test_pred.json
-```
-
-11. 生成量化模型（`output/qwen3_lora_sft_int4/`）
+8. 生成量化模型（`output/qwen3_lora_sft_int4/`）
 ```bash
 cd /root/autodl-tmp/XIAOMI_SU7_RAG/LLaMA-Factory-main
 python awq_quant.py
@@ -530,6 +512,24 @@ ls -l output/qwen3_lora_sft_int4
 ```
 
 注意：量化前需先完成第 4 步，确保 `output/qwen3_lora_sft/` 已存在。
+
+9. 启动 vLLM 推理服务（新终端）
+```bash
+cd /root/autodl-tmp/XIAOMI_SU7_RAG
+python deploy/auto_vllm_server.py --model LLaMA-Factory-main/output/qwen3_lora_sft_int4 --port 8000
+```
+
+10. 生成 `summary_test_pred.json`
+```bash
+cd /root/autodl-tmp/XIAOMI_SU7_RAG/LLaMA-Factory-main
+python predict.py
+```
+
+11. 校验 summary 文件
+```bash
+cd /root/autodl-tmp/XIAOMI_SU7_RAG/LLaMA-Factory-main
+ls -l data/summary_train.json data/summary_test.json data/summary_test_pred.json
+```
 
 ### 📊 数据文件说明
 
