@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-# --------------------------------------------
-# 项目名称: LLM任务型对话Agent
-# 版权所有  ©丁师兄大模型
-# --------------------------------------------
-
-
 import os
 import json
 from langchain_openai import ChatOpenAI
@@ -15,18 +8,51 @@ from ragas import EvaluationDataset
 from openai import OpenAI
 from tqdm import tqdm
 
+# 尝试从 .env 文件加载环境变量
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+    print("[INFO] 已从 .env 文件加载环境变量")
+except ImportError:
+    print("[WARNING] 未安装 python-dotenv，将使用系统环境变量")
+
+# 本地 vLLM 服务配置
 openai_api_key = "EMPTY"
 openai_api_base = "http://localhost:8000/v1"
+
+# 检查豆包 API 环境变量
+print("\n[INFO] 检查豆包 API 配置...")
+doubao_config = {
+    "model": os.environ.get("DOUBAO_MODEL_NAME"),
+    "api_key": os.environ.get("DOUBAO_API_KEY"),
+    "base_url": os.environ.get("DOUBAO_BASE_URL")
+}
+
+missing_config = [key for key, value in doubao_config.items() if not value]
+if missing_config:
+    raise EnvironmentError(
+        f"[ERROR] 缺少必需的豆包 API 配置: {', '.join(missing_config)}\n"
+        f"请在 .env 文件中配置或设置环境变量"
+    )
+
+print("[INFO] ✅ 豆包 API 配置检查通过")
+print(f"[INFO]   - DOUBAO_MODEL_NAME: {doubao_config['model']}")
+print(f"[INFO]   - DOUBAO_API_KEY: {'*' * len(doubao_config['api_key'])}")
+print(f"[INFO]   - DOUBAO_BASE_URL: {doubao_config['base_url']}")
 
 client = OpenAI(
     api_key=openai_api_key,
     base_url=openai_api_base,
 )
 
-import os
-
 test_data_path = os.path.join(os.getcwd(), "data", "summary_test.json")
 test_data = json.load(open(test_data_path))
+
+print("\n[INFO] ========== 开始预测任务 ==========")
+print(f"[INFO] 预测模型: 本地 vLLM 服务 (qwen3_lora_sft_int4)")
+print(f"[INFO] 服务地址: {openai_api_base}")
+print(f"[INFO] 预测数据: {len(test_data)} 条")
+
 for info in tqdm(test_data):
     # 构建模型的完整路径 - 在 LLaMA-Factory-main 目录下
     model_path = os.path.join(os.getcwd(), "output", "qwen3_lora_sft_int4")
@@ -63,11 +89,16 @@ test_data = json.load(open(pred_data_path))
 评估采用了精确率和召回率两个指标
 """
 
+print("\n[INFO] ========== 开始 RAG 评估 ==========")
+print(f"[INFO] 评估模型: 豆包 API ({doubao_config['model']})")
+print(f"[INFO] 评估数据: {len(test_data)} 条")
+print("[INFO] 评估指标: LLMContextRecall, LLMContextPrecisionWithReference")
+
 # 使用豆包 API 进行评估
 llm = ChatOpenAI(
-    model=os.environ["DOUBAO_MODEL_NAME"], 
-    api_key=os.environ["DOUBAO_API_KEY"], 
-    base_url=os.environ["DOUBAO_BASE_URL"]
+    model=doubao_config["model"], 
+    api_key=doubao_config["api_key"], 
+    base_url=doubao_config["base_url"]
 )
 
 dataset = []
