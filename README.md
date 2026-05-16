@@ -509,27 +509,17 @@ cp data/summary_data/test.json LLaMA-Factory-main/data/summary_test.json
 8. 生成量化模型（`output/qwen3_lora_sft_int4/`）
 ```bash
 cd /root/autodl-tmp/XIAOMI_SU7_RAG/LLaMA-Factory-main
-pip install llmcompressor
 python awq_quant.py
 ls -l output/qwen3_lora_sft_int4
 ```
-
-说明：
-- 使用 llmcompressor（vLLM 维护）进行 AWQ 量化
-- 自动使用训练数据作为校准集
-- 输出量化模型到 `output/qwen3_lora_sft_int4/`
 
 注意：量化前需先完成第 4 步，确保 `output/qwen3_lora_sft/` 已存在。
 
 9. 启动 vLLM 推理服务（新终端）
 ```bash
 cd /root/autodl-tmp/XIAOMI_SU7_RAG
-python deploy/auto_vllm_server.py --model LLaMA-Factory-main/output/qwen3_lora_sft_int4 --port 8000 --quantization none
+python deploy/auto_vllm_server.py --model LLaMA-Factory-main/output/qwen3_lora_sft_int4 --port 8000
 ```
-
-说明：
-- 使用预量化的 AWQ 模型
-- `--quantization none` 表示不使用额外量化
 
 10. 生成 `summary_test_pred.json`
 ```bash
