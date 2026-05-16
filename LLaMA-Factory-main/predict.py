@@ -32,7 +32,7 @@ class DoubaoRagasWrapper:
         """设置运行配置（Ragas 要求的方法）"""
         self.run_config = config
     
-    def generate(self, prompts: List[str]) -> List[str]:
+    def generate(self, prompts: List[str], **kwargs) -> List[str]:
         """生成响应，将豆包 API 的 JSON 输出转换为 Ragas 期望的格式"""
         results = []
         for prompt in prompts:
@@ -64,9 +64,9 @@ class DoubaoRagasWrapper:
                 results.append("")
         return results
     
-    async def agenerate(self, prompts: List[str]) -> List[str]:
+    async def agenerate(self, prompts: List[str], **kwargs) -> List[str]:
         """异步生成响应"""
-        return self.generate(prompts)
+        return self.generate(prompts, **kwargs)
     
     @property
     def llm(self):
@@ -165,16 +165,18 @@ evaluator_llm = DoubaoRagasWrapper(
 
 dataset = []
 for g in test_data:
-    query = g["query"] # 输入问题
-    reference = g["output"] # 参考答案
-    response = g["response"] #生成的答案
-    context = [g["context"]] # 上下文
+    # 确保字段名一致性，使用预测部分对应的字段
+    query = g.get("query", g.get("instruction", ""))  # 尝试获取query或instruction作为输入问题
+    reference = g.get("output", "")  # 参考答案
+    response = g.get("response", "")  # 生成的答案
+    context = [g.get("context", "")]  # 上下文，如果不存在则使用空字符串
+    
     dataset.append(
         {
-            "user_input":query,
+            "user_input": query,
             "retrieved_contexts": context,
-            "response":response,
-            "reference":reference
+            "response": response,
+            "reference": reference
         }
     )
 
