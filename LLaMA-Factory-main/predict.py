@@ -1,26 +1,18 @@
 import os
 import json
-import logging
 from typing import Any, List, Mapping, Optional
 
-from langchain_core.language_models.llms import LLM
+from langchain.llms.base import LLM
 from openai import OpenAI, AsyncOpenAI
-from ragas import evaluate, EvaluationDataset
+from dotenv import load_dotenv
+from datasets import load_dataset
+from ragas import evaluate
 from ragas.metrics import LLMContextRecall, LLMContextPrecisionWithReference
-from tqdm import tqdm
 
-
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-    print("[INFO] 已从 .env 文件加载环境变量")
-except ImportError:
-    print("[WARNING] 未安装 python-dotenv，将使用系统环境变量")
+load_dotenv()
 
 
 class DoubaoLangChainLLM(LLM):
-    """使用 LangChain LLM 基类包装豆包 API，确保与 Ragas 兼容"""
-    
     model: str = "doubao-1-5-lite-32k-250115"
     api_key: str = ""
     base_url: str = "https://ark.cn-beijing.volces.com/api/v3"
@@ -35,23 +27,29 @@ class DoubaoLangChainLLM(LLM):
             self.base_url = base_url
         self._client = None
         self._async_client = None
-    
+
     @property
-    def _client_instance(self) -> OpenAI:
+    def _client_instance(self):
         if self._client is None:
-            self._client = OpenAI(api_key=self.api_key, base_url=self.base_url)
+            self._client = OpenAI(
+                api_key=self.api_key,
+                base_url=self.base_url,
+            )
         return self._client
-    
+
     @property
-    def _async_client_instance(self) -> AsyncOpenAI:
+    def _async_client_instance(self):
         if self._async_client is None:
-            self._async_client = AsyncOpenAI(api_key=self.api_key, base_url=self.base_url)
+            self._async_client = AsyncOpenAI(
+                api_key=self.api_key,
+                base_url=self.base_url,
+            )
         return self._async_client
-    
+
     @property
     def _llm_type(self) -> str:
         return "doubao"
-    
+
     def _call(
         self,
         prompt: str,
@@ -72,9 +70,9 @@ class DoubaoLangChainLLM(LLM):
                 if "classifications" in json_output:
                     result_lines = []
                     for item in json_output["classifications"]:
-                        statement = item.get("statement", "")
+                        statement = item.get("statement", "").strip()
                         attributed = item.get("attributed", 0)
-                        if statement.strip() in ["无答案", "没有答案", "无", "-"]:
+                        if not statement or statement in ["无答案", "没有答案", "无", "-"]:
                             continue
                         if attributed:
                             result_lines.append(f"SUPPORTED {statement}")
@@ -83,18 +81,21 @@ class DoubaoLangChainLLM(LLM):
                     if result_lines:
                         return "\n".join(result_lines)
                     else:
-                        return "NOT_SUPPORTED No relevant information"
+                        return "NOT_SUPPORTED No relevant information found in context"
                 else:
+                    content = str(content).strip()
+                    if not content or content in ["无答案", "没有答案", "无", "-"]:
+                        return "NOT_SUPPORTED No relevant information found in context"
                     return content
             except json.JSONDecodeError:
-                content = content.strip()
-                if content in ["无答案", "没有答案", "无", "-", ""]:
-                    return "NOT_SUPPORTED No relevant information"
+                content = str(content).strip()
+                if not content or content in ["无答案", "没有答案", "无", "-"]:
+                    return "NOT_SUPPORTED No relevant information found in context"
                 return content
         except Exception as e:
             print(f"[ERROR] 同步 API 调用失败: {e}")
-            return "NOT_SUPPORTED No relevant information"
-    
+            return "NOT_SUPPORTED No relevant information found in context"
+
     async def _acall(
         self,
         prompt: str,
@@ -115,9 +116,9 @@ class DoubaoLangChainLLM(LLM):
                 if "classifications" in json_output:
                     result_lines = []
                     for item in json_output["classifications"]:
-                        statement = item.get("statement", "")
+                        statement = item.get("statement", "").strip()
                         attributed = item.get("attributed", 0)
-                        if statement.strip() in ["无答案", "没有答案", "无", "-"]:
+                        if not statement or statement in ["无答案", "没有答案", "无", "-"]:
                             continue
                         if attributed:
                             result_lines.append(f"SUPPORTED {statement}")
@@ -126,18 +127,21 @@ class DoubaoLangChainLLM(LLM):
                     if result_lines:
                         return "\n".join(result_lines)
                     else:
-                        return "NOT_SUPPORTED No relevant information"
+                        return "NOT_SUPPORTED No relevant information found in context"
                 else:
+                    content = str(content).strip()
+                    if not content or content in ["无答案", "没有答案", "无", "-"]:
+                        return "NOT_SUPPORTED No relevant information found in context"
                     return content
             except json.JSONDecodeError:
-                content = content.strip()
-                if content in ["无答案", "没有答案", "无", "-", ""]:
-                    return "NOT_SUPPORTED No relevant information"
+                content = str(content).strip()
+                if not content or content in ["无答案", "没有答案", "无", "-"]:
+                    return "NOT_SUPPORTED No relevant information found in context"
                 return content
         except Exception as e:
             print(f"[ERROR] 异步 API 调用失败: {e}")
-            return "NOT_SUPPORTED No relevant information"
-    
+            return "NOT_SUPPORTED No relevant information found in context"
+
     @property
     def _identifying_params(self) -> Mapping[str, Any]:
         return {
@@ -146,126 +150,71 @@ class DoubaoLangChainLLM(LLM):
         }
 
 
-openai_api_key = "EMPTY"
-openai_api_base = "http://localhost:8000/v1"
+def main():
+    print("[INFO] 加载环境变量...")
+    api_key = os.getenv("DOUBAO_API_KEY")
+    if not api_key:
+        raise ValueError("请设置 DOUBAO_API_KEY 环境变量")
 
-
-print("\n[INFO] 检查豆包 API 配置...")
-doubao_config = {
-    "model": os.environ.get("DOUBAO_MODEL_NAME"),
-    "api_key": os.environ.get("DOUBAO_API_KEY"),
-    "base_url": os.environ.get("DOUBAO_BASE_URL")
-}
-
-missing_config = [key for key, value in doubao_config.items() if not value]
-if missing_config:
-    raise EnvironmentError(
-        f"[ERROR] 缺少必需的豆包 API 配置: {', '.join(missing_config)}\n"
-        f"请在 .env 文件中配置或设置环境变量"
+    print(f"[INFO] 初始化豆包 LLM...")
+    llm = DoubaoLangChainLLM(
+        model="doubao-1-5-lite-32k-250115",
+        api_key=api_key,
+        base_url="https://ark.cn-beijing.volces.com/api/v3"
     )
+    print(f"[INFO] 评估模型: 豆包 API ({llm.model})")
 
-print("[INFO] ✅ 豆包 API 配置检查通过")
-print(f"[INFO]   - DOUBAO_MODEL_NAME: {doubao_config['model']}")
-print(f"[INFO]   - DOUBAO_API_KEY: {'*' * len(doubao_config['api_key'])}")
-print(f"[INFO]   - DOUBAO_BASE_URL: {doubao_config['base_url']}")
+    print("[INFO] 加载评估数据集...")
+    try:
+        with open("data/ragas_test_data.json", "r", encoding="utf-8") as f:
+            test_data = json.load(f)
+        print(f"[INFO] 评估数据: {len(test_data)} 条")
+    except Exception as e:
+        print(f"[ERROR] 加载数据集失败: {e}")
+        raise
 
-client = OpenAI(
-    api_key=openai_api_key,
-    base_url=openai_api_base,
-)
-
-test_data_path = os.path.join(os.getcwd(), "data", "summary_test.json")
-pred_data_path = os.path.join(os.getcwd(), "data", "summary_test_pred.json")
-
-
-if os.path.exists(pred_data_path):
-    print(f"\n[INFO] 检测到已存在预测文件: {pred_data_path}")
-    print("[INFO] 将跳过预测阶段，直接加载已有预测结果进行评估")
-    with open(pred_data_path, "r", encoding="utf-8") as f:
-        test_data = json.load(f)
-else:
-    with open(test_data_path, "r", encoding="utf-8") as f:
-        test_data = json.load(f)
-
-    print("\n[INFO] ========== 开始预测任务 ==========")
-    print(f"[INFO] 预测模型: 本地 vLLM 服务 (qwen3_lora_sft_int4)")
-    print(f"[INFO] 服务地址: {openai_api_base}")
-    print(f"[INFO] 预测数据: {len(test_data)} 条")
-
-    for info in tqdm(test_data):
-        model_path = os.path.join(os.getcwd(), "output", "qwen3_lora_sft_int4")
-        model_path = os.path.abspath(model_path)
-        
-        chat_response = client.chat.completions.create(
-            model=model_path,
-            messages=[
-                {
-                    "role": "user",
-                    "content": info["instruction"]
-                }
-            ],
-            max_tokens=4096,
-            frequency_penalty=2.0,
-            temperature=0.001,
-            top_p=0.95,
-            extra_body={
-                "top_k": 1,
-                "chat_template_kwargs": {"enable_thinking": False},
-            },
-        )
-        info["response"] = chat_response.choices[0].message.content
-
-    with open(pred_data_path, "w", encoding="utf-8") as fd:
-        json.dump(test_data, fd, ensure_ascii=False, indent=4)
-
-
-print("\n[INFO] ========== 开始 RAG 评估 ==========")
-print(f"[INFO] 评估模型: 豆包 API ({doubao_config['model']})")
-print(f"[INFO] 评估数据: {len(test_data)} 条")
-print("[INFO] 评估指标: LLMContextRecall, LLMContextPrecisionWithReference")
-
-
-evaluator_llm = DoubaoLangChainLLM(
-    model=doubao_config["model"],
-    api_key=doubao_config["api_key"],
-    base_url=doubao_config["base_url"]
-)
-
-dataset = []
-for g in test_data:
-    query = g.get("query", g.get("instruction", ""))
-    reference = g.get("output", "")
-    response = g.get("response", "")
-    context = [g.get("context", "")]
+    print("[INFO] 准备评估数据格式...")
+    dataset_dict = {
+        "question": [],
+        "contexts": [],
+        "answer": [],
+        "ground_truth": []
+    }
     
-    dataset.append(
-        {
-            "user_input": query,
-            "retrieved_contexts": context,
-            "response": response,
-            "reference": reference
-        }
-    )
+    for item in test_data:
+        dataset_dict["question"].append(item.get("question", ""))
+        dataset_dict["contexts"].append([item.get("context", "")])
+        dataset_dict["answer"].append(item.get("answer", ""))
+        dataset_dict["ground_truth"].append([item.get("ground_truth", "")])
+    
+    dataset = load_dataset("json", data_files={"train": "data/ragas_test_data.json"})["train"]
+    
+    print("[INFO] 初始化评估指标...")
+    metrics = [
+        LLMContextRecall(llm=llm),
+        LLMContextPrecisionWithReference(llm=llm)
+    ]
+    print(f"[INFO] 评估指标: {', '.join([m.__class__.__name__ for m in metrics])}")
 
-evaluation_dataset = EvaluationDataset.from_list(dataset)
+    print("[INFO] 开始评估...")
+    try:
+        result = evaluate(
+            dataset=dataset,
+            metrics=metrics,
+        )
+        
+        print("[INFO] 评估完成!")
+        print(result)
+        
+        print("[INFO] 保存评估结果...")
+        with open("data/ragas_evaluation_result.json", "w", encoding="utf-8") as f:
+            json.dump(result.to_dict(), f, ensure_ascii=False, indent=2)
+        print("[INFO] 结果已保存到 data/ragas_evaluation_result.json")
+        
+    except Exception as e:
+        print(f"[ERROR] 评估失败: {e}")
+        raise
 
 
-logging.getLogger("ragas").setLevel(logging.ERROR)
-logging.getLogger("httpx").setLevel(logging.ERROR)
-logging.getLogger("ragas.evaluation").setLevel(logging.ERROR)
-logging.getLogger("ragas.metrics").setLevel(logging.ERROR)
-logging.getLogger("ragas.executor").setLevel(logging.ERROR)
-
-
-os.environ["RAGAS_VERBOSE"] = "false"
-os.environ["RAGAS_DEBUG"] = "false"
-
-
-result = evaluate(
-    dataset=evaluation_dataset,
-    metrics=[LLMContextRecall(), LLMContextPrecisionWithReference()],
-    llm=evaluator_llm,
-    show_progress=True,
-    raise_exceptions=False
-)
-print("评估结果：", result)
+if __name__ == "__main__":
+    main()
