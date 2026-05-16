@@ -23,10 +23,17 @@ client = OpenAI(
     base_url=openai_api_base,
 )
 
-test_data = json.load(open("./data/summary_test.json"))
+import os
+
+test_data_path = os.path.join(os.getcwd(), "data", "summary_test.json")
+test_data = json.load(open(test_data_path))
 for info in tqdm(test_data):
+    # 构建模型的完整路径 - 在 LLaMA-Factory-main 目录下
+    model_path = os.path.join(os.getcwd(), "output", "qwen3_lora_sft_int4")
+    model_path = os.path.abspath(model_path)
+    
     chat_response = client.chat.completions.create(
-        model="qwen3_lora_sft_int4",
+        model=model_path,
         messages=[
             {
                 "role": "user",
@@ -44,10 +51,11 @@ for info in tqdm(test_data):
     )
     info["response"] = chat_response.choices[0].message.content
 
-with open("./data/summary_test_pred.json", "w") as fd:
+pred_data_path = os.path.join(os.getcwd(), "data", "summary_test_pred.json")
+with open(pred_data_path, "w") as fd:
     fd.write(json.dumps(test_data, ensure_ascii=False, indent=4))
 
-test_data = json.load(open("./data/summary_test_pred.json"))
+test_data = json.load(open(pred_data_path))
 
 
 """
