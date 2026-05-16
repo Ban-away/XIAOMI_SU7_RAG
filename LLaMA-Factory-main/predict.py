@@ -63,7 +63,12 @@ test_data = json.load(open(pred_data_path))
 评估采用了精确率和召回率两个指标
 """
 
-llm = ChatOpenAI(model=os.environ["DOUBAO_MODEL_NAME"], api_key=os.environ["DOUBAO_API_KEY"], base_url=os.environ["DOUBAO_BASE_URL"])
+# 使用豆包 API 进行评估
+llm = ChatOpenAI(
+    model=os.environ["DOUBAO_MODEL_NAME"], 
+    api_key=os.environ["DOUBAO_API_KEY"], 
+    base_url=os.environ["DOUBAO_BASE_URL"]
+)
 
 dataset = []
 for g in test_data:
