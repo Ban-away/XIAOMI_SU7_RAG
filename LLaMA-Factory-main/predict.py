@@ -89,27 +89,14 @@ class DoubaoLangChainLLM(LLM):
         stop: Optional[List[str]] = None,
         **kwargs: Any,
     ) -> str:
-        """异步调用豆包 API"""
+        """异步调用豆包 API - 直接返回原始响应内容，由 Ragas 自行处理解析"""
         try:
             response = await self._async_client_instance.chat.completions.create(
                 model=self.model,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.01,
             )
-            content = response.choices[0].message.content
-            
-            try:
-                json_output = json.loads(content)
-                if "classifications" in json_output:
-                    classification_str = "\n".join([
-                        f"{i+1}. Statement: {item.get('statement', '')}"
-                        for i, item in enumerate(json_output["classifications"])
-                    ])
-                    return classification_str
-                else:
-                    return content
-            except json.JSONDecodeError:
-                return content
+            return response.choices[0].message.content
         except Exception as e:
             print(f"[ERROR] 异步 API 调用失败: {e}")
             return ""
