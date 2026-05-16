@@ -506,11 +506,8 @@ cp data/summary_data/test.json LLaMA-Factory-main/data/summary_test.json
 
 8. 启动 vLLM 推理服务（新终端）
 ```bash
-cd /root/autodl-tmp/XIAOMI_SU7_RAG/LLaMA-Factory-main
-vllm serve output/qwen3_lora_sft_int4 \
-  --port 8000 \
-  --tensor-parallel-size 1 \
-  --trust-remote-code
+cd /root/autodl-tmp/XIAOMI_SU7_RAG
+python deploy/auto_vllm_server.py --model LLaMA-Factory-main/output/qwen3_lora_sft_int4 --port 8000
 ```
 
 9. 生成 `summary_test_pred.json`

@@ -79,11 +79,15 @@ def main() -> None:
     if gpu_count <= 0:
         raise RuntimeError("No available CUDA GPU detected. Cannot start vLLM.")
 
+    # 将相对路径转换为绝对路径，避免 vLLM 将其解析为 Hugging Face repo ID
+    model_path = os.path.abspath(args.model)
+    print(f"[INFO] Model path: {model_path}")
+
     print(f"[INFO] Detected GPU count: {gpu_count}")
     command = [
         "vllm",
         "serve",
-        args.model,
+        model_path,
         "--port",
         str(args.port),
         "--max-model-len",
@@ -92,6 +96,7 @@ def main() -> None:
         str(args.gpu_memory_utilization),
         "--dtype",
         args.dtype,
+        "--trust-remote-code",
     ]
 
     if gpu_count > 1 and not args.disable_auto_tp:
@@ -115,4 +120,3 @@ if __name__ == "__main__":
     except subprocess.CalledProcessError as exc:
         print(f"[ERROR] vLLM exited with code {exc.returncode}", file=sys.stderr)
         raise
-
