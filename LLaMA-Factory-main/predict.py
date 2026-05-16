@@ -3,10 +3,10 @@ import json
 from langchain_openai import ChatOpenAI
 from ragas.metrics import LLMContextRecall, LLMContextPrecisionWithReference
 from ragas import evaluate
-from ragas.llms import LangchainLLMWrapper
 from ragas import EvaluationDataset
 from openai import OpenAI
 from tqdm import tqdm
+from typing import Any, List, Optional, Dict, Union
 
 # 尝试从 .env 文件加载环境变量
 try:
@@ -15,6 +15,58 @@ try:
     print("[INFO] 已从 .env 文件加载环境变量")
 except ImportError:
     print("[WARNING] 未安装 python-dotenv，将使用系统环境变量")
+
+
+class DoubaoRagasWrapper:
+    """自定义 LLM wrapper，适配豆包 API 的输出格式"""
+    
+    def __init__(self, model: str, api_key: str, base_url: str):
+        self.client = OpenAI(
+            api_key=api_key,
+            base_url=base_url,
+        )
+        self.model = model
+    
+    def generate(self, prompts: List[str]) -> List[str]:
+        """生成响应，将豆包 API 的 JSON 输出转换为 Ragas 期望的格式"""
+        results = []
+        for prompt in prompts:
+            try:
+                response = self.client.chat.completions.create(
+                    model=self.model,
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0.01,
+                )
+                content = response.choices[0].message.content
+                
+                # 尝试解析豆包 API 返回的 JSON 格式
+                try:
+                    json_output = json.loads(content)
+                    if "classifications" in json_output:
+                        # 将分类结果转换为 Ragas 期望的格式
+                        classification_str = "\n".join([
+                            f"{i+1}. Statement: {item.get('statement', '')}"
+                            for i, item in enumerate(json_output["classifications"])
+                        ])
+                        results.append(classification_str)
+                    else:
+                        results.append(content)
+                except json.JSONDecodeError:
+                    # 如果不是 JSON 格式，直接返回原始内容
+                    results.append(content)
+            except Exception as e:
+                print(f"[ERROR] API 调用失败: {e}")
+                results.append("")
+        return results
+    
+    async def agenerate(self, prompts: List[str]) -> List[str]:
+        """异步生成响应"""
+        return self.generate(prompts)
+    
+    @property
+    def llm(self):
+        return self
+
 
 # 本地 vLLM 服务配置
 openai_api_key = "EMPTY"
@@ -99,10 +151,10 @@ print(f"[INFO] 评估模型: 豆包 API ({doubao_config['model']})")
 print(f"[INFO] 评估数据: {len(test_data)} 条")
 print("[INFO] 评估指标: LLMContextRecall, LLMContextPrecisionWithReference")
 
-# 使用豆包 API 进行评估
-llm = ChatOpenAI(
-    model=doubao_config["model"], 
-    api_key=doubao_config["api_key"], 
+# 创建自定义的豆包 API wrapper
+evaluator_llm = DoubaoRagasWrapper(
+    model=doubao_config["model"],
+    api_key=doubao_config["api_key"],
     base_url=doubao_config["base_url"]
 )
 
@@ -122,7 +174,6 @@ for g in test_data:
     )
 
 evaluation_dataset = EvaluationDataset.from_list(dataset)
-evaluator_llm = LangchainLLMWrapper(llm)
 
 result = evaluate(dataset=evaluation_dataset,metrics=[LLMContextRecall(), LLMContextPrecisionWithReference()],llm=evaluator_llm)
 print("评估结果：", result)

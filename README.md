@@ -518,12 +518,14 @@ cd /root/autodl-tmp/XIAOMI_SU7_RAG
 python deploy/auto_vllm_server.py --model LLaMA-Factory-main/output/qwen3_lora_sft_int4 --port 8000
 ```
 
-9. 生成 `summary_test_pred.json`
+9. 生成 `summary_test_pred.json`（含 API 评估）
 
 ```bash
 cd /root/autodl-tmp/XIAOMI_SU7_RAG/LLaMA-Factory-main
 python predict.py
 ```
+
+**评估方式：** 使用豆包 API 进行 RAG 评估（需配置 `DOUBAO_MODEL_NAME`、`DOUBAO_API_KEY`、`DOUBAO_BASE_URL` 环境变量）
 
 10. 校验 summary 文件
 
