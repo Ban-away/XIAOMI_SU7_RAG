@@ -58,9 +58,13 @@ class DoubaoLangChainLLM(LLM):
         **kwargs: Any,
     ) -> str:
         try:
-            from langchain_core.prompt_values import StringPromptValue
-            if isinstance(prompt, StringPromptValue):
+            # 处理 LangChain 的各种 prompt 类型
+            if hasattr(prompt, 'to_string') and callable(getattr(prompt, 'to_string')):
                 prompt = prompt.to_string()
+            elif hasattr(prompt, '__str__'):
+                prompt = str(prompt)
+            else:
+                prompt = str(prompt)
             
             response = self._client_instance.chat.completions.create(
                 model=self.model,
@@ -107,9 +111,13 @@ class DoubaoLangChainLLM(LLM):
         **kwargs: Any,
     ) -> str:
         try:
-            from langchain_core.prompt_values import StringPromptValue
-            if isinstance(prompt, StringPromptValue):
+            # 处理 LangChain 的各种 prompt 类型
+            if hasattr(prompt, 'to_string') and callable(getattr(prompt, 'to_string')):
                 prompt = prompt.to_string()
+            elif hasattr(prompt, '__str__'):
+                prompt = str(prompt)
+            else:
+                prompt = str(prompt)
             
             response = await self._async_client_instance.chat.completions.create(
                 model=self.model,
