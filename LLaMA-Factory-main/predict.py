@@ -37,9 +37,19 @@ class DoubaoRagasWrapper:
         results = []
         for prompt in prompts:
             try:
+                # 处理不同类型的 prompt 对象，确保转换为字符串
+                if hasattr(prompt, 'text'):
+                    prompt_text = prompt.text
+                elif hasattr(prompt, 'to_string'):
+                    prompt_text = prompt.to_string()
+                elif isinstance(prompt, str):
+                    prompt_text = prompt
+                else:
+                    prompt_text = str(prompt)
+                
                 response = self.client.chat.completions.create(
                     model=self.model,
-                    messages=[{"role": "user", "content": prompt}],
+                    messages=[{"role": "user", "content": prompt_text}],
                     temperature=0.01,
                 )
                 content = response.choices[0].message.content
@@ -183,10 +193,20 @@ for g in test_data:
 evaluation_dataset = EvaluationDataset.from_list(dataset)
 
 import logging
-# 设置日志级别以减少数据样本输出，但保留进度条
-logging.getLogger("ragas").setLevel(logging.WARNING)
-logging.getLogger("httpx").setLevel(logging.WARNING)
+import sys
+from contextlib import redirect_stderr, redirect_stdout
+import os
+
+# 设置日志级别以完全抑制数据样本输出，但保留进度条
+logging.getLogger("ragas").setLevel(logging.ERROR)
+logging.getLogger("httpx").setLevel(logging.ERROR)
 logging.getLogger("ragas.evaluation").setLevel(logging.ERROR)
+logging.getLogger("ragas.metrics").setLevel(logging.ERROR)
+logging.getLogger("ragas.executor").setLevel(logging.ERROR)
+
+# 设置环境变量来进一步抑制输出
+os.environ["RAGAS_VERBOSE"] = "false"
+os.environ["RAGAS_DEBUG"] = "false"
 
 # 执行评估，只显示进度条，不打印数据样本
 result = evaluate(
