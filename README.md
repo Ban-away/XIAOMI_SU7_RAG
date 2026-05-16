@@ -509,7 +509,8 @@ cp data/summary_data/test.json LLaMA-Factory-main/data/summary_test.json
 cd /root/autodl-tmp/XIAOMI_SU7_RAG/LLaMA-Factory-main
 vllm serve output/qwen3_lora_sft_int4 \
   --port 8000 \
-  --tensor-parallel-size 1
+  --tensor-parallel-size 1 \
+  --trust-remote-code
 ```
 
 9. 生成 `summary_test_pred.json`
