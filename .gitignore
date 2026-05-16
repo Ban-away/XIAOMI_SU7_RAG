@@ -42,8 +42,6 @@ data/saved_index/
 data/rerank_data/
 data/summary_data/
 data/qa_pairs/
-data/ut/test_doc2.txt
-data/ut/test_docs.txt
 
 # 解析PDF导出的图片资源
 data/saved_images/
