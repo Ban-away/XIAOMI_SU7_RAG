@@ -40,6 +40,5 @@ lr_scheduler_type: cosine
 warmup_ratio: 0.1
 bf16: true
 optim: adamw_torch_fused
-attn_implementation: flash_attention_2
 ddp_timeout: 180000000
 resume_from_checkpoint: null
