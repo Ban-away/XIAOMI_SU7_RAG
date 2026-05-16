@@ -182,5 +182,14 @@ for g in test_data:
 
 evaluation_dataset = EvaluationDataset.from_list(dataset)
 
-result = evaluate(dataset=evaluation_dataset,metrics=[LLMContextRecall(), LLMContextPrecisionWithReference()],llm=evaluator_llm)
+import logging
+# 设置日志级别以减少输出
+logging.getLogger("ragas").setLevel(logging.WARNING)
+logging.getLogger("httpx").setLevel(logging.WARNING)
+
+result = evaluate(
+    dataset=evaluation_dataset,
+    metrics=[LLMContextRecall(), LLMContextPrecisionWithReference()],
+    llm=evaluator_llm
+)
 print("评估结果：", result)
