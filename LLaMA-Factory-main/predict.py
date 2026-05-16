@@ -26,6 +26,11 @@ class DoubaoRagasWrapper:
             base_url=base_url,
         )
         self.model = model
+        self.run_config = None
+    
+    def set_run_config(self, config):
+        """设置运行配置（Ragas 要求的方法）"""
+        self.run_config = config
     
     def generate(self, prompts: List[str]) -> List[str]:
         """生成响应，将豆包 API 的 JSON 输出转换为 Ragas 期望的格式"""
