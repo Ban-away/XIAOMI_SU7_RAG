@@ -58,7 +58,7 @@ class DoubaoLangChainLLM(LLM):
         stop: Optional[List[str]] = None,
         **kwargs: Any,
     ) -> str:
-        """同步调用豆包 API"""
+        """同步调用豆包 API - 将 JSON 格式转换为 Ragas 期望的 SUPPORTED/NOT_SUPPORTED 格式"""
         try:
             response = self._client_instance.chat.completions.create(
                 model=self.model,
@@ -70,11 +70,15 @@ class DoubaoLangChainLLM(LLM):
             try:
                 json_output = json.loads(content)
                 if "classifications" in json_output:
-                    classification_str = "\n".join([
-                        f"{i+1}. Statement: {item.get('statement', '')}"
-                        for i, item in enumerate(json_output["classifications"])
-                    ])
-                    return classification_str
+                    result_lines = []
+                    for item in json_output["classifications"]:
+                        statement = item.get("statement", "")
+                        attributed = item.get("attributed", 0)
+                        if attributed:
+                            result_lines.append(f"SUPPORTED {statement}")
+                        else:
+                            result_lines.append(f"NOT_SUPPORTED {statement}")
+                    return "\n".join(result_lines)
                 else:
                     return content
             except json.JSONDecodeError:
@@ -89,14 +93,31 @@ class DoubaoLangChainLLM(LLM):
         stop: Optional[List[str]] = None,
         **kwargs: Any,
     ) -> str:
-        """异步调用豆包 API - 直接返回原始响应内容，由 Ragas 自行处理解析"""
+        """异步调用豆包 API - 将 JSON 格式转换为 Ragas 期望的 SUPPORTED/NOT_SUPPORTED 格式"""
         try:
             response = await self._async_client_instance.chat.completions.create(
                 model=self.model,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.01,
             )
-            return response.choices[0].message.content
+            content = response.choices[0].message.content
+            
+            try:
+                json_output = json.loads(content)
+                if "classifications" in json_output:
+                    result_lines = []
+                    for item in json_output["classifications"]:
+                        statement = item.get("statement", "")
+                        attributed = item.get("attributed", 0)
+                        if attributed:
+                            result_lines.append(f"SUPPORTED {statement}")
+                        else:
+                            result_lines.append(f"NOT_SUPPORTED {statement}")
+                    return "\n".join(result_lines)
+                else:
+                    return content
+            except json.JSONDecodeError:
+                return content
         except Exception as e:
             print(f"[ERROR] 异步 API 调用失败: {e}")
             return ""
