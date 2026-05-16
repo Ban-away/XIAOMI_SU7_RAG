@@ -42,3 +42,8 @@ bf16: true
 # optim: adamw_torch_fused  # 注释掉，使用默认优化器
 ddp_timeout: 180000000
 resume_from_checkpoint: null
+
+### distributed
+ddp_backend: nccl
+ddp_find_unused_parameters: false
+num_trainers: -1
