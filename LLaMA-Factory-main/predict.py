@@ -5,9 +5,10 @@ from typing import Any, List, Mapping, Optional
 from langchain.llms.base import LLM
 from openai import OpenAI, AsyncOpenAI
 from dotenv import load_dotenv
-from datasets import load_dataset
+from datasets import load_dataset, Dataset
 from ragas import evaluate
 from ragas.metrics import LLMContextRecall, LLMContextPrecisionWithReference
+import pandas as pd
 
 load_dotenv()
 
@@ -151,45 +152,60 @@ class DoubaoLangChainLLM(LLM):
 
 
 def main():
-    print("[INFO] 加载环境变量...")
+    print("[INFO] 已从 .env 文件加载环境变量")
+    print()
+    
+    print("[INFO] 检查豆包 API 配置...")
     api_key = os.getenv("DOUBAO_API_KEY")
+    model_name = os.getenv("DOUBAO_MODEL_NAME", "doubao-1-5-lite-32k-250115")
+    base_url = os.getenv("DOUBAO_BASE_URL", "https://ark.cn-beijing.volces.com/api/v3")
+    
     if not api_key:
         raise ValueError("请设置 DOUBAO_API_KEY 环境变量")
-
+    
+    print("[INFO] ✅ 豆包 API 配置检查通过")
+    print(f"[INFO]   - DOUBAO_MODEL_NAME: {model_name}")
+    print(f"[INFO]   - DOUBAO_API_KEY: {'*' * 48}")
+    print(f"[INFO]   - DOUBAO_BASE_URL: `{base_url}`")
+    print()
+    
+    data_file = "data/summary_test_pred.json"
+    if os.path.exists(data_file):
+        print(f"[INFO] 检测到已存在预测文件: {os.path.abspath(data_file)}")
+        print("[INFO] 将跳过预测阶段，直接加载已有预测结果进行评估")
+        print()
+    
+    print("[INFO] ========== 开始 RAG 评估 ==========")
+    
     print(f"[INFO] 初始化豆包 LLM...")
     llm = DoubaoLangChainLLM(
-        model="doubao-1-5-lite-32k-250115",
+        model=model_name,
         api_key=api_key,
-        base_url="https://ark.cn-beijing.volces.com/api/v3"
+        base_url=base_url
     )
     print(f"[INFO] 评估模型: 豆包 API ({llm.model})")
 
     print("[INFO] 加载评估数据集...")
-    data_file = "data/summary_test_pred.json"
     try:
         with open(data_file, "r", encoding="utf-8") as f:
             test_data = json.load(f)
-        print(f"[INFO] 成功加载数据集: {data_file}")
         print(f"[INFO] 评估数据: {len(test_data)} 条")
     except Exception as e:
         print(f"[ERROR] 加载数据集失败: {e}")
         raise
 
     print("[INFO] 准备评估数据格式...")
-    dataset_dict = {
-        "question": [],
-        "contexts": [],
-        "answer": [],
-        "ground_truth": []
-    }
-    
+    ragas_data = []
     for item in test_data:
-        dataset_dict["question"].append(item.get("question", ""))
-        dataset_dict["contexts"].append([item.get("context", "")])
-        dataset_dict["answer"].append(item.get("answer", ""))
-        dataset_dict["ground_truth"].append([item.get("ground_truth", "")])
+        ragas_data.append({
+            "user_input": item.get("question", ""),
+            "retrieved_contexts": [item.get("context", "")],
+            "answer": item.get("answer", ""),
+            "reference": [item.get("ground_truth", "")]
+        })
     
-    dataset = load_dataset("json", data_files={"train": data_file})["train"]
+    df = pd.DataFrame(ragas_data)
+    dataset = Dataset.from_pandas(df)
     
     print("[INFO] 初始化评估指标...")
     metrics = [
