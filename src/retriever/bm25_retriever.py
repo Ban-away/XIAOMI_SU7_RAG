@@ -4,6 +4,7 @@ import os
 import pickle
 import jieba
 import hashlib
+import threading
 from langchain.schema import Document
 from langchain_community.retrievers import BM25Retriever
 
@@ -23,6 +24,8 @@ class BM25(object):
 
         # 初始化BM25的知识库
         self.retriever = self.get_BM25_retriever(retrieve=retrieve)
+        # 线程锁，保护共享状态
+        self._lock = threading.Lock()
 
 
 
@@ -52,13 +55,15 @@ class BM25(object):
 
     def retrieve_topk(self, query, topk=10):
         # 获得得分在topk的文档和分数
-        # 动态设置本次召回条数
-        self.retriever.k = topk
-        # query_tokens = jieba.cut_for_search(query)
-        # query_tokens_filter = [t for t in query_tokens if t not in _stopwords]
-        # query = " ".join(query_tokens_filter)
-        # 执行检索并返回候选文档列表
-        ans_docs = self.retriever.get_relevant_documents(query)
+        # 使用锁保护共享状态，防止多线程竞争
+        with self._lock:
+            # 动态设置本次召回条数
+            self.retriever.k = topk
+            # query_tokens = jieba.cut_for_search(query)
+            # query_tokens_filter = [t for t in query_tokens if t not in _stopwords]
+            # query = " ".join(query_tokens_filter)
+            # 执行检索并返回候选文档列表
+            ans_docs = self.retriever.get_relevant_documents(query)
         return ans_docs
 
 
@@ -72,4 +77,3 @@ if __name__ == "__main__":
     bm25 = BM25(docs)
     bm25_res = bm25.retrieve_topk("座椅加热", 3)
     print(bm25_res)
-

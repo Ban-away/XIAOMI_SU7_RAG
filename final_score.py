@@ -37,7 +37,7 @@ MILVUS_RETRIEVE_SIZE = 20
 RERANK_SIZE          = 8
 HYDE                 = 1
 QUERY_REWRITE        = 1
-MAX_WORKERS          = 16   # 并发线程数（IO密集部分）
+MAX_WORKERS          = 4   # 并发线程数（IO密集部分）
 # ────────────────────────────────────────────────────────────
 
 # 预热检索器、重排器、向量评估模型
@@ -135,8 +135,11 @@ def main():
             try:
                 item = future.result()
                 result.append(item)
-                print(f"问题：{item['question'][:30]}...")
-                print(f"答案：{item['pred']['answer'][:60]}...")
+                print(f"原始问题：{item['question']}")
+                if QUERY_REWRITE:
+                    print(f"改写后：{item.get('rewritten_query', '')}")
+                print(f"答案：{item['pred']['answer']}")
+                print(f"cite_pages: {item['pred'].get('cite_pages', [])}, related_images: {item['pred'].get('related_images', [])}")
                 print("-" * 100)
             except Exception as e:
                 print(f"[WARN] 单条推理失败: {e}")

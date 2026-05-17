@@ -468,6 +468,10 @@ python src/server/semantic_chunk.py
 pip install --force-reinstall setuptools==69.0.0
 python build_index.py
 
+# 评估文档解析质量（可选）
+# 生成解析准确率报告，包含文本保留率、切分质量等指标
+python evaluate_parse_quality.py
+
 # 生成所有 QA 数据
 # 默认模式：跳过已存在的文件，不会覆盖
 python generate_all_data.py
@@ -598,6 +602,13 @@ docker-compose down
 
 > ⚠️ **注意**：`semantic-chunk` 服务仅在**建索引阶段**（`build_index.py`）需要，日常推理无需启动。  
 > 建索引时单独启动：`docker-compose up -d semantic-chunk`
+
+#### 文档解析质量评估
+
+```bash
+# 在 build_index.py 执行完成后，评估文档解析准确率
+python evaluate_parse_quality.py
+```
 
 ---
 
