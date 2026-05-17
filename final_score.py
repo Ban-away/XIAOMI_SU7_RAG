@@ -76,12 +76,17 @@ def report_score(result):
             join_keywords  = [w for w in keywords if w in pred]
             keyword_score  = calc_jaccard(join_keywords, keywords)
             score = semantic_score if not keywords else (
-                0.2 * keyword_score + 0.8 * semantic_score
+                0.15 * keyword_score + 0.85 * semantic_score
             )
 
         result[idx]["score"] = score
+        print("\n【打印低分样本：】\n")
         if score < 0.6:
-            print(f"低分样本: {item['question'][:30]}... 得分: {score:.3f}")
+            print(f"低分样本: {item['question']}")
+            print(f"参考回答: {gold}")
+            print(f"模型回答: {pred}")
+            print(f"得分: {score:.3f}")
+            print("-" * 100)
     return result
 
 
@@ -121,35 +126,45 @@ def process_one(item):
 
 
 # ── 主流程 ───────────────────────────────────────────────────
-def main():
-    fd = open("data/qa_pairs/test_qa_pair_verify.json")
-    test_qa_pairs = json.load(fd)
-    fd.close()
-    print(f"[INFO] 共 {len(test_qa_pairs)} 条测试数据，MAX_WORKERS={MAX_WORKERS}")
-    print("-" * 100)
-
-    result = []
-    # ThreadPoolExecutor 并发处理：IO密集部分（检索+API）并发，GPU部分锁串行
-    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        futures = {executor.submit(process_one, item): item for item in test_qa_pairs}
-        for future in tqdm(as_completed(futures), total=len(futures),
-                           desc="推理进度", unit="问题"):
-            try:
-                item = future.result()
-                result.append(item)
-                print(f"【原始问题】：{item['question']}")
-                if QUERY_REWRITE:
-                    print(f"【改写后】：{item.get('rewritten_query', '')}")
-                print(f"【答案】：{item['pred']['answer']}")
-                print(f"【引用页码】：{item['pred'].get('cite_pages', [])}, 【相关图片】：{item['pred'].get('related_images', [])}")
-                print("-" * 100)
-            except Exception as e:
-                print(f"[WARN] 单条推理失败: {e}")
-
-    # 保存推理结果
-    with open("data/qa_pairs/test_qa_pair_pred.json", "w") as fw:
-        fw.write(json.dumps(result, ensure_ascii=False, indent=4))
-    print(f"[INFO] 推理结果已保存，共 {len(result)} 条")
+def main(): 
+     # 检查是否存在已保存的推理结果 
+     pred_file = "data/qa_pairs/test_qa_pair_pred.json" 
+     if os.path.exists(pred_file): 
+         print(f"[INFO] 发现已保存的推理结果，直接加载") 
+         with open(pred_file, 'r') as f: 
+             result = json.load(f) 
+         print(f"[INFO] 推理结果已加载，共 {len(result)} 条") 
+     else: 
+         fd = open("data/qa_pairs/test_qa_pair_verify.json") 
+         test_qa_pairs = json.load(fd) 
+         fd.close() 
+         print(f"[INFO] 共 {len(test_qa_pairs)} 条测试数据，MAX_WORKERS={MAX_WORKERS}") 
+         print("-" * 100) 
+ 
+ 
+         result = [] 
+         # ThreadPoolExecutor 并发处理：IO密集部分（检索+API）并发，GPU部分锁串行 
+         with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor: 
+             futures = {executor.submit(process_one, item): item for item in test_qa_pairs} 
+             for future in tqdm(as_completed(futures), total=len(futures), 
+                                desc="推理进度", unit="问题"): 
+                 try: 
+                     item = future.result() 
+                     result.append(item) 
+                     print(f"【原始问题】：{item['question']}") 
+                     if QUERY_REWRITE: 
+                         print(f"【改写后】：{item.get('rewritten_query', '')}") 
+                     print(f"【答案】：{item['pred']['answer']}") 
+                     print(f"【引用页码】：{item['pred'].get('cite_pages', [])}, 【相关图片】：{item['pred'].get('related_images', [])}") 
+                     print("-" * 100) 
+                 except Exception as e: 
+                     print(f"[WARN] 单条推理失败: {e}") 
+ 
+ 
+         # 保存推理结果 
+         with open(pred_file, "w") as fw: 
+             fw.write(json.dumps(result, ensure_ascii=False, indent=4)) 
+         print(f"[INFO] 推理结果已保存，共 {len(result)} 条")
 
     # ── 语义相似度 + 关键词加权评分 ─────────────────────────
     results    = report_score(result)
