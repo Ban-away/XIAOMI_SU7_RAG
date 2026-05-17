@@ -38,6 +38,9 @@ class BGEM3ReRanker(object):
 
     def rank(self, query, candidate_docs, topk=10):
         # 输入文档对，返回每一对(query, doc)的相关得分，并从大到小排序
+        if not candidate_docs:
+            return []
+            
         # 组装 query-doc 文本对
         pairs = [(query, doc.page_content) for doc in candidate_docs]
         # 批量编码后送入模型
@@ -48,28 +51,40 @@ class BGEM3ReRanker(object):
             return_tensors="pt",
             max_length=self.max_length,
         ).to("cuda")
+        
         with torch.no_grad():
             outputs = self.model(**inputs)
             
             # 处理不同模型的输出格式
             if hasattr(outputs, 'logits'):
+                # 标准序列分类模型
                 scores = outputs.logits
-            elif hasattr(outputs, 'last_hidden_state'):
-                # 对于没有 logits 的模型，使用 [CLS] token 的表示计算相似度
-                cls_embeddings = outputs.last_hidden_state[:, 0, :]
-                # 计算 query 和 doc 的相似度作为分数
-                query_emb = cls_embeddings[0::2]  # 偶数索引是 query
-                doc_emb = cls_embeddings[1::2]    # 奇数索引是 doc
-                scores = torch.sum(query_emb * doc_emb, dim=1).unsqueeze(1)
-            elif isinstance(outputs, torch.Tensor):
-                scores = outputs
-            elif isinstance(outputs, tuple) and len(outputs) > 0 and isinstance(outputs[0], torch.Tensor):
-                scores = outputs[0]
+            elif hasattr(outputs, 'scores'):
+                # 某些自定义重排模型直接输出 scores
+                scores = outputs.scores
+            elif isinstance(outputs, tuple) and len(outputs) > 0:
+                # 尝试从元组中获取分数
+                if hasattr(outputs[0], 'logits'):
+                    scores = outputs[0].logits
+                elif isinstance(outputs[0], torch.Tensor):
+                    scores = outputs[0]
+                else:
+                    # 对于返回 last_hidden_state 的模型，使用 CLS token 计算相似度
+                    if hasattr(outputs, 'last_hidden_state'):
+                        cls_embeddings = outputs.last_hidden_state[:, 0, :]
+                        # 计算每个文档与查询的相似度
+                        query_emb = cls_embeddings[0:1, :]  # 第一个样本作为参考
+                        scores = torch.matmul(cls_embeddings, query_emb.transpose(0, 1))
+                    else:
+                        raise RuntimeError(f"无法处理模型输出格式: {type(outputs)}")
             else:
                 raise RuntimeError(f"无法处理模型输出格式: {type(outputs)}")
         
         # 张量转 numpy，便于 Python 层排序
         scores = scores.detach().cpu().clone().numpy()
+        # 确保 scores 是一维数组
+        if scores.ndim > 1:
+            scores = scores.flatten()
         # 依据分数降序排序并截断 topk
         response = [
             doc
