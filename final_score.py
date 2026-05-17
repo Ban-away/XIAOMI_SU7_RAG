@@ -126,7 +126,6 @@ with tqdm(total=total_count, desc="推理进度", unit="问题", position=0, lea
         
         # 打印结果前刷新进度条
         pbar.refresh()
-        print(f"\n[问题 {idx+1}/{total_count}]")
         print(f"原始问题：{query}")
         if QUERY_REWRITE:
             print(f"改写后：{retrieve_query}")
