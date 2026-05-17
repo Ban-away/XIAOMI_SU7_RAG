@@ -98,8 +98,9 @@ print(f"开始推理，共 {len(test_qa_pairs)} 个问题...")
 print("-" * 100)
 
 # 创建进度条，固定在底部位置
-with tqdm(total=len(test_qa_pairs), desc="推理进度", unit="问题", position=0, leave=True) as pbar:
-    for item in test_qa_pairs:
+total_count = len(test_qa_pairs)
+with tqdm(total=total_count, desc="推理进度", unit="问题", position=0, leave=True) as pbar:
+    for idx, item in enumerate(test_qa_pairs):
         query = item["question"].strip()
         
         # Query 纠错改写：在检索前用LLM对query做纠错和扩写
@@ -119,7 +120,7 @@ with tqdm(total=len(test_qa_pairs), desc="推理进度", unit="问题", position
             milvus_docs = milvus_retriever.retrieve_topk(retrieve_query, topk=MILVUS_RETRIEVE_SIZE)
         merged_docs = merge_docs(bm25_docs, milvus_docs)
         ranked_docs = bge_minicpm_reranker.rank(query, merged_docs, topk=RERANK_SIZE)
-        context = "\n".join([str(idx+1) + "." + doc.page_content for idx, doc in enumerate(ranked_docs)])
+        context = "\n".join([str(i+1) + "." + doc.page_content for i, doc in enumerate(ranked_docs)])
         response = request_chat(query, context)
         answer = post_processing(response, ranked_docs)
         
@@ -129,7 +130,7 @@ with tqdm(total=len(test_qa_pairs), desc="推理进度", unit="问题", position
         print(f"原始问题：{query}")
         if QUERY_REWRITE:
             print(f"改写后：{retrieve_query}")
-        print(f"答案：{answer_dict['answer']}")
+        print(f"答案：{answer['answer']}")
         print("-" * 100)
         
         item["pred"] = answer
