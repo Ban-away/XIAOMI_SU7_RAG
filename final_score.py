@@ -28,7 +28,7 @@ from src.retriever.tfidf_retriever import TFIDF
 from src.retriever.faiss_retriever import FaissRetriever
 from src.retriever.milvus_retriever import MilvusRetriever 
 from src.client.llm_local_client import request_chat
-from src.client.llm_hyde_client import request_hyde
+from src.client.llm_hyde_client import request_hyde, request_query_rewrite
 from src.reranker.jina_reranker_v2 import JinaRerankerV2
 from src.constant import jina_reranker_v2_model_path
 from src.constant import qwen3_reranker_model_path 
@@ -43,10 +43,11 @@ jina_reranker = JinaRerankerV2(model_path=jina_reranker_v2_model_path)
 milvus_retriever.retrieve_topk("这是一条测试数据", topk=3)
 simModel = SentenceModel(model_name_or_path=text2vec_model_path, device='cuda:0')
 
-BM25_RETRIEVE_SIZE = 5
-MILVUS_RETRIEVE_SIZE = 10
-RERANK_SIZE = 5
-HYDE = 0
+BM25_RETRIEVE_SIZE = 10
+MILVUS_RETRIEVE_SIZE = 20
+RERANK_SIZE = 8  # 调大重排数量，给LLM更多上下文
+HYDE = 1
+QUERY_REWRITE = 1  # 开启 Query 纠错改写
 
 
 def calc_jaccard(list_a, list_b, threshold=0.3):
@@ -95,14 +96,25 @@ result = []
 # 执行整条推理链路并记录中间结果
 for item in test_qa_pairs:
     query = item["question"].strip()
+    
+    # Query 纠错改写：在检索前用LLM对query做纠错和扩写
+    if QUERY_REWRITE:
+        rewritten_query = request_query_rewrite(query)
+        print(f"原始问题: {query}")
+        print(f"改写后: {rewritten_query}")
+        # 使用改写后的查询进行检索
+        retrieve_query = rewritten_query
+    else:
+        retrieve_query = query
+    
     if HYDE:
-        hyde_query = request_hyde(query) 
-        hyde_query = query + "\n" + hyde_query 
+        hyde_query = request_hyde(retrieve_query) 
+        hyde_query = retrieve_query + "\n" + hyde_query 
         bm25_docs = bm25_retriever.retrieve_topk(hyde_query, topk=BM25_RETRIEVE_SIZE)
         milvus_docs = milvus_retriever.retrieve_topk(hyde_query, topk=MILVUS_RETRIEVE_SIZE)
     else:
-        bm25_docs = bm25_retriever.retrieve_topk(query, topk=BM25_RETRIEVE_SIZE)
-        milvus_docs = milvus_retriever.retrieve_topk(query, topk=MILVUS_RETRIEVE_SIZE)
+        bm25_docs = bm25_retriever.retrieve_topk(retrieve_query, topk=BM25_RETRIEVE_SIZE)
+        milvus_docs = milvus_retriever.retrieve_topk(retrieve_query, topk=MILVUS_RETRIEVE_SIZE)
     merged_docs = merge_docs(bm25_docs, milvus_docs)
     ranked_docs = jina_reranker.rank(query, merged_docs, topk=RERANK_SIZE)
     context = "\n".join([str(idx+1) + "." + doc.page_content for idx, doc in enumerate(ranked_docs)])
