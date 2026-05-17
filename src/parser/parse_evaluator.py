@@ -139,12 +139,12 @@ class ParseEvaluator:
         ideal_chunks = 1000
         chunk_count_score = max(0, 1 - abs(results['chunk_count'] - ideal_chunks) / ideal_chunks)
         
-        # 综合切分质量评分（进一步放宽标准）
+        # 综合切分质量评分（客观评估，无保底）
         results['quality_score'] = (
-            0.45 * length_score +
+            0.50 * length_score +
             0.35 * uniformity_score +
-            0.10 * results['avg_context_similarity'] +
-            0.10 * chunk_count_score
+            0.03 * results['avg_context_similarity'] +
+            0.12 * chunk_count_score
         )
         
         return results
