@@ -49,30 +49,20 @@ while True:
     # BM25 关键词检索召回
     t1 = time.time()
     bm25_docs = bm25_retriever.retrieve_topk(retrieve_query, topk=BM25_RETRIEVE_SIZE)
-    print("BM25召回样例:")
-    print(bm25_docs)
-    print("="*100)
     t2 = time.time()
 
 
     # Milvus 混合召回（Dense + Sparse）
     milvus_docs = milvus_retriever.retrieve_topk(retrieve_query, topk=MILVUS_RETRIEVE_SIZE)
-    print("BGE-M3召回样例:")
-    print(milvus_docs)
-    print("="*100)
     t3 = time.time()
 
 
     # 去重并对齐父块，避免上下文冗余
     merged_docs = merge_docs(bm25_docs, milvus_docs)
-    print(merged_docs)
-    print("="*100)
 
 
     # 重排：从候选中选出最相关的 TopK 文档
     ranked_docs = bge_m3_reranker.rank(retrieve_query, merged_docs, topk=RERANK_SIZE)
-    print(ranked_docs)
-    print("="*100)
 
 
     # 生成答案（流式输出）

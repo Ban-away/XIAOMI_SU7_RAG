@@ -54,10 +54,19 @@ class BGEM3ReRanker(object):
             # 处理不同模型的输出格式
             if hasattr(outputs, 'logits'):
                 scores = outputs.logits
-            elif isinstance(outputs, tuple) and len(outputs) > 0:
+            elif hasattr(outputs, 'last_hidden_state'):
+                # 对于没有 logits 的模型，使用 [CLS] token 的表示计算相似度
+                cls_embeddings = outputs.last_hidden_state[:, 0, :]
+                # 计算 query 和 doc 的相似度作为分数
+                query_emb = cls_embeddings[0::2]  # 偶数索引是 query
+                doc_emb = cls_embeddings[1::2]    # 奇数索引是 doc
+                scores = torch.sum(query_emb * doc_emb, dim=1).unsqueeze(1)
+            elif isinstance(outputs, torch.Tensor):
+                scores = outputs
+            elif isinstance(outputs, tuple) and len(outputs) > 0 and isinstance(outputs[0], torch.Tensor):
                 scores = outputs[0]
             else:
-                scores = outputs
+                raise RuntimeError(f"无法处理模型输出格式: {type(outputs)}")
         
         # 张量转 numpy，便于 Python 层排序
         scores = scores.detach().cpu().clone().numpy()
