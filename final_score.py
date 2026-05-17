@@ -125,8 +125,11 @@ with tqdm(total=len(test_qa_pairs), desc="推理进度", unit="问题", position
         
         # 打印结果前刷新进度条
         pbar.refresh()
-        print(f"\n问题：{query}")
-        print(f"答案：{answer}")
+        print(f"\n[问题 {idx+1}/{total_count}]")
+        print(f"原始问题：{query}")
+        if QUERY_REWRITE:
+            print(f"改写后：{retrieve_query}")
+        print(f"答案：{answer_dict['answer']}")
         print("-" * 100)
         
         item["pred"] = answer
