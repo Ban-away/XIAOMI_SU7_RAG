@@ -166,64 +166,64 @@ def main():
              fw.write(json.dumps(result, ensure_ascii=False, indent=4)) 
          print(f"[INFO] 推理结果已保存，共 {len(result)} 条")
 
-    # ── 语义相似度 + 关键词加权评分 ─────────────────────────
-    results    = report_score(result)
-    final_score = np.mean([item["score"] for item in results])
-    print(f"\n预测问题数：{len(results)}")
-    print(f"语义相似度 + 关键词加权得分：{final_score:.4f}")
+# ── 语义相似度 + 关键词加权评分 ─────────────────────────
+results = report_score(result)
+final_score = np.mean([item["score"] for item in results])
+print(f"\n预测问题数：{len(results)}")
+print(f"语义相似度 + 关键词加权得分：{final_score:.4f}")
 
-    # ── RAGas 评估 ────────────────────────────────────────────
-    print("\n[INFO] 开始 RAGas 评估...")
-    api_key    = os.environ["DOUBAO_API_KEY"]
-    model_name = os.environ["DOUBAO_MODEL_NAME"]
-    base_url   = os.environ["DOUBAO_BASE_URL"]
+# ── RAGas 评估 ────────────────────────────────────────────
+print("\n[INFO] 开始 RAGas 评估...")
+api_key = os.environ["DOUBAO_API_KEY"]
+model_name = os.environ["DOUBAO_MODEL_NAME"]
+base_url = os.environ["DOUBAO_BASE_URL"]
 
-    llm          = ChatOpenAI(model=model_name, api_key=api_key, base_url=base_url, temperature=0.01)
-    evaluator_llm = LangchainLLMWrapper(llm)
+llm = ChatOpenAI(model=model_name, api_key=api_key, base_url=base_url, temperature=0.01, model_kwargs={ "extra_body": { "system": "You are a helpful assistant. Always respond in English with exact JSON format as instructed. Do not add extra fields." } })
+evaluator_llm = LangchainLLMWrapper(llm)
 
-    NO_ANSWER_SET = {"无答案", "没有答案", "无", "-", ""}
-    ragas_data = []
-    for item in result:
-        response  = item["pred"]["answer"].strip()
-        reference = item["answer"].strip()
-        context   = item["context"].strip()
-        if not response or not reference or not context:
-            continue
-        if response in NO_ANSWER_SET or reference in NO_ANSWER_SET:
-            continue
-        ragas_data.append({
-            "user_input":         item["question"],
-            "retrieved_contexts": [context],
-            "response":           response,
-            "reference":          reference,
-        })
+NO_ANSWER_SET = {"无答案", "没有答案", "无", "-", ""}
+ragas_data = []
+for item in result:
+    response  = item["pred"]["answer"].strip()
+    reference = item["answer"].strip()
+    context   = item["context"].strip()
+    if not response or not reference or not context:
+        continue
+    if response in NO_ANSWER_SET or reference in NO_ANSWER_SET:
+        continue
+    ragas_data.append({
+        "user_input":         item["question"],
+        "retrieved_contexts": [context],
+        "response":           response,
+        "reference":          reference,
+    })
 
-    print(f"[INFO] RAGas 有效样本：{len(ragas_data)} 条")
-    dataset = EvaluationDataset.from_list(ragas_data)
-    ragas_result = evaluate(
-        dataset=dataset,
-        metrics=[
-            LLMContextRecall(llm=evaluator_llm),
-            LLMContextPrecisionWithReference(llm=evaluator_llm),
-        ],
-    )
+print(f"[INFO] RAGas 有效样本：{len(ragas_data)} 条")
+dataset = EvaluationDataset.from_list(ragas_data)
+ragas_result = evaluate(
+    dataset=dataset,
+    metrics=[
+        LLMContextRecall(llm=evaluator_llm),
+        LLMContextPrecisionWithReference(llm=evaluator_llm),
+    ],
+)
 
-    # ── 汇总输出 ──────────────────────────────────────────────
-    print("\n" + "=" * 100)
-    print(f"预测问题数：{len(results)}")
-    print(f"语义相似度 + 关键词加权得分：{final_score:.4f}")
-    print(f"RAGas 综合得分：{ragas_result}")
-    print("=" * 100)
+# ── 汇总输出 ──────────────────────────────────────────────
+print("\n" + "=" * 100)
+print(f"预测问题数：{len(results)}")
+print(f"语义相似度 + 关键词加权得分：{final_score:.4f}")
+print(f"RAGas 综合得分：{ragas_result}")
+print("=" * 100)
 
-    # 保存评估结果
-    save_data = {
-        "semantic_keyword_score": final_score,
-        "context_recall": ragas_result["context_recall"],
-        "llm_context_precision_with_reference": ragas_result["llm_context_precision_with_reference"],
-    }
-    with open("data/ragas_evaluation_result.json", "w") as f:
-        json.dump(save_data, f, ensure_ascii=False, indent=2)
-    print("[INFO] 结果已保存到 data/ragas_evaluation_result.json")
+# 保存评估结果
+save_data = {
+    "semantic_keyword_score": final_score,
+    "context_recall": ragas_result["context_recall"],
+    "llm_context_precision_with_reference": ragas_result["llm_context_precision_with_reference"],
+}
+with open("data/ragas_evaluation_result.json", "w") as f:
+    json.dump(save_data, f, ensure_ascii=False, indent=2)
+print("[INFO] 结果已保存到 data/ragas_evaluation_result.json")
 
 
 if __name__ == "__main__":
