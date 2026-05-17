@@ -459,6 +459,10 @@ mkdir -p /var/log/mongodb
 
 ```bash
 cd /root/autodl-tmp/XIAOMI_SU7_RAG
+
+# 启动语义切分服务（build_index.py 依赖此服务）
+python src/server/semantic_chunk.py &
+
 # 先生成或加载 split_docs.pkl（run build_index.py）
 # 注意：首次运行可能需要修复 setuptools 版本
 pip install --force-reinstall setuptools==69.0.0
@@ -566,23 +570,30 @@ ls -l data/summary_train.json data/summary_test.json data/summary_test_pred.json
 
 ### 🚀 启动在线服务
 
+> ⚠️ **前提条件**：已完成离线建库（`build_index.py`），索引文件已生成。
+
 ```bash
 # 终端 1：启动 MongoDB（必需，需先安装）
 /usr/local/mongodb/bin/mongod --dbpath /data/db --logpath /var/log/mongodb/mongod.log --bind_ip_all --fork
 
-# 终端 2：启动语义切分服务
-python src/server/semantic_chunk.py
-
-# 终端 3：启动 vLLM（自动识别单卡/多卡）
+# 终端 2：启动 vLLM（自动识别单卡/多卡）
 python deploy/auto_vllm_server.py --model LLaMA-Factory-main/output/qwen3_lora_sft_int4 --port 8000
 
-# 终端 4：构建索引（如果尚未构建）
-pip install --force-reinstall setuptools==69.0.0
-python build_index.py
+# 终端 3：构建索引（仅当索引文件不存在时执行）
+# 检查索引文件是否存在：ls data/saved_index/bm25retriever.pkl data/saved_index/milvus.db
+# 如果不存在，先启动语义切分服务：
+# python src/server/semantic_chunk.py 
+# 然后构建索引：
+# pip install --force-reinstall setuptools==69.0.0
+# python build_index.py
 
-# 终端 5：在线问答
+# 终端 4：在线问答
 python infer.py
 ```
+
+> **说明**：
+> - 语义切分服务仅在**离线建库阶段**（`build_index.py`）需要，在线推理阶段无需启动
+> - 如果索引已存在，可跳过构建索引步骤直接启动推理服务
 
 #### vLLM 启动参数说明
 

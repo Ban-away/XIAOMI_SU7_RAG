@@ -131,6 +131,7 @@ with tqdm(total=total_count, desc="推理进度", unit="问题", position=0, lea
         if QUERY_REWRITE:
             print(f"改写后：{retrieve_query}")
         print(f"答案：{answer['answer']}")
+        print(f"cite_pages: {answer.get('cite_pages', [])}, related_images: {answer.get('related_images', [])}")
         print("-" * 100)
         
         item["pred"] = answer
