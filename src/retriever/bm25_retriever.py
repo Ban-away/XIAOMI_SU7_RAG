@@ -63,7 +63,7 @@ class BM25(object):
             # query_tokens_filter = [t for t in query_tokens if t not in _stopwords]
             # query = " ".join(query_tokens_filter)
             # 执行检索并返回候选文档列表
-            ans_docs = self.retriever.get_relevant_documents(query)
+            ans_docs = self.retriever.invoke(query)
         return ans_docs
 
 

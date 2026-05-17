@@ -37,7 +37,7 @@ MILVUS_RETRIEVE_SIZE = 20
 RERANK_SIZE          = 8
 HYDE                 = 1
 QUERY_REWRITE        = 1
-MAX_WORKERS          = 4   # 并发线程数（IO密集部分）
+MAX_WORKERS          = 8   # 并发线程数（IO密集部分）
 # ────────────────────────────────────────────────────────────
 
 # 预热检索器、重排器、向量评估模型
@@ -91,12 +91,13 @@ def process_one(item):
     query = item["question"].strip()
 
     # 1. Query 纠错改写（API，可并发）
-    retrieve_query = request_query_rewrite(query) if QUERY_REWRITE else query
+    rewritten_query = request_query_rewrite(query) if QUERY_REWRITE else query
 
     # 2. HyDE 扩写（API，可并发）
+    retrieve_query = rewritten_query
     if HYDE:
-        hyde_text      = request_hyde(retrieve_query)
-        retrieve_query = retrieve_query + "\n" + hyde_text
+        hyde_text      = request_hyde(rewritten_query)
+        retrieve_query = rewritten_query + "\n" + hyde_text
 
     # 3. 检索（BM25 CPU + Milvus 网络，可并发）
     bm25_docs   = bm25_retriever.retrieve_topk(retrieve_query, topk=BM25_RETRIEVE_SIZE)
@@ -113,8 +114,9 @@ def process_one(item):
     answer   = post_processing(response, ranked_docs)
 
     item = dict(item)   # 避免修改原始数据
-    item["pred"]    = answer
-    item["context"] = context
+    item["pred"]          = answer
+    item["context"]       = context
+    item["rewritten_query"] = retrieve_query  # 保存改写后的查询
     return item
 
 

@@ -20,6 +20,9 @@ from src.constant import bge_reranker_minicpm_path
 from src.utils import merge_docs, post_processing
 
 # 预热：提前加载检索与重排模型，降低首问延迟
+import jieba
+jieba.initialize()
+print("[INFO] jieba 分词器加载完成")
 bm25_retriever = BM25(docs=None, retrieve=True)
 milvus_retriever = MilvusRetriever(docs=None, retrieve=True) 
 reranker = MiniCPMReRanker(model_path=bge_reranker_minicpm_path)
