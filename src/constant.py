@@ -88,5 +88,5 @@ jina_reranker_v2_model_path = base_dir + "models/jinaai/jina-reranker-v2-base-mu
 text2vec_model_path = base_dir + "models/text2vec-base-chinese"
 
 # 本地生成模型（vLLM 侧 model 字段）
-# 注意：必须与 vLLM 启动时指定的模型路径一致
-qwen3_8b_tune_model_name = "output/qwen3_lora_sft_int4"
+# 注意：必须与 vLLM 启动时指定的模型路径一致（从项目根目录出发的相对路径）
+qwen3_8b_tune_model_name = "LLaMA-Factory-main/output/qwen3_lora_sft_int4"
