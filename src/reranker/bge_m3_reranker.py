@@ -62,21 +62,25 @@ class BGEM3ReRanker(object):
             elif hasattr(outputs, 'scores'):
                 # 某些自定义重排模型直接输出 scores
                 scores = outputs.scores
+            elif hasattr(outputs, 'last_hidden_state'):
+                # BaseModelOutputWithPast 类型，使用 CLS token 计算相似度
+                cls_embeddings = outputs.last_hidden_state[:, 0, :]
+                # 计算每个文档与查询的相似度（第一个样本作为查询表示）
+                query_emb = cls_embeddings[0:1, :]
+                scores = torch.matmul(cls_embeddings, query_emb.transpose(0, 1))
             elif isinstance(outputs, tuple) and len(outputs) > 0:
                 # 尝试从元组中获取分数
                 if hasattr(outputs[0], 'logits'):
                     scores = outputs[0].logits
+                elif hasattr(outputs[0], 'scores'):
+                    scores = outputs[0].scores
                 elif isinstance(outputs[0], torch.Tensor):
                     scores = outputs[0]
                 else:
-                    # 对于返回 last_hidden_state 的模型，使用 CLS token 计算相似度
-                    if hasattr(outputs, 'last_hidden_state'):
-                        cls_embeddings = outputs.last_hidden_state[:, 0, :]
-                        # 计算每个文档与查询的相似度
-                        query_emb = cls_embeddings[0:1, :]  # 第一个样本作为参考
-                        scores = torch.matmul(cls_embeddings, query_emb.transpose(0, 1))
-                    else:
-                        raise RuntimeError(f"无法处理模型输出格式: {type(outputs)}")
+                    raise RuntimeError(f"无法处理模型输出格式: {type(outputs)}")
+            elif isinstance(outputs, torch.Tensor):
+                # 直接返回张量
+                scores = outputs
             else:
                 raise RuntimeError(f"无法处理模型输出格式: {type(outputs)}")
         
