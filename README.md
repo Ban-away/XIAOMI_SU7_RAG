@@ -637,6 +637,7 @@ python evaluate_parse_quality.py
 
 #### 方式二：手动逐服务启动
 
+**方式 A：使用 Docker（推荐）**
 ```bash
 # 终端 1：启动 MongoDB（用 Docker）
 docker run -d --name mongodb -p 27017:27017 \
@@ -651,7 +652,19 @@ python deploy/auto_vllm_server.py \
 python infer.py
 ```
 
-> ⚠️ vLLM 启动时模型路径必须使用**绝对路径**，否则会被误认为 HuggingFace repo id。
+**方式 B：本地安装 MongoDB**
+```bash
+# 终端 1：启动 MongoDB（必需，需先安装）
+/usr/local/mongodb/bin/mongod --dbpath /data/db --logpath /var/log/mongodb/mongod.log --bind_ip_all --fork
+
+# 终端 2：启动 vLLM（自动识别单卡/多卡）
+python deploy/auto_vllm_server.py --model LLaMA-Factory-main/output/qwen3_lora_sft_int4 --port 8000
+
+# 终端 3：在线问答
+python infer.py
+```
+
+> ⚠️ vLLM 启动时模型路径推荐使用**绝对路径**，否则可能被误认为 HuggingFace repo id。
 
 #### vLLM 启动参数说明
 
