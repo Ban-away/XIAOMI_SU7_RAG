@@ -11,7 +11,7 @@ class ParseEvaluator:
     
     def __init__(self):
         self.title_pattern = re.compile(r'^[一二三四五六七八九十]+\s*[、.．]|^\d+[\.\)]')
-        self.list_pattern = re.compile(r'^[\u2022•●▪-*+>]\s|^\d+[\.\)]\s')
+        self.list_pattern = re.compile(r'^[\u2022•●▪\-*+>]\s|^\d+[\.\)]\s')
         
     def evaluate_text_quality(self, raw_text: str, parsed_text: str) -> Dict[str, float]:
         """评估文本解析质量"""
