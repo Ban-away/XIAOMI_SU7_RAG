@@ -9,11 +9,20 @@ from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 class BGEM3ReRanker(object):
     def __init__(self, model_path, max_length=4096):
+        # 打印模型路径调试信息
+        print(f"[DEBUG] 尝试加载重排模型: {model_path}")
+        print(f"[DEBUG] 路径是否存在: {os.path.exists(model_path)}")
+        
+        if os.path.exists(model_path):
+            print(f"[DEBUG] 目录内容: {os.listdir(model_path)[:5]}...")  # 显示前5个文件
+        else:
+            print(f"[ERROR] 模型路径不存在!")
 
         # 加载 tokenizer 与 sequence classification 模型
         # trust_remote_code=True 用于加载包含自定义代码的模型（如 bge-reranker-v2-minicpm-layerwise）
-        self.tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
-        self.model = AutoModelForSequenceClassification.from_pretrained(model_path, trust_remote_code=True)
+        # local_files_only=True 强制只使用本地文件，不连接 HuggingFace Hub
+        self.tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True, local_files_only=True)
+        self.model = AutoModelForSequenceClassification.from_pretrained(model_path, trust_remote_code=True, local_files_only=True)
         # 切换到推理模式，关闭 dropout
         self.model.eval()
         # 使用 fp16 降低显存占用
