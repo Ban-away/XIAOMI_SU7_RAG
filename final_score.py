@@ -94,38 +94,47 @@ fd = open("data/qa_pairs/test_qa_pair_verify.json")
 test_qa_pairs = json.load(fd)
 result = []
 # 执行整条推理链路并记录中间结果
-for item in test_qa_pairs:
-    query = item["question"].strip()
-    
-    # Query 纠错改写：在检索前用LLM对query做纠错和扩写
-    if QUERY_REWRITE:
-        rewritten_query = request_query_rewrite(query)
-        print(f"原始问题: {query}")
-        print(f"改写后: {rewritten_query}")
-        # 使用改写后的查询进行检索
-        retrieve_query = rewritten_query
-    else:
-        retrieve_query = query
-    
-    if HYDE:
-        hyde_query = request_hyde(retrieve_query) 
-        hyde_query = retrieve_query + "\n" + hyde_query 
-        bm25_docs = bm25_retriever.retrieve_topk(hyde_query, topk=BM25_RETRIEVE_SIZE)
-        milvus_docs = milvus_retriever.retrieve_topk(hyde_query, topk=MILVUS_RETRIEVE_SIZE)
-    else:
-        bm25_docs = bm25_retriever.retrieve_topk(retrieve_query, topk=BM25_RETRIEVE_SIZE)
-        milvus_docs = milvus_retriever.retrieve_topk(retrieve_query, topk=MILVUS_RETRIEVE_SIZE)
-    merged_docs = merge_docs(bm25_docs, milvus_docs)
-    ranked_docs = bge_minicpm_reranker.rank(query, merged_docs, topk=RERANK_SIZE)
-    context = "\n".join([str(idx+1) + "." + doc.page_content for idx, doc in enumerate(ranked_docs)])
-    response = request_chat(query, context)
-    answer = post_processing(response, ranked_docs)
-    print("问题：", query)
-    print("答案：", answer)
-    print("="*100)
-    item["pred"] = answer
-    item["context"] = context
-    result.append(item)
+print(f"开始推理，共 {len(test_qa_pairs)} 个问题...")
+print("-" * 100)
+
+# 创建进度条，固定在底部位置
+with tqdm(total=len(test_qa_pairs), desc="推理进度", unit="问题", position=0, leave=True) as pbar:
+    for item in test_qa_pairs:
+        query = item["question"].strip()
+        
+        # Query 纠错改写：在检索前用LLM对query做纠错和扩写
+        if QUERY_REWRITE:
+            rewritten_query = request_query_rewrite(query)
+            retrieve_query = rewritten_query
+        else:
+            retrieve_query = query
+        
+        if HYDE:
+            hyde_query = request_hyde(retrieve_query) 
+            hyde_query = retrieve_query + "\n" + hyde_query 
+            bm25_docs = bm25_retriever.retrieve_topk(hyde_query, topk=BM25_RETRIEVE_SIZE)
+            milvus_docs = milvus_retriever.retrieve_topk(hyde_query, topk=MILVUS_RETRIEVE_SIZE)
+        else:
+            bm25_docs = bm25_retriever.retrieve_topk(retrieve_query, topk=BM25_RETRIEVE_SIZE)
+            milvus_docs = milvus_retriever.retrieve_topk(retrieve_query, topk=MILVUS_RETRIEVE_SIZE)
+        merged_docs = merge_docs(bm25_docs, milvus_docs)
+        ranked_docs = bge_minicpm_reranker.rank(query, merged_docs, topk=RERANK_SIZE)
+        context = "\n".join([str(idx+1) + "." + doc.page_content for idx, doc in enumerate(ranked_docs)])
+        response = request_chat(query, context)
+        answer = post_processing(response, ranked_docs)
+        
+        # 打印结果前刷新进度条
+        pbar.refresh()
+        print(f"\n问题：{query}")
+        print(f"答案：{answer}")
+        print("-" * 100)
+        
+        item["pred"] = answer
+        item["context"] = context
+        result.append(item)
+        
+        # 更新进度条
+        pbar.update(1)
 
 with open("data/qa_pairs/test_qa_pair_pred.json", "w") as fw:
     fw.write(json.dumps(result, ensure_ascii=False, indent=4))
