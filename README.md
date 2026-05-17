@@ -86,8 +86,8 @@ PDF 文本 + 图片抽取
 | 📚 Dense检索 | `BAAI/bge-large-zh-v1.5` | `bge_large_zh_v1_5_model_path` | `src\retriever\milvus_retriever.py` |
 | 🎯 Sparse检索 | `naver/splade-cocondenser-ensembledistil` | `splade_v2_model_path` | `src\retriever\milvus_retriever.py` |
 | 🔎 向量备选 | `Qwen3-Embedding-0.6B` | `qwen3_embedding_model_path` | `src\retriever\qwen3_retriever.py` |
-| ⭐ 在线重排 | `bge-reranker-v2-m3` | `bge_reranker_tuned_model_path` | `infer.py` |
-| ✅ 评估重排 | `jina-reranker-v2-base-multilingual` | `jina_reranker_v2_model_path` | `final_score.py` |
+| ⭐ 在线重排 | `bge-reranker-v2-minicpm` | `bge_reranker_minicpm_path` | `infer.py` |
+| ✅ 评估重排 | `bge-reranker-v2-minicpm` | `bge_reranker_minicpm_path` | `final_score.py` |
 | 💬 生成模型 | `Qwen3-8B-Instruct (SFT)` | `qwen3_8b_tune_model_name` | `src\client\llm_local_client.py` |
 | ☁️ 云端生成 | `Doubao` | `DOUBAO_MODEL_NAME` | `src\client\llm_chat_client.py` |
 
@@ -611,7 +611,62 @@ python deploy/auto_vllm_server.py \
 python final_score.py
 ```
 
-评估结果将输出到控制台，包括 BLEU 分数、ROUGE 分数和关键词匹配准确率。
+评估结果将输出到控制台，包括语义相似度得分和 RAGAS 指标（上下文召回率、精确率）。
+
+---
+
+## 🐳 Docker 容器化部署
+
+### 环境要求
+- Docker 20.10+
+- Docker Compose 2.0+
+- NVIDIA Docker (用于 vLLM GPU 推理)
+
+### 一键启动
+
+```bash
+# 1. 确保已下载必要模型
+export HF_ENDPOINT=https://hf-mirror.com
+python deploy/download_models.py
+
+# 2. 确保已生成量化模型
+# LLaMA-Factory-main/output/qwen3_lora_sft_int4/ 必须存在
+
+# 3. 一键启动所有服务
+docker-compose up -d
+
+# 查看服务状态
+docker-compose ps
+
+# 查看日志
+docker-compose logs -f app
+```
+
+### 服务组成
+
+| 服务 | 端口 | 说明 |
+|:---:|:---:|:---|
+| `mongodb` | 27017 | 文档元数据存储 |
+| `semantic-chunk` | 6000 | 语义切分服务 |
+| `vllm` | 8000 | 本地 LLM 推理服务 |
+| `app` | - | 主应用（RAG 问答） |
+
+### 配置说明
+
+在 `docker-compose.yml` 中可调整：
+- MongoDB 数据目录映射
+- vLLM 模型路径和参数（`--max-model-len`, `--gpu-memory-utilization`）
+- GPU 资源分配
+
+### 停止服务
+
+```bash
+# 停止并保留数据
+docker-compose down
+
+# 停止并删除数据卷（谨慎使用）
+docker-compose down -v
+```
 
 ---
 
@@ -642,8 +697,8 @@ python final_score.py
 <details>
 <summary><b>📊 重排模块 (Reranker)</b></summary>
 
-- **BGE-M3 跨编码器**：在线使用，精准重排
-- **Jina Reranker V2**：评估使用，支持多语言
+- **BGE-Reranker-v2-minicpm**：在线与评估均使用，基于 MiniCPM 的轻量高性能重排模型
+- **BGE-M3 跨编码器**：备选方案，精准重排
 - **Qwen3 轻量重排**：更快速，可选多卡 vLLM
 - 所有重排器实现统一接口 `rank(query, docs, top_k) → List[RankedDoc]`
 

@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7.0
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./data/mongodb/data:/data/db
+      - ./data/mongodb/log:/var/log/mongodb
+    environment:
+      MONGO_INITDB_DATABASE: rag_db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+
+  semantic-chunk:
+    build: .
+    ports:
+      - "6000:6000"
+    command: python src/server/semantic_chunk.py
+    volumes:
+      - ./models:/app/models
+      - ./log:/app/log
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      - MONGO_HOST=mongodb
+      - MONGO_PORT=27017
+
+  vllm:
+    image: vllm/vllm-openai:latest
+    ports:
+      - "8000:8000"
+    runtime: nvidia
+    command: >
+      vllm serve /app/LLaMA-Factory-main/output/qwen3_lora_sft_int4
+      --port 8000 --max-model-len 8192 --gpu-memory-utilization 0.75
+    volumes:
+      - ./LLaMA-Factory-main/output:/app/LLaMA-Factory-main/output
+      - ./log:/app/log
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  app:
+    build: .
+    command: python infer.py
+    volumes:
+      - ./models:/app/models
+      - ./data:/app/data
+      - ./log:/app/log
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      semantic-chunk:
+        condition: service_started
+      vllm:
+        condition: service_started
+    environment:
+      - MONGO_HOST=mongodb
+      - MONGO_PORT=27017
+      - VLLM_BASE_URL=http://vllm:8000/v1

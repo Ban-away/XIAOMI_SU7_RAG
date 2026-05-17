@@ -45,7 +45,7 @@ MODEL_PRESETS: Dict[str, List[ModelSpec]] = {
         ModelSpec("Qwen3-8B", "Qwen/Qwen3-8B", "models/Qwen3-8B"),
         ModelSpec("Qwen3-Reranker-4B", "Qwen/Qwen3-Reranker-4B", "models/Qwen3-Reranker-4B", required=False),
         ModelSpec("text2vec-base-chinese", "shibing624/text2vec-base-chinese", "models/text2vec-base-chinese"),
-        ModelSpec("jina-reranker-v2-base-multilingual", "jinaai/jina-reranker-v2-base-multilingual", "models/jinaai/jina-reranker-v2-base-multilingual"),
+        ModelSpec("bge-reranker-v2-minicpm-layerwise", "BAAI/bge-reranker-v2-minicpm-layerwise", "models/bge-reranker-v2-minicpm-layerwise"),
     ],
     "all": [
         ModelSpec("m3e-small", "moka-ai/m3e-small", "models/moka-ai/m3e-small"),
@@ -58,8 +58,8 @@ MODEL_PRESETS: Dict[str, List[ModelSpec]] = {
         ModelSpec("Qwen3-Reranker-0.6B", "Qwen/Qwen3-Reranker-0.6B", "models/Qwen3-Reranker-0.6B"),
         ModelSpec("Qwen3-Reranker-4B", "Qwen/Qwen3-Reranker-4B", "models/Qwen3-Reranker-4B", required=False),
         ModelSpec("bge-reranker-v2-m3", "BAAI/bge-reranker-v2-m3", "models/BAAI/bge-reranker-v2-m3"),
-        ModelSpec("bge-reranker-v2-minicpm-layerwise", "BAAI/bge-reranker-v2-minicpm-layerwise", "models/bge-reranker-v2-minicpm-layerwise", required=False),
-        ModelSpec("jina-reranker-v2-base-multilingual", "jinaai/jina-reranker-v2-base-multilingual", "models/jinaai/jina-reranker-v2-base-multilingual"),
+        ModelSpec("bge-reranker-v2-minicpm-layerwise", "BAAI/bge-reranker-v2-minicpm-layerwise", "models/bge-reranker-v2-minicpm-layerwise"),
+        ModelSpec("jina-reranker-v2-base-multilingual", "jinaai/jina-reranker-v2-base-multilingual", "models/jinaai/jina-reranker-v2-base-multilingual", required=False),
         ModelSpec("text2vec-base-chinese", "shibing624/text2vec-base-chinese", "models/text2vec-base-chinese"),
     ],
 }
@@ -132,4 +132,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

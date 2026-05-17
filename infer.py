@@ -16,13 +16,13 @@ from src.retriever.milvus_retriever import MilvusRetriever
 from src.client.llm_local_client import request_chat
 from src.client.llm_hyde_client import request_hyde, request_query_rewrite
 from src.reranker.bge_m3_reranker import BGEM3ReRanker 
-from src.constant import bge_reranker_tuned_model_path
+from src.constant import bge_reranker_minicpm_path
 from src.utils import merge_docs, post_processing
 
 # 预热：提前加载检索与重排模型，降低首问延迟
 bm25_retriever = BM25(docs=None, retrieve=True)
 milvus_retriever = MilvusRetriever(docs=None, retrieve=True) 
-bge_m3_reranker = BGEM3ReRanker(model_path=bge_reranker_tuned_model_path)
+bge_m3_reranker = BGEM3ReRanker(model_path=bge_reranker_minicpm_path)
 milvus_retriever.retrieve_topk("这是一条测试数据", topk=3)
 
 # 配置参数

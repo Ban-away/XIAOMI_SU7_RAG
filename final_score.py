@@ -29,8 +29,8 @@ from src.retriever.faiss_retriever import FaissRetriever
 from src.retriever.milvus_retriever import MilvusRetriever 
 from src.client.llm_local_client import request_chat
 from src.client.llm_hyde_client import request_hyde, request_query_rewrite
-from src.reranker.jina_reranker_v2 import JinaRerankerV2
-from src.constant import jina_reranker_v2_model_path
+from src.reranker.bge_m3_reranker import BGEM3ReRanker
+from src.constant import bge_reranker_minicpm_path
 from src.constant import qwen3_reranker_model_path 
 from src.constant import text2vec_model_path 
 from src.utils import merge_docs, post_processing
@@ -39,7 +39,7 @@ from src.utils import merge_docs, post_processing
 # 预热检索器、重排器、向量模型
 bm25_retriever = BM25(docs=None, retrieve=True)
 milvus_retriever = MilvusRetriever(docs=None, retrieve=True) 
-jina_reranker = JinaRerankerV2(model_path=jina_reranker_v2_model_path)
+bge_minicpm_reranker = BGEM3ReRanker(model_path=bge_reranker_minicpm_path)
 milvus_retriever.retrieve_topk("这是一条测试数据", topk=3)
 simModel = SentenceModel(model_name_or_path=text2vec_model_path, device='cuda:0')
 
@@ -116,7 +116,7 @@ for item in test_qa_pairs:
         bm25_docs = bm25_retriever.retrieve_topk(retrieve_query, topk=BM25_RETRIEVE_SIZE)
         milvus_docs = milvus_retriever.retrieve_topk(retrieve_query, topk=MILVUS_RETRIEVE_SIZE)
     merged_docs = merge_docs(bm25_docs, milvus_docs)
-    ranked_docs = jina_reranker.rank(query, merged_docs, topk=RERANK_SIZE)
+    ranked_docs = bge_minicpm_reranker.rank(query, merged_docs, topk=RERANK_SIZE)
     context = "\n".join([str(idx+1) + "." + doc.page_content for idx, doc in enumerate(ranked_docs)])
     response = request_chat(query, context)
     answer = post_processing(response, ranked_docs)
