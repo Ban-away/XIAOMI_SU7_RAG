@@ -15,14 +15,14 @@ from src.retriever.faiss_retriever import FaissRetriever
 from src.retriever.milvus_retriever import MilvusRetriever 
 from src.client.llm_local_client import request_chat
 from src.client.llm_hyde_client import request_hyde, request_query_rewrite
-from src.reranker.bge_m3_reranker import BGEM3ReRanker 
+from src.reranker.minicpm_reranker import MiniCPMReRanker
 from src.constant import bge_reranker_minicpm_path
 from src.utils import merge_docs, post_processing
 
 # 预热：提前加载检索与重排模型，降低首问延迟
 bm25_retriever = BM25(docs=None, retrieve=True)
 milvus_retriever = MilvusRetriever(docs=None, retrieve=True) 
-bge_m3_reranker = BGEM3ReRanker(model_path=bge_reranker_minicpm_path)
+reranker = MiniCPMReRanker(model_path=bge_reranker_minicpm_path)
 milvus_retriever.retrieve_topk("这是一条测试数据", topk=3)
 
 # 配置参数
@@ -62,7 +62,7 @@ while True:
 
 
     # 重排：从候选中选出最相关的 TopK 文档
-    ranked_docs = bge_m3_reranker.rank(retrieve_query, merged_docs, topk=RERANK_SIZE)
+    ranked_docs = reranker.rank(retrieve_query, merged_docs, topk=RERANK_SIZE)
 
 
     # 生成答案（流式输出）

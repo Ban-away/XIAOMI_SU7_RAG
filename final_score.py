@@ -1,186 +1,210 @@
 # -*- coding: utf-8 -*-
-"""离线评估脚本：执行完整RAG推理并计算语义分与RAGAS指标。"""
+"""离线评估脚本：执行完整RAG推理并计算语义分与RAGAS指标。
+
+并行策略：
+  - 检索（BM25/Milvus）、HyDE、Query改写、vLLM生成 → ThreadPoolExecutor 并发（IO密集）
+  - Reranker（GPU）→ threading.Lock 串行保护（CUDA非线程安全）
+"""
 
 from dotenv import load_dotenv
-
-# 加载 .env 文件中的环境变量（如果存在）
 load_dotenv()
 
 import os
-import pickle
-import time
 import json
-import sys
-import re
+import threading
 import numpy as np
-from text2vec import SentenceModel, semantic_search, Similarity
+from tqdm import tqdm
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+from text2vec import SentenceModel, semantic_search
 from langchain_openai import ChatOpenAI
 from ragas.metrics import LLMContextRecall, LLMContextPrecisionWithReference
-from ragas import evaluate
+from ragas import evaluate, EvaluationDataset
 from ragas.llms import LangchainLLMWrapper
-from ragas import EvaluationDataset
-from openai import OpenAI
-from tqdm import tqdm
-
 
 from src.retriever.bm25_retriever import BM25
-from src.retriever.tfidf_retriever import TFIDF
-from src.retriever.faiss_retriever import FaissRetriever
-from src.retriever.milvus_retriever import MilvusRetriever 
+from src.retriever.milvus_retriever import MilvusRetriever
 from src.client.llm_local_client import request_chat
 from src.client.llm_hyde_client import request_hyde, request_query_rewrite
-from src.reranker.bge_m3_reranker import BGEM3ReRanker
-from src.constant import bge_reranker_minicpm_path
-from src.constant import qwen3_reranker_model_path 
-from src.constant import text2vec_model_path 
+from src.reranker.minicpm_reranker import MiniCPMReRanker
+from src.constant import bge_reranker_minicpm_path, text2vec_model_path
 from src.utils import merge_docs, post_processing
 
 
-# 预热检索器、重排器、向量模型
-bm25_retriever = BM25(docs=None, retrieve=True)
-milvus_retriever = MilvusRetriever(docs=None, retrieve=True) 
-bge_minicpm_reranker = BGEM3ReRanker(model_path=bge_reranker_minicpm_path)
-milvus_retriever.retrieve_topk("这是一条测试数据", topk=3)
-simModel = SentenceModel(model_name_or_path=text2vec_model_path, device='cuda:0')
-
-BM25_RETRIEVE_SIZE = 10
+# ── 超参数 ──────────────────────────────────────────────────
+BM25_RETRIEVE_SIZE   = 10
 MILVUS_RETRIEVE_SIZE = 20
-RERANK_SIZE = 8  # 调大重排数量，给LLM更多上下文
-HYDE = 1
-QUERY_REWRITE = 1  # 开启 Query 纠错改写
+RERANK_SIZE          = 8
+HYDE                 = 1
+QUERY_REWRITE        = 1
+MAX_WORKERS          = 16   # 并发线程数（IO密集部分）
+# ────────────────────────────────────────────────────────────
+
+# 预热检索器、重排器、向量评估模型
+print("[INFO] 加载检索器和重排器...")
+bm25_retriever    = BM25(docs=None, retrieve=True)
+milvus_retriever  = MilvusRetriever(docs=None, retrieve=True)
+reranker          = MiniCPMReRanker(model_path=bge_reranker_minicpm_path, cutoff_layers=28)
+milvus_retriever.retrieve_topk("这是一条测试数据", topk=3)
+simModel          = SentenceModel(model_name_or_path=text2vec_model_path, device='cuda:0')
+
+# GPU Reranker 不是线程安全的，用锁保护
+_rerank_lock = threading.Lock()
 
 
+# ── 评分函数 ─────────────────────────────────────────────────
 def calc_jaccard(list_a, list_b, threshold=0.3):
-    size_a, size_b = len(list_a), len(list_b)
-    list_c = [i for i in list_a if i in list_b]
-    size_c = len(list_c)
-    score = size_c / (size_b + 1e-6)
-    if score > threshold:
-        return 1
-    else:
-        return 0
+    size_c = len([i for i in list_a if i in list_b])
+    return 1 if size_c / (len(list_b) + 1e-6) > threshold else 0
 
 
 def report_score(result):
     """计算语义相似度与关键词加权得分。"""
-    idx = 0
-    for item in result:
-        question = item["question"]
-        keywords = item["keywords"]
-        gold = item["answer"]
-        pred = item["pred"]["answer"]
+    for idx, item in enumerate(result):
+        gold     = item["answer"]
+        pred     = item["pred"]["answer"]
+        keywords = item.get("keywords", [])
+
         if gold == "无答案" and pred != gold:
             score = 0.0
         elif gold == "无答案" and pred == gold:
             score = 1.0
         else:
-            semantic_score = semantic_search(simModel.encode([gold]), simModel.encode(pred), top_k=1)[0][0]['score']
-            join_keywords = [word for word in keywords if word in pred]
-            keyword_score = calc_jaccard(join_keywords, keywords)
-            if not keywords:
-                score = semantic_score
-            else:
-                score = 0.2 * keyword_score + 0.8 * semantic_score
-        result[idx]["score"] = score
-        idx += 1
-        if score < 0.6:
-            print(f"预测: {question}, 得分: {score}")
+            semantic_score = semantic_search(
+                simModel.encode([gold]), simModel.encode(pred), top_k=1
+            )[0][0]['score']
+            join_keywords  = [w for w in keywords if w in pred]
+            keyword_score  = calc_jaccard(join_keywords, keywords)
+            score = semantic_score if not keywords else (
+                0.2 * keyword_score + 0.8 * semantic_score
+            )
 
+        result[idx]["score"] = score
+        if score < 0.6:
+            print(f"低分样本: {item['question'][:30]}... 得分: {score:.3f}")
     return result
 
 
+# ── 单条推理（在线程池中运行）────────────────────────────────
+def process_one(item):
+    """对单条测试数据执行完整推理链路，返回带 pred 字段的 item。"""
+    query = item["question"].strip()
 
-fd = open("data/qa_pairs/test_qa_pair_verify.json")
-test_qa_pairs = json.load(fd)
-result = []
-# 执行整条推理链路并记录中间结果
-print(f"开始推理，共 {len(test_qa_pairs)} 个问题...")
-print("-" * 100)
+    # 1. Query 纠错改写（API，可并发）
+    retrieve_query = request_query_rewrite(query) if QUERY_REWRITE else query
 
-# 创建进度条，固定在底部位置
-total_count = len(test_qa_pairs)
-with tqdm(total=total_count, desc="推理进度", unit="问题", position=0, leave=True) as pbar:
-    for idx, item in enumerate(test_qa_pairs):
-        query = item["question"].strip()
-        
-        # Query 纠错改写：在检索前用LLM对query做纠错和扩写
-        if QUERY_REWRITE:
-            rewritten_query = request_query_rewrite(query)
-            retrieve_query = rewritten_query
-        else:
-            retrieve_query = query
-        
-        if HYDE:
-            hyde_query = request_hyde(retrieve_query) 
-            hyde_query = retrieve_query + "\n" + hyde_query 
-            bm25_docs = bm25_retriever.retrieve_topk(hyde_query, topk=BM25_RETRIEVE_SIZE)
-            milvus_docs = milvus_retriever.retrieve_topk(hyde_query, topk=MILVUS_RETRIEVE_SIZE)
-        else:
-            bm25_docs = bm25_retriever.retrieve_topk(retrieve_query, topk=BM25_RETRIEVE_SIZE)
-            milvus_docs = milvus_retriever.retrieve_topk(retrieve_query, topk=MILVUS_RETRIEVE_SIZE)
-        merged_docs = merge_docs(bm25_docs, milvus_docs)
-        ranked_docs = bge_minicpm_reranker.rank(query, merged_docs, topk=RERANK_SIZE)
-        context = "\n".join([str(i+1) + "." + doc.page_content for i, doc in enumerate(ranked_docs)])
-        response = request_chat(query, context)
-        answer = post_processing(response, ranked_docs)
-        
-        # 打印结果前刷新进度条
-        pbar.refresh()
-        print(f"原始问题：{query}")
-        if QUERY_REWRITE:
-            print(f"改写后：{retrieve_query}")
-        print(f"答案：{answer['answer']}")
-        print(f"cite_pages: {answer.get('cite_pages', [])}, related_images: {answer.get('related_images', [])}")
-        print("-" * 100)
-        
-        item["pred"] = answer
-        item["context"] = context
-        result.append(item)
-        
-        # 更新进度条
-        pbar.update(1)
+    # 2. HyDE 扩写（API，可并发）
+    if HYDE:
+        hyde_text      = request_hyde(retrieve_query)
+        retrieve_query = retrieve_query + "\n" + hyde_text
 
-with open("data/qa_pairs/test_qa_pair_pred.json", "w") as fw:
-    fw.write(json.dumps(result, ensure_ascii=False, indent=4))
+    # 3. 检索（BM25 CPU + Milvus 网络，可并发）
+    bm25_docs   = bm25_retriever.retrieve_topk(retrieve_query, topk=BM25_RETRIEVE_SIZE)
+    milvus_docs = milvus_retriever.retrieve_topk(retrieve_query, topk=MILVUS_RETRIEVE_SIZE)
+    merged_docs = merge_docs(bm25_docs, milvus_docs)
+
+    # 4. 精排（GPU，串行保护）
+    with _rerank_lock:
+        ranked_docs = reranker.rank(retrieve_query, merged_docs, topk=RERANK_SIZE)
+
+    # 5. 生成（vLLM 网络 API，可并发）
+    context  = "\n".join([f"【{i+1}】{doc.page_content}" for i, doc in enumerate(ranked_docs)])
+    response = request_chat(query, context)
+    answer   = post_processing(response, ranked_docs)
+
+    item = dict(item)   # 避免修改原始数据
+    item["pred"]    = answer
+    item["context"] = context
+    return item
 
 
-with open("data/qa_pairs/test_qa_pair_pred.json") as fw:
-    result = json.load(fw) 
+# ── 主流程 ───────────────────────────────────────────────────
+def main():
+    fd = open("data/qa_pairs/test_qa_pair_verify.json")
+    test_qa_pairs = json.load(fd)
+    fd.close()
+    print(f"[INFO] 共 {len(test_qa_pairs)} 条测试数据，MAX_WORKERS={MAX_WORKERS}")
+    print("-" * 100)
 
-results = report_score(result)
-final_score = np.mean([item["score"] for item in results])
-print("\n")
-print(f"预测问题数：{len(results)}, 语义相似度+关键词加权得分：{final_score}")
+    result = []
+    # ThreadPoolExecutor 并发处理：IO密集部分（检索+API）并发，GPU部分锁串行
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        futures = {executor.submit(process_one, item): item for item in test_qa_pairs}
+        for future in tqdm(as_completed(futures), total=len(futures),
+                           desc="推理进度", unit="问题"):
+            try:
+                item = future.result()
+                result.append(item)
+                print(f"问题：{item['question'][:30]}...")
+                print(f"答案：{item['pred']['answer'][:60]}...")
+                print("-" * 100)
+            except Exception as e:
+                print(f"[WARN] 单条推理失败: {e}")
 
+    # 保存推理结果
+    with open("data/qa_pairs/test_qa_pair_pred.json", "w") as fw:
+        fw.write(json.dumps(result, ensure_ascii=False, indent=4))
+    print(f"[INFO] 推理结果已保存，共 {len(result)} 条")
 
-# RAGAS 扩展评估：上下文召回率与精确率
+    # ── 语义相似度 + 关键词加权评分 ─────────────────────────
+    results    = report_score(result)
+    final_score = np.mean([item["score"] for item in results])
+    print(f"\n预测问题数：{len(results)}")
+    print(f"语义相似度 + 关键词加权得分：{final_score:.4f}")
 
-llm = ChatOpenAI(model=os.environ["DOUBAO_MODEL_NAME"], api_key=os.environ["DOUBAO_API_KEY"], base_url=os.environ["DOUBAO_BASE_URL"])
+    # ── RAGas 评估 ────────────────────────────────────────────
+    print("\n[INFO] 开始 RAGas 评估...")
+    api_key    = os.environ["DOUBAO_API_KEY"]
+    model_name = os.environ["DOUBAO_MODEL_NAME"]
+    base_url   = os.environ["DOUBAO_BASE_URL"]
 
-print("开始做RAGas评估...")
-dataset = []
-for g in result:
-    query = g["question"] # 输入问题
-    reference = g["answer"] # 参考答案
-    response = g["pred"]["answer"] #生成的答案
-    context = [g["context"]] # 上下文
-    dataset.append(
-        {
-            "user_input":query,
-            "retrieved_contexts": context,
-            "response":response,
-            "reference":reference
-        }
+    llm          = ChatOpenAI(model=model_name, api_key=api_key, base_url=base_url, temperature=0.01)
+    evaluator_llm = LangchainLLMWrapper(llm)
+
+    NO_ANSWER_SET = {"无答案", "没有答案", "无", "-", ""}
+    ragas_data = []
+    for item in result:
+        response  = item["pred"]["answer"].strip()
+        reference = item["answer"].strip()
+        context   = item["context"].strip()
+        if not response or not reference or not context:
+            continue
+        if response in NO_ANSWER_SET or reference in NO_ANSWER_SET:
+            continue
+        ragas_data.append({
+            "user_input":         item["question"],
+            "retrieved_contexts": [context],
+            "response":           response,
+            "reference":          reference,
+        })
+
+    print(f"[INFO] RAGas 有效样本：{len(ragas_data)} 条")
+    dataset = EvaluationDataset.from_list(ragas_data)
+    ragas_result = evaluate(
+        dataset=dataset,
+        metrics=[
+            LLMContextRecall(llm=evaluator_llm),
+            LLMContextPrecisionWithReference(llm=evaluator_llm),
+        ],
     )
 
-evaluation_dataset = EvaluationDataset.from_list(dataset)
-evaluator_llm = LangchainLLMWrapper(llm)
+    # ── 汇总输出 ──────────────────────────────────────────────
+    print("\n" + "=" * 100)
+    print(f"预测问题数：{len(results)}")
+    print(f"语义相似度 + 关键词加权得分：{final_score:.4f}")
+    print(f"RAGas 综合得分：{ragas_result}")
+    print("=" * 100)
 
-result = evaluate(dataset=evaluation_dataset,metrics=[LLMContextRecall(), LLMContextPrecisionWithReference()],llm=evaluator_llm)
+    # 保存评估结果
+    save_data = {
+        "semantic_keyword_score": final_score,
+        "context_recall": ragas_result["context_recall"],
+        "llm_context_precision_with_reference": ragas_result["llm_context_precision_with_reference"],
+    }
+    with open("data/ragas_evaluation_result.json", "w") as f:
+        json.dump(save_data, f, ensure_ascii=False, indent=2)
+    print("[INFO] 结果已保存到 data/ragas_evaluation_result.json")
 
-# 系统输出得分
-print("\n")
-print("="*100)
-print(f"预测问题数：{len(results)}, 语义相似度+关键词加权得分：{final_score}")
-print(f"预测问题数：{len(results)}, LLM+RAGas综合得分：{result}")
-print("="*100)
+
+if __name__ == "__main__":
+    main()

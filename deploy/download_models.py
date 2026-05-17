@@ -38,28 +38,40 @@ class ModelSpec:
 
 MODEL_PRESETS: Dict[str, List[ModelSpec]] = {
     "core": [
+        # 语义切分
         ModelSpec("m3e-small", "moka-ai/m3e-small", "models/moka-ai/m3e-small"),
+        # Dense + Sparse 检索
         ModelSpec("bge-large-zh-v1.5", "BAAI/bge-large-zh-v1.5", "models/BAAI/bge-large-zh-v1.5"),
         ModelSpec("splade-v2", "naver/splade-cocondenser-ensembledistil", "models/naver/splade-cocondenser-ensembledistil"),
-        ModelSpec("bge-reranker-v2-m3", "BAAI/bge-reranker-v2-m3", "models/BAAI/bge-reranker-v2-m3"),
-        ModelSpec("Qwen3-8B", "Qwen/Qwen3-8B", "models/Qwen3-8B"),
-        ModelSpec("Qwen3-Reranker-4B", "Qwen/Qwen3-Reranker-4B", "models/Qwen3-Reranker-4B", required=False),
-        ModelSpec("text2vec-base-chinese", "shibing624/text2vec-base-chinese", "models/text2vec-base-chinese"),
+        # 精排（在线推理 + 离线评估均使用）
         ModelSpec("bge-reranker-v2-minicpm-layerwise", "BAAI/bge-reranker-v2-minicpm-layerwise", "models/bge-reranker-v2-minicpm-layerwise"),
+        # 生成模型基座（微调用）
+        ModelSpec("Qwen3-8B", "Qwen/Qwen3-8B", "models/Qwen3-8B"),
+        # 评测相似度
+        ModelSpec("text2vec-base-chinese", "shibing624/text2vec-base-chinese", "models/text2vec-base-chinese"),
+        # 可选重排器
+        ModelSpec("Qwen3-Reranker-4B", "Qwen/Qwen3-Reranker-4B", "models/Qwen3-Reranker-4B", required=False),
     ],
     "all": [
+        # 语义切分
         ModelSpec("m3e-small", "moka-ai/m3e-small", "models/moka-ai/m3e-small"),
+        # Dense 检索
         ModelSpec("bge-m3", "BAAI/bge-m3", "models/BAAI/bge-m3"),
         ModelSpec("bge-large-zh-v1.5", "BAAI/bge-large-zh-v1.5", "models/BAAI/bge-large-zh-v1.5"),
-        ModelSpec("Qwen3-8B", "Qwen/Qwen3-8B", "models/Qwen3-8B"),
-        ModelSpec("splade-v2", "naver/splade-cocondenser-ensembledistil", "models/naver/splade-cocondenser-ensembledistil"),
         ModelSpec("bce-embedding-base_v1", "maidalun/bce-embedding-base_v1", "models/maidalun/bce-embedding-base_v1"),
         ModelSpec("Qwen3-Embedding-0.6B", "Qwen/Qwen3-Embedding-0.6B", "models/Qwen3-Embedding-0.6B"),
+        # Sparse 检索
+        ModelSpec("splade-v2", "naver/splade-cocondenser-ensembledistil", "models/naver/splade-cocondenser-ensembledistil"),
+        # 生成模型基座
+        ModelSpec("Qwen3-8B", "Qwen/Qwen3-8B", "models/Qwen3-8B"),
+        # 精排（主力）
+        ModelSpec("bge-reranker-v2-minicpm-layerwise", "BAAI/bge-reranker-v2-minicpm-layerwise", "models/bge-reranker-v2-minicpm-layerwise"),
+        # 精排（备选）
+        ModelSpec("bge-reranker-v2-m3", "BAAI/bge-reranker-v2-m3", "models/BAAI/bge-reranker-v2-m3"),
         ModelSpec("Qwen3-Reranker-0.6B", "Qwen/Qwen3-Reranker-0.6B", "models/Qwen3-Reranker-0.6B"),
         ModelSpec("Qwen3-Reranker-4B", "Qwen/Qwen3-Reranker-4B", "models/Qwen3-Reranker-4B", required=False),
-        ModelSpec("bge-reranker-v2-m3", "BAAI/bge-reranker-v2-m3", "models/BAAI/bge-reranker-v2-m3"),
-        ModelSpec("bge-reranker-v2-minicpm-layerwise", "BAAI/bge-reranker-v2-minicpm-layerwise", "models/bge-reranker-v2-minicpm-layerwise"),
         ModelSpec("jina-reranker-v2-base-multilingual", "jinaai/jina-reranker-v2-base-multilingual", "models/jinaai/jina-reranker-v2-base-multilingual", required=False),
+        # 评测
         ModelSpec("text2vec-base-chinese", "shibing624/text2vec-base-chinese", "models/text2vec-base-chinese"),
     ],
 }

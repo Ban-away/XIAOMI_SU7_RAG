@@ -59,7 +59,7 @@ PDF 文本 + 图片抽取
 <td><b>📊 重排</b></td>
 <td>
 跨编码器精排  
-<code>BGE</code> / <code>Jina</code> / <code>Qwen3</code>
+<code>BGE-Reranker-v2-MiniCPM</code> / <code>Qwen3</code>
 </td>
 </tr>
 <tr>
@@ -86,8 +86,8 @@ PDF 文本 + 图片抽取
 | 📚 Dense检索 | `BAAI/bge-large-zh-v1.5` | `bge_large_zh_v1_5_model_path` | `src\retriever\milvus_retriever.py` |
 | 🎯 Sparse检索 | `naver/splade-cocondenser-ensembledistil` | `splade_v2_model_path` | `src\retriever\milvus_retriever.py` |
 | 🔎 向量备选 | `Qwen3-Embedding-0.6B` | `qwen3_embedding_model_path` | `src\retriever\qwen3_retriever.py` |
-| ⭐ 在线重排 | `bge-reranker-v2-minicpm` | `bge_reranker_minicpm_path` | `infer.py` |
-| ✅ 评估重排 | `bge-reranker-v2-minicpm` | `bge_reranker_minicpm_path` | `final_score.py` |
+| ⭐ 在线重排 | `bge-reranker-v2-minicpm-layerwise` | `bge_reranker_minicpm_path` | `infer.py` |
+| ✅ 评估重排 | `bge-reranker-v2-minicpm-layerwise` | `bge_reranker_minicpm_path` | `final_score.py` |
 | 💬 生成模型 | `Qwen3-8B-Instruct (SFT)` | `qwen3_8b_tune_model_name` | `src\client\llm_local_client.py` |
 | ☁️ 云端生成 | `Doubao` | `DOUBAO_MODEL_NAME` | `src\client\llm_chat_client.py` |
 
@@ -103,7 +103,7 @@ PDF 文本 + 图片抽取
    → 调用豆包 API  
    → 生成问题、泛化问题、抽关键词、QA 质量打分
 
-3. **HyDE 假设文档扩写**（`final_score.py`，可选，默认 `HYDE=0` 关闭）  
+3. **HyDE 假设文档扩写**（`final_score.py`，可选，默认 `HYDE=1` 开启）  
    `llm_hyde_client.py`  
    → 调用豆包 API  
    → 把 query 扩写成假设答案，增强检索效果
@@ -129,9 +129,9 @@ PDF 文本 + 图片抽取
    模型：`BGE-Large-zh-v1.5` + `SPLADEv2`  
    作用：把 query 编码，做混合向量检索 Top-K
 
-4. **重排序**（`infer.py` → `bge_m3_reranker.py`）  
-   模型：`Jina-Reranker-v2`  
-   作用：Cross-Encoder 精排，筛出最终上下文
+4. **重排序**（`infer.py` → `minicpm_reranker.py`）  
+   模型：`BGE-Reranker-v2-MiniCPM-Layerwise`  
+   作用：Layerwise Cross-Encoder 精排，筛出最终上下文
 
 5. **最终答案生成**（`src/client/llm_local_client.py`）  
    模型：`Qwen3-8B`（SFT 微调，本地 vLLM 部署）  
@@ -156,8 +156,8 @@ PDF → [☁️ 豆包API 清洗] → [🖥️ m3e-small 语义切分] → [🖥
 训练集 → LLaMA-Factory 微调 Qwen3-8B → 本地模型
 
 阶段四：日常推理（每次问答）
-query → [🖥️ BGE 召回] → [🖥️ Jina 精排] → [🖥️ Qwen3-8B 生成答案]
-          ↑本地               ↑本地                ↑本地
+query → [🖥️ BGE 召回] → [🖥️ MiniCPM 精排] → [🖥️ Qwen3-8B 生成答案]
+          ↑本地                ↑本地                  ↑本地
 全程不需要调用任何远程 API
 
 阶段五：离线评估（按需）
@@ -334,7 +334,7 @@ XIAOMI_SU7_RAG/
 | **2.2 BM25 召回** | `retrieve_topk()`<br/>`src\retriever\bm25_retriever.py` | jieba + BM25 | Top-K 候选文档 |
 | **2.3 混合召回** | `retrieve_topk()`<br/>`src\retriever\milvus_retriever.py` | BGE Dense + SPLADE Sparse | Top-K 候选文档 |
 | **2.4 合并去重** | `merge_docs()`<br/>`src\utils.py` | pymongo 回表 | 去重后候选 |
-| **2.5 精排** | `rank()`<br/>`src\reranker\bge_m3_reranker.py` | Cross-Encoder | 最终 Top-K 上下文 |
+| **2.5 精排** | `rank()`<br/>`src\reranker\minicpm_reranker.py` | Cross-Encoder | 最终 Top-K 上下文 |
 | **2.6 答案生成** | `request_chat()`<br/>`src\client\llm_local_client.py` | vLLM (OpenAI 协议) | 流式答案文本 |
 | **2.7 后处理** | `post_processing()`<br/>`src\utils.py` | 正则 + metadata | `answer` + `cite_pages` + `related_images` |
 
@@ -461,7 +461,7 @@ mkdir -p /var/log/mongodb
 cd /root/autodl-tmp/XIAOMI_SU7_RAG
 
 # 启动语义切分服务（build_index.py 依赖此服务）
-python src/server/semantic_chunk.py &
+python src/server/semantic_chunk.py
 
 # 先生成或加载 split_docs.pkl（run build_index.py）
 # 注意：首次运行可能需要修复 setuptools 版本
@@ -570,30 +570,54 @@ ls -l data/summary_train.json data/summary_test.json data/summary_test_pred.json
 
 ### 🚀 启动在线服务
 
-> ⚠️ **前提条件**：已完成离线建库（`build_index.py`），索引文件已生成。
+> 提供两种方式，二选一。
+
+#### 方式一：Docker Compose（推荐）
 
 ```bash
-# 终端 1：启动 MongoDB（必需，需先安装）
-/usr/local/mongodb/bin/mongod --dbpath /data/db --logpath /var/log/mongodb/mongod.log --bind_ip_all --fork
+# 确保已有 .env 文件（参考 .env.example）
+cp .env.example .env
+# 编辑 .env 填入 DOUBAO_API_KEY 等配置
+
+# 一键启动所有服务（MongoDB + vLLM + 主应用）
+docker-compose up -d
+
+# 进入主应用容器进行交互式问答
+docker exec -it xiaomi_rag_app python infer.py
+
+# 查看服务状态
+docker-compose ps
+
+# 查看日志
+docker-compose logs -f vllm
+docker-compose logs -f app
+
+# 停止所有服务
+docker-compose down
+```
+
+> ⚠️ **注意**：`semantic-chunk` 服务仅在**建索引阶段**（`build_index.py`）需要，日常推理无需启动。  
+> 建索引时单独启动：`docker-compose up -d semantic-chunk`
+
+---
+
+#### 方式二：手动逐服务启动
+
+```bash
+# 终端 1：启动 MongoDB（用 Docker）
+docker run -d --name mongodb -p 27017:27017 \
+  -v $(pwd)/data/mongodb/data:/data/db mongo:7.0
 
 # 终端 2：启动 vLLM（自动识别单卡/多卡）
-python deploy/auto_vllm_server.py --model LLaMA-Factory-main/output/qwen3_lora_sft_int4 --port 8000
+python deploy/auto_vllm_server.py \
+  --model /root/autodl-tmp/XIAOMI_SU7_RAG/LLaMA-Factory-main/output/qwen3_lora_sft_int4 \
+  --port 8000
 
-# 终端 3：构建索引（仅当索引文件不存在时执行）
-# 检查索引文件是否存在：ls data/saved_index/bm25retriever.pkl data/saved_index/milvus.db
-# 如果不存在，先启动语义切分服务：
-# python src/server/semantic_chunk.py 
-# 然后构建索引：
-# pip install --force-reinstall setuptools==69.0.0
-# python build_index.py
-
-# 终端 4：在线问答
+# 终端 3：在线问答
 python infer.py
 ```
 
-> **说明**：
-> - 语义切分服务仅在**离线建库阶段**（`build_index.py`）需要，在线推理阶段无需启动
-> - 如果索引已存在，可跳过构建索引步骤直接启动推理服务
+> ⚠️ vLLM 启动时模型路径必须使用**绝对路径**，否则会被误认为 HuggingFace repo id。
 
 #### vLLM 启动参数说明
 
@@ -622,62 +646,7 @@ python deploy/auto_vllm_server.py \
 python final_score.py
 ```
 
-评估结果将输出到控制台，包括语义相似度得分和 RAGAS 指标（上下文召回率、精确率）。
-
----
-
-## 🐳 Docker 容器化部署
-
-### 环境要求
-- Docker 20.10+
-- Docker Compose 2.0+
-- NVIDIA Docker (用于 vLLM GPU 推理)
-
-### 一键启动
-
-```bash
-# 1. 确保已下载必要模型
-export HF_ENDPOINT=https://hf-mirror.com
-python deploy/download_models.py
-
-# 2. 确保已生成量化模型
-# LLaMA-Factory-main/output/qwen3_lora_sft_int4/ 必须存在
-
-# 3. 一键启动所有服务
-docker-compose up -d
-
-# 查看服务状态
-docker-compose ps
-
-# 查看日志
-docker-compose logs -f app
-```
-
-### 服务组成
-
-| 服务 | 端口 | 说明 |
-|:---:|:---:|:---|
-| `mongodb` | 27017 | 文档元数据存储 |
-| `semantic-chunk` | 6000 | 语义切分服务 |
-| `vllm` | 8000 | 本地 LLM 推理服务 |
-| `app` | - | 主应用（RAG 问答） |
-
-### 配置说明
-
-在 `docker-compose.yml` 中可调整：
-- MongoDB 数据目录映射
-- vLLM 模型路径和参数（`--max-model-len`, `--gpu-memory-utilization`）
-- GPU 资源分配
-
-### 停止服务
-
-```bash
-# 停止并保留数据
-docker-compose down
-
-# 停止并删除数据卷（谨慎使用）
-docker-compose down -v
-```
+评估结果将输出到控制台，包括语义相似度 + 关键词加权得分（`text2vec`）以及 RAGas 指标（上下文召回率 `context_recall`、精确率 `llm_context_precision_with_reference`），结果保存到 `data/ragas_evaluation_result.json`。
 
 ---
 
@@ -708,7 +677,7 @@ docker-compose down -v
 <details>
 <summary><b>📊 重排模块 (Reranker)</b></summary>
 
-- **BGE-Reranker-v2-minicpm**：在线与评估均使用，基于 MiniCPM 的轻量高性能重排模型
+- **BGE-Reranker-v2-MiniCPM-Layerwise**：在线推理与离线评估均使用，基于 MiniCPM 的 Layerwise 轻量高性能重排模型，可通过 `cutoff_layers` 控制精度/速度平衡
 - **BGE-M3 跨编码器**：备选方案，精准重排
 - **Qwen3 轻量重排**：更快速，可选多卡 vLLM
 - 所有重排器实现统一接口 `rank(query, docs, top_k) → List[RankedDoc]`

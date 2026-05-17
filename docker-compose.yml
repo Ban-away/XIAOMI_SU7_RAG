@@ -1,47 +1,67 @@
 version: '3.8'
 
 services:
+
+  # ─────────────────────────────────────────
+  # 1. MongoDB：文档元数据存储
+  # ─────────────────────────────────────────
   mongodb:
     image: mongo:7.0
+    container_name: xiaomi_rag_mongodb
     ports:
       - "27017:27017"
     volumes:
       - ./data/mongodb/data:/data/db
       - ./data/mongodb/log:/var/log/mongodb
     environment:
-      MONGO_INITDB_DATABASE: rag_db
+      MONGO_INITDB_DATABASE: mydatabase
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 10s
-      retries: 3
+      retries: 5
+    restart: unless-stopped
 
+  # ─────────────────────────────────────────
+  # 2. 语义切分服务（仅建索引阶段使用）
+  #    注意：不依赖 MongoDB，单独运行即可
+  # ─────────────────────────────────────────
   semantic-chunk:
     build: .
+    container_name: xiaomi_rag_semantic_chunk
     ports:
       - "6000:6000"
     command: python src/server/semantic_chunk.py
     volumes:
       - ./models:/app/models
       - ./log:/app/log
-    depends_on:
-      mongodb:
-        condition: service_healthy
+    env_file:
+      - .env
     environment:
-      - MONGO_HOST=mongodb
-      - MONGO_PORT=27017
+      - RAG_BASE_DIR=/app/
+    restart: unless-stopped
 
+  # ─────────────────────────────────────────
+  # 3. vLLM 推理服务
+  # ─────────────────────────────────────────
   vllm:
     image: vllm/vllm-openai:latest
+    container_name: xiaomi_rag_vllm
     ports:
       - "8000:8000"
     runtime: nvidia
     command: >
-      vllm serve /app/LLaMA-Factory-main/output/qwen3_lora_sft_int4
-      --port 8000 --max-model-len 8192 --gpu-memory-utilization 0.75
+      vllm serve /models/qwen3_lora_sft_int4
+      --port 8000
+      --max-model-len 8192
+      --gpu-memory-utilization 0.75
+      --dtype bfloat16
+      --trust-remote-code
     volumes:
-      - ./LLaMA-Factory-main/output:/app/LLaMA-Factory-main/output
+      - ./LLaMA-Factory-main/output:/models
       - ./log:/app/log
+    env_file:
+      - .env
     deploy:
       resources:
         reservations:
@@ -49,22 +69,32 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
+    restart: unless-stopped
 
+  # ─────────────────────────────────────────
+  # 4. 主应用（在线问答交互入口）
+  #    stdin_open + tty：支持 infer.py 的交互式输入
+  # ─────────────────────────────────────────
   app:
     build: .
+    container_name: xiaomi_rag_app
+    stdin_open: true
+    tty: true
     command: python infer.py
     volumes:
       - ./models:/app/models
       - ./data:/app/data
       - ./log:/app/log
-    depends_on:
-      mongodb:
-        condition: service_healthy
-      semantic-chunk:
-        condition: service_started
-      vllm:
-        condition: service_started
+    env_file:
+      - .env
     environment:
       - MONGO_HOST=mongodb
       - MONGO_PORT=27017
       - VLLM_BASE_URL=http://vllm:8000/v1
+      - RAG_BASE_DIR=/app/
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      vllm:
+        condition: service_started
+    restart: unless-stopped
