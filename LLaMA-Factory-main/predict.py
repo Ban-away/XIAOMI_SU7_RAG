@@ -7,6 +7,7 @@ from ragas import EvaluationDataset
 from dotenv import load_dotenv
 from ragas import evaluate
 from ragas.metrics import LLMContextRecall, LLMContextPrecisionWithReference
+from ragas.run_config import RunConfig
 
 load_dotenv()
 
@@ -40,11 +41,16 @@ def main():
     # 使用 ChatOpenAI + LangchainLLMWrapper，RAGas 官方推荐用法
     print(f"[INFO] 初始化豆包 LLM...")
     chat_llm = ChatOpenAI(
-        model=model_name,
-        api_key=api_key,
-        base_url=base_url,
-        temperature=0.01,
-    )
+    model=model_name,
+    api_key=api_key,
+    base_url=base_url,
+    temperature=0.01,
+    model_kwargs={
+        "extra_body": {
+            "system": "You are a helpful assistant. Always respond in English with exact JSON format as instructed. Do not add extra fields."
+        }
+    }
+)
     evaluator_llm = LangchainLLMWrapper(chat_llm)
     print(f"[INFO] 评估模型: 豆包 API ({model_name})")
 
@@ -100,16 +106,25 @@ def main():
     print("[INFO] 开始评估...")
     try:
         result = evaluate(
-            dataset=dataset,
-            metrics=metrics,
+        dataset=dataset,
+        metrics=metrics,
+        run_config=RunConfig(
+            timeout=60,   # 默认30秒，改成60秒
+            max_retries=3, # 最大重试次数
+            max_wait=30,   # 重试间隔最大等待30秒
         )
+    )
 
         print("[INFO] 评估完成!")
         print(result)
 
         print("[INFO] 保存评估结果...")
+        save_data = {
+            "context_recall": result["context_recall"],
+            "llm_context_precision_with_reference": result["llm_context_precision_with_reference"],
+        }
         with open("data/ragas_evaluation_result.json", "w", encoding="utf-8") as f:
-            json.dump(result.to_dict(), f, ensure_ascii=False, indent=2)
+            json.dump(save_data, f, ensure_ascii=False, indent=2)
         print("[INFO] 结果已保存到 data/ragas_evaluation_result.json")
 
     except Exception as e:
