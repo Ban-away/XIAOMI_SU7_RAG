@@ -137,11 +137,11 @@ def main():
             try:
                 item = future.result()
                 result.append(item)
-                print(f"原始问题：{item['question']}")
+                print(f"【原始问题】：{item['question']}")
                 if QUERY_REWRITE:
-                    print(f"改写后：{item.get('rewritten_query', '')}")
-                print(f"答案：{item['pred']['answer']}")
-                print(f"cite_pages: {item['pred'].get('cite_pages', [])}, related_images: {item['pred'].get('related_images', [])}")
+                    print(f"【改写后】：{item.get('rewritten_query', '')}")
+                print(f"【答案】：{item['pred']['answer']}")
+                print(f"【引用页码】：{item['pred'].get('cite_pages', [])}, 【相关图片】：{item['pred'].get('related_images', [])}")
                 print("-" * 100)
             except Exception as e:
                 print(f"[WARN] 单条推理失败: {e}")
