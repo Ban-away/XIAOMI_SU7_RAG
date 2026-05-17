@@ -19,7 +19,8 @@ from sentence_transformers import SentenceTransformer
 from sklearn.cluster import AgglomerativeClustering
 
 # 添加项目根目录到 sys.path，确保能正确导入 src 模块
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+print(f"[DEBUG] Added to sys.path: {sys.path[-1]}")
 
 from src import constant
 
