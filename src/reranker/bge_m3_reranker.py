@@ -4,6 +4,7 @@
 import os
 import sys
 import torch
+import importlib.util
 from langchain_core.documents import Document
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
@@ -31,17 +32,26 @@ class BGEM3ReRanker(object):
             # 方法2：如果是自定义模型（如 bge-reranker-v2-minicpm-layerwise）
             print(f"[DEBUG] AutoModel 加载失败，尝试自定义模型类: {str(e)}")
             
-            # 添加模型路径到 sys.path，以便导入自定义类
-            sys.path.insert(0, model_path)
-            
-            # 尝试导入自定义配置和模型类
+            # 使用 importlib 加载自定义模块（解决相对导入问题）
             try:
-                from configuration_minicpm_reranker import LayerWiseMiniCPMConfig
-                from modeling_minicpm_reranker import LayerWiseMiniCPMForSequenceClassification
+                # 加载配置类
+                config_path = os.path.join(model_path, "configuration_minicpm_reranker.py")
+                config_spec = importlib.util.spec_from_file_location("config", config_path)
+                config_module = importlib.util.module_from_spec(config_spec)
+                config_spec.loader.exec_module(config_module)
+                LayerWiseMiniCPMConfig = config_module.LayerWiseMiniCPMConfig
                 
+                # 加载模型类
+                model_path_file = os.path.join(model_path, "modeling_minicpm_reranker.py")
+                model_spec = importlib.util.spec_from_file_location("model", model_path_file)
+                model_module = importlib.util.module_from_spec(model_spec)
+                model_spec.loader.exec_module(model_module)
+                LayerWiseMiniCPMForSequenceClassification = model_module.LayerWiseMiniCPMForSequenceClassification
+                
+                # 加载配置和模型
                 config = LayerWiseMiniCPMConfig.from_pretrained(model_path)
                 self.model = LayerWiseMiniCPMForSequenceClassification.from_pretrained(model_path, config=config)
-                print("[DEBUG] 模型加载成功（使用 LayerWiseMiniCPMForSequenceClassification）")
+                print("[DEBUG] 模型加载成功（使用 importlib 加载自定义类）")
             except Exception as e2:
                 raise RuntimeError(f"无法加载模型 {model_path}: {str(e2)}")
         # 切换到推理模式，关闭 dropout
