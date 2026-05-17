@@ -11,8 +11,9 @@ class BGEM3ReRanker(object):
     def __init__(self, model_path, max_length=4096):
 
         # 加载 tokenizer 与 sequence classification 模型
-        self.tokenizer = AutoTokenizer.from_pretrained(model_path)
-        self.model = AutoModelForSequenceClassification.from_pretrained(model_path)
+        # trust_remote_code=True 用于加载包含自定义代码的模型（如 bge-reranker-v2-minicpm-layerwise）
+        self.tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
+        self.model = AutoModelForSequenceClassification.from_pretrained(model_path, trust_remote_code=True)
         # 切换到推理模式，关闭 dropout
         self.model.eval()
         # 使用 fp16 降低显存占用
