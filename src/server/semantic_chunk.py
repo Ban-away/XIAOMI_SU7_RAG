@@ -4,6 +4,7 @@ import gc
 import re
 import sys
 import math
+import os
 import requests
 import uvicorn
 import torch
@@ -16,6 +17,9 @@ from pydantic import BaseModel, Field
 from sse_starlette.sse import EventSourceResponse
 from sentence_transformers import SentenceTransformer
 from sklearn.cluster import AgglomerativeClustering
+
+# 添加项目根目录到 sys.path，确保能正确导入 src 模块
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src import constant
 
