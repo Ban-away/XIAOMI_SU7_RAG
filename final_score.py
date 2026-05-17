@@ -37,7 +37,7 @@ MILVUS_RETRIEVE_SIZE = 20
 RERANK_SIZE          = 8
 HYDE                 = 1
 QUERY_REWRITE        = 1
-MAX_WORKERS          = 10   # 并发线程数（IO密集部分）
+MAX_WORKERS          = 8   # 并发线程数（IO密集部分）
 # ────────────────────────────────────────────────────────────
 
 # 预热检索器、重排器、向量评估模型
