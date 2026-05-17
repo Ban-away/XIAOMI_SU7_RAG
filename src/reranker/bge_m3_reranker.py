@@ -18,17 +18,31 @@ class BGEM3ReRanker(object):
         else:
             print(f"[ERROR] 模型路径不存在!")
 
-        # 加载 tokenizer 与 sequence classification 模型
-        # trust_remote_code=True 用于加载包含自定义代码的模型（如 bge-reranker-v2-minicpm-layerwise）
-        # 注意：对于包含自定义代码的模型，需要连接 HuggingFace Hub 来解析配置
+        # 加载 tokenizer
+        self.tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
+        
+        # 尝试加载模型
         try:
-            self.tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True, local_files_only=False)
-            self.model = AutoModelForSequenceClassification.from_pretrained(model_path, trust_remote_code=True, local_files_only=False)
-            print("[DEBUG] 模型加载成功（使用远程配置解析）")
-        except Exception as e:
-            print(f"[WARN] 远程加载失败，尝试本地模式: {str(e)}")
-            self.tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True, local_files_only=True)
-            self.model = AutoModelForSequenceClassification.from_pretrained(model_path, trust_remote_code=True, local_files_only=True)
+            # 方法1：尝试使用 AutoModel（适用于标准模型）
+            self.model = AutoModelForSequenceClassification.from_pretrained(model_path, trust_remote_code=True)
+            print("[DEBUG] 模型加载成功（使用 AutoModelForSequenceClassification）")
+        except ValueError as e:
+            # 方法2：如果是自定义模型（如 bge-reranker-v2-minicpm-layerwise）
+            print(f"[DEBUG] AutoModel 加载失败，尝试自定义模型类: {str(e)}")
+            
+            # 添加模型路径到 sys.path，以便导入自定义类
+            sys.path.insert(0, model_path)
+            
+            # 尝试导入自定义配置和模型类
+            try:
+                from configuration_minicpm_reranker import LayerWiseMiniCPMConfig
+                from modeling_minicpm_reranker import LayerWiseMiniCPMForSequenceClassification
+                
+                config = LayerWiseMiniCPMConfig.from_pretrained(model_path)
+                self.model = LayerWiseMiniCPMForSequenceClassification.from_pretrained(model_path, config=config)
+                print("[DEBUG] 模型加载成功（使用 LayerWiseMiniCPMForSequenceClassification）")
+            except Exception as e2:
+                raise RuntimeError(f"无法加载模型 {model_path}: {str(e2)}")
         # 切换到推理模式，关闭 dropout
         self.model.eval()
         # 使用 fp16 降低显存占用
