@@ -2,7 +2,6 @@
 
 
 import os
-import sys
 import torch
 from langchain_core.documents import Document
 from transformers import AutoModelForSequenceClassification, AutoTokenizer, AutoModel
@@ -10,31 +9,21 @@ from transformers import AutoModelForSequenceClassification, AutoTokenizer, Auto
 
 class BGEM3ReRanker(object):
     def __init__(self, model_path, max_length=4096):
-        # 打印模型路径调试信息
-        print(f"[DEBUG] 尝试加载重排模型: {model_path}")
-        print(f"[DEBUG] 路径是否存在: {os.path.exists(model_path)}")
+        print(f"[INFO] 加载重排模型: {os.path.basename(model_path)}")
         
-        if os.path.exists(model_path):
-            print(f"[DEBUG] 目录内容: {os.listdir(model_path)[:5]}...")  # 显示前5个文件
-        else:
-            print(f"[ERROR] 模型路径不存在!")
-
         # 加载 tokenizer
         self.tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
         
-        # 尝试加载模型
+        # 尝试加载模型（双层策略）
         try:
-            # 方法1：尝试使用 AutoModelForSequenceClassification（适用于标准模型）
+            # 方法1：标准序列分类模型
             self.model = AutoModelForSequenceClassification.from_pretrained(model_path, trust_remote_code=True)
-            print("[DEBUG] 模型加载成功（使用 AutoModelForSequenceClassification）")
-        except ValueError as e:
-            # 方法2：尝试使用通用的 AutoModel（适用于自定义模型）
-            print(f"[DEBUG] AutoModelForSequenceClassification 加载失败，尝试 AutoModel: {str(e)}")
-            try:
-                self.model = AutoModel.from_pretrained(model_path, trust_remote_code=True)
-                print("[DEBUG] 模型加载成功（使用 AutoModel）")
-            except Exception as e2:
-                raise RuntimeError(f"无法加载模型 {model_path}: {str(e2)}")
+            self.model_type = "sequence_classification"
+        except ValueError:
+            # 方法2：自定义模型（如 bge-reranker-v2-minicpm-layerwise）
+            self.model = AutoModel.from_pretrained(model_path, trust_remote_code=True)
+            self.model_type = "custom"
+        
         # 切换到推理模式，关闭 dropout
         self.model.eval()
         # 使用 fp16 降低显存占用
@@ -43,6 +32,8 @@ class BGEM3ReRanker(object):
         self.model.cuda()
         # 文本对最大长度（query + doc）
         self.max_length = max_length
+        
+        print(f"[INFO] 重排模型加载完成")
 
 
     def rank(self, query, candidate_docs, topk=10):
@@ -58,7 +49,16 @@ class BGEM3ReRanker(object):
             max_length=self.max_length,
         ).to("cuda")
         with torch.no_grad():
-            scores = self.model(**inputs).logits
+            outputs = self.model(**inputs)
+            
+            # 处理不同模型的输出格式
+            if hasattr(outputs, 'logits'):
+                scores = outputs.logits
+            elif isinstance(outputs, tuple) and len(outputs) > 0:
+                scores = outputs[0]
+            else:
+                scores = outputs
+        
         # 张量转 numpy，便于 Python 层排序
         scores = scores.detach().cpu().clone().numpy()
         # 依据分数降序排序并截断 topk
