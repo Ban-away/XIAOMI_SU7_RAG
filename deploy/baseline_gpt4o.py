@@ -25,6 +25,7 @@
 
 import os
 import json
+import time
 import argparse
 import numpy as np
 from tqdm import tqdm
@@ -32,6 +33,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 from langchain_community.vectorstores import FAISS
 from text2vec import SentenceModel, semantic_search
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 load_dotenv()
 
@@ -209,7 +211,7 @@ def main():
     # 3. 加载评分模型
     sim_model = SentenceModel(model_name_or_path=TEXT2VEC_MODEL, device="cuda:0")
 
-    # 4. 批量推理
+    # 4. 批量推理（分批并行处理）
     results = []
     if os.path.exists(RESULT_FILE):
         with open(RESULT_FILE, "r", encoding="utf-8") as f:
@@ -218,30 +220,57 @@ def main():
         done_ids = {r["unique_id"] for r in results}
         test_data = [d for d in test_data if d["unique_id"] not in done_ids]
 
-    model_desc = "本地Qwen3" if args.model == "local" else ("豆包" if args.model == "doubao" else CHAT_MODEL)
-    for item in tqdm(test_data, desc=f"{model_desc} 推理"):
+    # 分批并行处理配置
+    BATCH_SIZE = 700  # 每批处理700条
+    MAX_WORKERS = 25  # 并发数
+    BASE_WAIT_SECONDS = 3  # 批间等待时间
+    
+    total_batches = (len(test_data) + BATCH_SIZE - 1) // BATCH_SIZE
+    print(f"📦 分批处理：共 {total_batches} 批，每批 {BATCH_SIZE} 条，并发数 {MAX_WORKERS}")
+    
+    def process_item(item):
+        """处理单个测试样本"""
         query = item["question"]
         docs = retrieve(vector_store, query)
         context = "\n".join(
             [f"【{i+1}】{doc.page_content}" for i, doc in enumerate(docs)]
         )
         pred = generate(query, context)
-
-        results.append({
+        return {
             "unique_id": item["unique_id"],
             "question": query,
             "answer": item["answer"],
             "keywords": item.get("keywords", []),
             "pred": pred,
             "context": context,
-        })
+        }
 
-        if len(results) % 50 == 0:
-            with open(RESULT_FILE, "w", encoding="utf-8") as f:
-                json.dump(results, f, ensure_ascii=False, indent=2)
+    model_desc = "本地Qwen3" if args.model == "local" else ("豆包" if args.model == "doubao" else CHAT_MODEL)
+    
+    for batch_idx in range(total_batches):
+        start_idx = batch_idx * BATCH_SIZE
+        end_idx = min(start_idx + BATCH_SIZE, len(test_data))
+        batch_data = test_data[start_idx:end_idx]
+        
+        print(f"\n🚀 处理批次 {batch_idx+1}/{total_batches} ({len(batch_data)} 条)")
+        
+        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+            futures = {executor.submit(process_item, item): item for item in batch_data}
+            for future in tqdm(as_completed(futures), total=len(futures), desc=f"{model_desc} 推理"):
+                result = future.result()
+                if result:
+                    results.append(result)
+        
+        # 保存当前进度
+        with open(RESULT_FILE, "w", encoding="utf-8") as f:
+            json.dump(results, f, ensure_ascii=False, indent=2)
+        print(f"💾 已保存 {len(results)} 条结果")
+        
+        # 批间等待（最后一批不需要）
+        if batch_idx < total_batches - 1:
+            print(f"⏳ 等待 {BASE_WAIT_SECONDS} 秒...")
+            time.sleep(BASE_WAIT_SECONDS)
 
-    with open(RESULT_FILE, "w", encoding="utf-8") as f:
-        json.dump(results, f, ensure_ascii=False, indent=2)
     print(f"[INFO] 推理完成，结果已保存：{RESULT_FILE}")
 
     # 5. 评分（和 final_score.py 完全一致的评分逻辑）
