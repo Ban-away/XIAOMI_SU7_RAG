@@ -55,8 +55,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--dtype",
-        default="bfloat16",
-        help="Computation dtype, e.g. bfloat16/float16/auto.",
+        default="auto",
+        help="Computation dtype, e.g. bfloat16/float16/auto. Use 'auto' for quantized models.",
     )
     parser.add_argument(
         "--disable-auto-tp",
