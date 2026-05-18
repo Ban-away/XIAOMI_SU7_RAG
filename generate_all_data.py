@@ -144,13 +144,23 @@ def step2_generate_expanded_qa():
             for line in f:
                 try:
                     info = json.loads(line)
-                    processed_ids.add(info["unique_id"])
-                except:
+                    # 同时存储字符串和整数形式，确保匹配
+                    uid = info["unique_id"]
+                    processed_ids.add(str(uid))
+                    try:
+                        processed_ids.add(str(int(uid)))
+                    except:
+                        pass
+                except Exception as e:
                     pass
         print(f"📌 已处理 {len(processed_ids)} 条，继续剩余部分...")
     
     # 过滤已处理的问题
-    remaining_docs = [doc for doc in question_docs if doc.metadata["unique_id"] not in processed_ids]
+    remaining_docs = []
+    for doc in question_docs:
+        doc_uid = str(doc.metadata["unique_id"])
+        if doc_uid not in processed_ids:
+            remaining_docs.append(doc)
     print(f"📄 剩余待处理: {len(remaining_docs)} 条")
     
     # 分批处理
