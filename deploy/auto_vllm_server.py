@@ -50,8 +50,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--gpu-memory-utilization",
         type=float,
-        default=0.75,
-        help="GPU memory utilization ratio for vLLM.",
+        default=0.60,  # 降低默认值，避免显存不足
+        help="GPU memory utilization ratio for vLLM. Use lower value if 'No available memory' error occurs.",
     )
     parser.add_argument(
         "--dtype",
