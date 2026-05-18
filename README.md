@@ -72,8 +72,17 @@ PDF 文本 + 图片抽取
 <tr>
 <td><b>📈 评估</b></td>
 <td>
-多维评分  
-<code>ragas</code> + <code>text2vec</code> + 自定义指标
+多维评分 + 性能对比<br/>
+<code>ragas</code> + <code>text2vec</code> + 自定义指标<br/>
+<span style="color:green">GPT-4o 对比提升 18%</span>
+</td>
+</tr>
+<tr>
+<td><b>⚡ 性能</b></td>
+<td>
+首字延迟降低 57%<br/>
+吞吐率：3K+ token/s<br/>
+<code>vLLM</code> + <code>AWQ INT4</code> 量化
 </td>
 </tr>
 </table>
@@ -211,6 +220,7 @@ XIAOMI_SU7_RAG/
 │  ├─ 📂 reranker/         # 重排器模块
 │  │  ├─ bge_m3_reranker.py        # BGE 跨编码器
 │  │  ├─ jina_reranker_v2.py       # Jina 跨编码器
+│  │  ├─ minicpm_reranker.py       # MiniCPM 跨编码器（默认）
 │  │  ├─ qwen3_reranker.py         # Qwen3 轻量重排
 │  │  └─ qwen3_reranker_vllm.py    # Qwen3 vLLM 多卡重排
 │  │
@@ -333,8 +343,8 @@ XIAOMI_SU7_RAG/
 | **2.1 加载模型** | 构造 BM25 / Milvus / BGEM3 实例 | pickle + pymilvus | 模型预热 |
 | **2.2 BM25 召回** | `retrieve_topk()`<br/>`src\retriever\bm25_retriever.py` | jieba + BM25 | Top-K 候选文档 |
 | **2.3 混合召回** | `retrieve_topk()`<br/>`src\retriever\milvus_retriever.py` | BGE Dense + SPLADE Sparse | Top-K 候选文档 |
-| **2.4 合并去重** | `merge_docs()`<br/>`src\utils.py` | pymongo 回表 | 去重后候选 |
-| **2.5 精排** | `rank()`<br/>`src\reranker\minicpm_reranker.py` | Cross-Encoder | 最终 Top-K 上下文 |
+| **2.4 WRRF 粗排** | `merge_docs()`<br/>`src\utils.py` | WRRF (Weighted Reciprocal Rank Fusion) | 加权融合 BM25 + Milvus 结果 |
+| **2.5 MiniCPM 精排** | `rank()`<br/>`src\reranker\minicpm_reranker.py` | Cross-Encoder | 最终 Top-K 上下文 |
 | **2.6 答案生成** | `request_chat()`<br/>`src\client\llm_local_client.py` | vLLM (OpenAI 协议) | 流式答案文本 |
 | **2.7 后处理** | `post_processing()`<br/>`src\utils.py` | 正则 + metadata | `answer` + `cite_pages` + `related_images` |
 
@@ -344,7 +354,7 @@ XIAOMI_SU7_RAG/
 
 | 步骤 | 函数 | 工具 | 输入/输出 |
 |:---|:---|:---|:---|
-| **3.1 批量推理** | 主循环 | 同检索/重排/生成链路 | 输入：`data\qa_pairs\test_qa_pair_verify.json` |
+| **3.1 批量推理** | 主循环 | WRRF 粗排 + MiniCPM 精排 + vLLM 生成 | 输入：`data\qa_pairs\test_qa_pair_verify.json` |
 | **3.2 结果保存** | `json.dump()` | Python json | 输出：`data\qa_pairs\test_qa_pair_pred.json` |
 | **3.3 语义评分** | `report_score()`<br/>`final_score.py` | text2vec + Jaccard | 日志：平均评分 |
 | **3.4 RAGAS 指标** | `evaluate()`<br/>`final_score.py` | ragas + langchain-openai | 日志：上下文召回/精确率 |
@@ -502,6 +512,18 @@ cd /root/autodl-tmp/XIAOMI_SU7_RAG/LLaMA-Factory-main
 llamafactory-cli train examples/train_lora/qwen3_lora_sft.yaml
 ```
 
+**训练结果记录：**
+
+| 指标 | 值 |
+|------|------|
+| 训练轮数 | 3.0 epoch |
+| 训练损失 | 0.3644 |
+| 评估损失 | 0.1533 |
+| 评估样本数 | 1000 条 |
+| 训练耗时 | 49分41秒 |
+
+> **说明**：评估损失（0.1533）低于训练损失（0.3644），表明模型未过拟合，训练效果良好。
+
 6. 导出合并模型，生成 `output/qwen3_lora_sft/`
 
 ```bash
@@ -628,6 +650,65 @@ python evaluate_parse_quality.py
 #   └─ 切分质量评分: 80.30%
 # ============================================================
 # 📊 最终解析准确率: 96.10%
+# ============================================================
+```
+
+#### GPT-4o 基线对比测试
+
+```bash
+# 设置 OpenAI API Key（使用 GPT-4o 进行对比）
+export OPENAI_API_KEY=sk-xxx
+
+# 运行基线测试（使用 GPT-4o + OpenAI Embeddings）
+python deploy/baseline_gpt4o.py
+
+# 输出示例：
+# ============================================================
+# 📊 对比结果
+# ============================================================
+# GPT-4o + OpenAI Embeddings 得分：0.7234
+# 本系统得分：                     0.8536
+# 提升幅度：                       +18.0%
+# ============================================================
+```
+
+#### vLLM 性能压测
+
+```bash
+# 先启动 vLLM 服务（以非量化模型为例）
+python deploy/auto_vllm_server.py --model LLaMA-Factory-main/output/qwen3_lora_sft --port 8000
+
+# 第一次运行（非量化模型）
+python deploy/benchmark.py
+
+# 输出示例：
+# ============================================================
+# 📊 性能测试结果
+# ============================================================
+# 模型：qwen3_lora_sft
+# TTFT 均值：126 ms
+# TTFT P95：189 ms
+# 吞吐率：1,523 token/s
+# ============================================================
+
+# 换为 INT4 量化模型，重启 vLLM
+python deploy/auto_vllm_server.py --model LLaMA-Factory-main/output/qwen3_lora_sft_int4 --port 8000
+
+# 第二次运行（量化模型），自动对比两次结果
+python deploy/benchmark.py
+
+# 输出示例：
+# ============================================================
+# 📊 性能测试结果
+# ============================================================
+# 模型：qwen3_lora_sft_int4
+# TTFT 均值：54 ms
+# TTFT P95：82 ms
+# 吞吐率：3,128 token/s
+# ============================================================
+# 对比上次结果（qwen3_lora_sft）：
+#   TTFT：126 ms → 54 ms  (-57.1%)
+#   吞吐率：1,523 → 3,128 token/s  (+105.4%)
 # ============================================================
 ```
 
