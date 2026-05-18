@@ -170,8 +170,10 @@ def main():
         prompt = PROMPT.format(query=query, context=context)
         try:
             if args.model == "local" and local_client:
+                # 使用 vLLM 启动时的完整模型路径
+                model_path = os.path.join(BASE_DIR, "LLaMA-Factory-main/output/qwen3_lora_sft_int4")
                 response = local_client.chat.completions.create(
-                    model="qwen3_lora_sft_int4",
+                    model=model_path,
                     messages=[{"role": "user", "content": prompt}],
                     max_tokens=512,
                     temperature=0.01,
