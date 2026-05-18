@@ -8,45 +8,129 @@ from src.client.mongodb_config import MongoConfig
 manual_collection = MongoConfig.get_collection("manual_text")
 
 
-def merge_docs(docs1, docs2):
+def wrrf_fusion(results_list, weights=None, k=60):
     """
-    合并两路召回文档，并按父块去重。
+    Weighted Reciprocal Rank Fusion (WRRF) 加权倒数排名融合
+
+    公式: score(d) = Σ (w_i / (k + rank_i(d)))
+    
+    参数:
+        results_list: 多个检索器的结果列表，每个元素是一个 Document 列表
+        weights: 各检索器的权重列表，长度应与 results_list 相同
+        k: 排名衰减常数，通常取 60-100
+    
+    返回:
+        按 WRRF 分数排序后的 Document 列表
+    """
+    if not results_list or all(not results for results in results_list):
+        return []
+    
+    # 默认权重相等
+    if weights is None:
+        weights = [1.0] * len(results_list)
+    
+    # 存储每个文档的分数和原始文档对象
+    doc_scores = {}
+    doc_map = {}
+    
+    for idx, results in enumerate(results_list):
+        weight = weights[idx]
+        for rank, doc in enumerate(results, 1):
+            # 获取文档唯一标识
+            parent_id = doc.metadata.get("parent_id")
+            unique_id = parent_id if parent_id else doc.metadata.get("unique_id", str(id(doc)))
+            
+            # 计算 WRRF 分数
+            if unique_id not in doc_scores:
+                doc_scores[unique_id] = 0
+            doc_scores[unique_id] += weight / (k + rank)
+            
+            # 保存原始文档（第一次出现时保存）
+            if unique_id not in doc_map:
+                doc_map[unique_id] = doc
+    
+    # 按分数降序排序
+    sorted_ids = sorted(doc_scores.keys(), key=lambda x: -doc_scores[x])
+    
+    # 返回排序后的文档列表
+    return [doc_map[uid] for uid in sorted_ids]
+
+
+def merge_docs(docs1, docs2, use_wrrf=True):
+    """
+    合并两路召回文档，并按父块去重，支持 WRRF 排序。
 
     设计目的：
     1. 召回阶段会同时返回父块与子块，直接拼接会有重复信息。
     2. 如果命中子块（含 parent_id），这里回溯父块，统一上下文粒度。
-    """
-    # 最终合并结果（去重后）
-    merged_docs = []
-    # 记录已加入结果集的 unique_id，防止重复
-    merged_ids = set()
-    # 拼接两路候选文档（例如 BM25 + Milvus）
-    candidate_docs = docs1 + docs2
+    3. 使用 WRRF 融合提升检索效果。
 
-    # 逐条处理候选文档
-    for doc in candidate_docs:
-        # 如果是子块，metadata 会携带 parent_id
+    参数:
+        docs1: 第一路检索结果（如 BM25）
+        docs2: 第二路检索结果（如 Milvus）
+        use_wrrf: 是否使用 WRRF 排序
+    
+    返回:
+        合并去重后的文档列表
+    """
+    # 存储去重后的文档及其在原始检索中的排名信息
+    merged_ids = set()
+    docs1_unique = []  # 去重后的第一路结果
+    docs2_unique = []  # 去重后的第二路结果
+    
+    # 处理第一路检索结果
+    for doc in docs1:
         parent_id = doc.metadata.get("parent_id")
         if parent_id:
-            # 回表找到父块原文
             parent_mg = manual_collection.find_one({"unique_id": parent_id})
-            # 防御：如果 Mongo 数据丢失，直接跳过这条
             if not parent_mg:
                 continue
             unique_id = parent_mg["unique_id"]
-            # 只保留第一次命中的父块
-            if unique_id and unique_id not in merged_ids:
+            if unique_id not in merged_ids:
                 merged_ids.add(unique_id)
-                # 重新包装成 LangChain Document，保持下游接口一致
                 parent_doc = Document(page_content=parent_mg["page_content"], metadata=parent_mg["metadata"])
-                merged_docs.append(parent_doc)
+                docs1_unique.append(parent_doc)
         else:
-            # 当前文档本身就是父块（或没有 parent_id），直接按自身 unique_id 去重
             unique_id = doc.metadata.get("unique_id")
             if unique_id and unique_id not in merged_ids:
                 merged_ids.add(unique_id)
-                merged_docs.append(doc)
-    return merged_docs
+                docs1_unique.append(doc)
+    
+    # 重置去重集合，处理第二路
+    merged_ids.clear()
+    
+    for doc in docs2:
+        parent_id = doc.metadata.get("parent_id")
+        if parent_id:
+            parent_mg = manual_collection.find_one({"unique_id": parent_id})
+            if not parent_mg:
+                continue
+            unique_id = parent_mg["unique_id"]
+            if unique_id not in merged_ids:
+                merged_ids.add(unique_id)
+                parent_doc = Document(page_content=parent_mg["page_content"], metadata=parent_mg["metadata"])
+                docs2_unique.append(parent_doc)
+        else:
+            unique_id = doc.metadata.get("unique_id")
+            if unique_id and unique_id not in merged_ids:
+                merged_ids.add(unique_id)
+                docs2_unique.append(doc)
+    
+    # 使用 WRRF 融合排序
+    if use_wrrf:
+        # BM25 和 Milvus 的权重可以根据效果调整
+        # 这里设置 BM25 权重为 0.4，Milvus 权重为 0.6（向量检索通常更重要）
+        return wrrf_fusion([docs1_unique, docs2_unique], weights=[0.4, 0.6], k=60)
+    else:
+        # 传统方式：简单拼接去重
+        final_ids = set()
+        final_docs = []
+        for doc in docs1_unique + docs2_unique:
+            unique_id = doc.metadata.get("unique_id")
+            if unique_id and unique_id not in final_ids:
+                final_ids.add(unique_id)
+                final_docs.append(doc)
+        return final_docs
 
 
 

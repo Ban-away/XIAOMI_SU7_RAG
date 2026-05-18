@@ -30,9 +30,9 @@ from tqdm.contrib.concurrent import process_map
 from src.retriever.bm25_retriever import BM25
 from src.retriever.milvus_retriever import MilvusRetriever 
 from src.client.llm_chat_client import request_chat
-from src.reranker.bge_m3_reranker import BGEM3ReRanker 
+from src.reranker.minicpm_reranker import MiniCPMReRanker
 # from src.reranker.qwen3_reranker_vllm import Qwen3ReRankervLLM 
-from src.constant import bge_reranker_model_path
+from src.constant import bge_reranker_minicpm_path
 # from src.constant import qwen3_4b_reranker_model_path
 from src.utils import merge_docs, post_processing
 
@@ -60,10 +60,10 @@ MAX_WORKERS = min(32, os.cpu_count() * 2)  # 合理并发（使用所有CPU核�
 if not os.path.exists("data/qa_pairs/train_data.json"):
     print("[INFO] train_data.json 不存在，开始生成...")
     
-    # 加载检索器和重排器（使用轻量级 BGE-M3 重排器，避免 vLLM 多进程问题）
+    # 加载检索器和重排器（使用 BGE-Reranker-v2-MiniCPM 精排）
     bm25_retriever = BM25(docs=None, retrieve=True)
     milvus_retriever = MilvusRetriever(docs=None, retrieve=True) 
-    bge_m3_reranker = BGEM3ReRanker(model_path=bge_reranker_model_path)
+    bge_m3_reranker = MiniCPMReRanker(model_path=bge_reranker_minicpm_path, cutoff_layers=28)
     
     # 预热模型
     milvus_retriever.retrieve_topk("这是一条测试数据", topk=3)
