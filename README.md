@@ -543,7 +543,27 @@ python predict.py
 
 **评估方式：** 使用豆包 API 进行 RAG 评估（需配置 `DOUBAO_MODEL_NAME`、`DOUBAO_API_KEY`、`DOUBAO_BASE_URL` 环境变量）
 
-10. 校验 summary 文件
+**预测与评估输出：**
+
+```bash
+# predict.py 执行后生成：
+# - data/summary_test_pred.json：模型预测结果（含 response 字段）
+# - data/ragas_evaluation_result.json：RAGas 评估指标
+
+# 评估结果示例：
+# {'context_recall': 0.8223, 'llm_context_precision_with_reference': 0.9875}
+```
+
+**10. 执行完整离线评估（可选）**
+
+```bash
+cd /root/autodl-tmp/XIAOMI_SU7_RAG
+python final_score.py
+```
+
+> **说明**：`final_score.py` 会进行更全面的评估，包括语义相似度评分、关键词加权评分等，输出综合得分。
+
+**11. 校验 summary 文件**
 
 ```bash
 cd /root/autodl-tmp/XIAOMI_SU7_RAG/LLaMA-Factory-main
