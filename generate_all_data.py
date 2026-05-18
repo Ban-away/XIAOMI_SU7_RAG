@@ -101,13 +101,9 @@ def step2_generate_expanded_qa():
         print(f"❌ {QA_PATH} 不存在")
         return False
 
-    if os.path.exists(OUTPUT_PATH) and os.path.getsize(OUTPUT_PATH) > 0 and not args.force:
-        count = sum(1 for _ in open(OUTPUT_PATH))
-        print(f"✅ {OUTPUT_PATH} 已存在 ({count} 条)，跳过")
-        return True
-
+    # 使用 gen_qa 内部的断点续传机制，移除提前跳过逻辑
+    
     question_docs = []
-    idx = 0
     with open(QA_PATH, "r", encoding="utf-8") as f:
         for line in f:
             info = json.loads(line)
@@ -118,10 +114,10 @@ def step2_generate_expanded_qa():
             for qa in resp:
                 q = qa.get("question", "").strip()
                 if q:
+                    # 使用问题内容作为 unique_id，与 gen_qa 内部存储格式完全一致
                     question_docs.append(
-                        Document(page_content=q, metadata={"unique_id": str(idx)})
+                        Document(page_content=q, metadata={"unique_id": q})
                     )
-                    idx += 1
 
     print(f"📄 待扩展问题数（从QA对中提取）: {len(question_docs)}")
     print(f"[INFO] 每个问题生成5个同义问法，实际调用次数取决于断点续传状态")
@@ -144,23 +140,13 @@ def step2_generate_expanded_qa():
             for line in f:
                 try:
                     info = json.loads(line)
-                    # 同时存储字符串和整数形式，确保匹配
-                    uid = info["unique_id"]
-                    processed_ids.add(str(uid))
-                    try:
-                        processed_ids.add(str(int(uid)))
-                    except:
-                        pass
+                    processed_ids.add(info["unique_id"])
                 except Exception as e:
                     pass
         print(f"📌 已处理 {len(processed_ids)} 条，继续剩余部分...")
     
     # 过滤已处理的问题
-    remaining_docs = []
-    for doc in question_docs:
-        doc_uid = str(doc.metadata["unique_id"])
-        if doc_uid not in processed_ids:
-            remaining_docs.append(doc)
+    remaining_docs = [doc for doc in question_docs if doc.metadata["unique_id"] not in processed_ids]
     print(f"📄 剩余待处理: {len(remaining_docs)} 条")
     
     # 分批处理
