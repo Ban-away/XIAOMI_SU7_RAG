@@ -182,7 +182,7 @@ def gen_qa(splitted_docs, prompt_tmpl, qa_ckpt_filename, expand=False, force=Fal
                     qa_ckpt[info['unique_id']] = info
                 except:
                     pass
-        print(f"[INFO] 已存在 {len(qa_ckpt)} 条记录，跳过...")
+        print(f"[INFO] 断点续传：已处理 {len(qa_ckpt)} 条，跳过")
     
     with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         if expand:
@@ -195,7 +195,10 @@ def gen_qa(splitted_docs, prompt_tmpl, qa_ckpt_filename, expand=False, force=Fal
                        if len(doc.page_content.replace('\n', '')) >= MINMAL_CHUNK_SIZE and
                            doc.metadata['unique_id'] not in qa_ckpt}
         
-        print(f"[INFO] 待处理 {len(futures)} 条...")
+        already = len(qa_ckpt)
+        remaining = len(futures)
+        total = already + remaining
+        print(f"[INFO] 总计 {total} 条，已完成 {already} 条，本次处理 {remaining} 条...")
         
         for unique_id in tqdm(futures):
             future = futures[unique_id]

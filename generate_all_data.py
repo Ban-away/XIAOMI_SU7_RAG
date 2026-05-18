@@ -122,11 +122,67 @@ def step2_generate_expanded_qa():
                     )
                     idx += 1
 
-    print(f"📄 待扩展问题数: {len(question_docs)}")
-    gen_qa(question_docs, GENERALIZE_PROMPT_TPL, OUTPUT_PATH, expand=True, force=args.force)
-    count = sum(1 for _ in open(OUTPUT_PATH))
-    print(f"✅ {OUTPUT_PATH} 生成完成，共 {count} 条")
-    return True
+    print(f"📄 待扩展问题数（从QA对中提取）: {len(question_docs)}")
+    print(f"[INFO] 每个问题生成5个同义问法，实际调用次数取决于断点续传状态")
+    
+    # 扩展QA使用更高的并发数（参考原始QA的成功经验）
+    import src.gen_qa.run as gen_module
+    original_workers = gen_module.MAX_WORKERS
+    gen_module.MAX_WORKERS = 35  # 直接设置为35（参考原始QA的30并发成功经验）
+    print(f"⚠️ 扩展QA已分批处理，设置并发数为 {gen_module.MAX_WORKERS}")
+    
+    # 分批处理配置（参考原始QA的成功经验）
+    BATCH_SIZE = 850  # 每批处理800条（与原始QA的823条相当）
+    BASE_WAIT_SECONDS = 5  # 固定等待时间（秒）
+    MAX_WAIT_SECONDS = 5   # 固定等待时间，不递增
+    
+    # 检查是否有已处理的记录（断点续传）
+    processed_ids = set()
+    if os.path.exists(OUTPUT_PATH) and os.path.getsize(OUTPUT_PATH) > 0:
+        with open(OUTPUT_PATH, "r", encoding="utf-8") as f:
+            for line in f:
+                try:
+                    info = json.loads(line)
+                    processed_ids.add(info["unique_id"])
+                except:
+                    pass
+        print(f"📌 已处理 {len(processed_ids)} 条，继续剩余部分...")
+    
+    # 过滤已处理的问题
+    remaining_docs = [doc for doc in question_docs if doc.metadata["unique_id"] not in processed_ids]
+    print(f"📄 剩余待处理: {len(remaining_docs)} 条")
+    
+    # 分批处理
+    total_batches = (len(remaining_docs) + BATCH_SIZE - 1) // BATCH_SIZE
+    print(f"📦 共 {total_batches} 批，每批 {BATCH_SIZE} 条")
+    print(f"⏱️ 基础等待时间: {BASE_WAIT_SECONDS}秒，最大等待时间: {MAX_WAIT_SECONDS}秒")
+    
+    import time
+    for batch_idx in range(total_batches):
+        start_idx = batch_idx * BATCH_SIZE
+        end_idx = min(start_idx + BATCH_SIZE, len(remaining_docs))
+        batch_docs = remaining_docs[start_idx:end_idx]
+        
+        print(f"\n🚀 处理批次 {batch_idx+1}/{total_batches} ({len(batch_docs)} 条)")
+        
+        # 生成扩展 QA（分批处理时强制重新生成，跳过内部断点续传检查）
+        # 因为我们已经在外部做了断点续传过滤
+        result = gen_qa(batch_docs, GENERALIZE_PROMPT_TPL, OUTPUT_PATH, expand=True, force=True)
+        
+        # 等待固定时间（最后一批不需要等待）
+        if batch_idx < total_batches - 1:
+            print(f"⏳ 等待 {BASE_WAIT_SECONDS} 秒...")
+            time.sleep(BASE_WAIT_SECONDS)
+    
+    # 恢复原始并发数
+    gen_module.MAX_WORKERS = original_workers
+    
+    # 统计最终结果
+    if os.path.exists(OUTPUT_PATH):
+        count = sum(1 for _ in open(OUTPUT_PATH))
+        print(f"\n✅ {OUTPUT_PATH} 生成完成，共 {count} 条记录")
+        return True
+    return False
 
 
 # ── Step3：切分 + Step4：质量审核 ────────────────────────────
