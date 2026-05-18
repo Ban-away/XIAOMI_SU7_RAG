@@ -139,15 +139,6 @@ MAX_INPUT_SIZE = 4096
 RERANK_DEV_SIZE = 1000
 TEST_RATE = 0.08
 
-print("\n" + "="*60)
-print("生成 Summary/Rerank 数据集")
-print("="*60)
-print(f"摘要训练集: ./data/summary_data/train.json", flush=True)
-print(f"摘要测试集: ./data/summary_data/test.json", flush=True)
-print(f"重排训练集: ./data/rerank_data/train.json", flush=True)
-print(f"重排验证集: ./data/rerank_data/dev.json", flush=True)
-print(f"重排测试集: ./data/rerank_data/test.json", flush=True)
-
 # 训练/测试输出文件句柄
 summary_train_handler = open("./data/summary_data/train.json", "w")
 summary_test_handler = open("./data/summary_data/test.json", "w")
@@ -222,6 +213,15 @@ processed_results = process_map(
     desc="Processing train_data"
 )
 
+print("\n" + "="*60)
+print("生成 Summary/Rerank 数据集")
+print("="*60)
+print(f"摘要训练集: ./data/summary_data/train.json", flush=True)
+print(f"摘要测试集: ./data/summary_data/test.json", flush=True)
+print(f"重排训练集: ./data/rerank_data/train.json", flush=True)
+print(f"重排验证集: ./data/rerank_data/dev.json", flush=True)
+print(f"重排测试集: ./data/rerank_data/test.json", flush=True)
+
 # 构建训练/测试集
 for result in processed_results:
     item = result["item"]
@@ -260,7 +260,12 @@ for result in processed_results:
 rerank_train = [item for item in rerank_train if len(item["query"]) > 0 and len(item["content"]) > 0]
 rerank_dev = rerank_train[-RERANK_DEV_SIZE:]
 random.shuffle(rerank_train)
-print("Rerank Train size:", len(rerank_train), "Rerank Test size:", len(rerank_test))
+print("╔═══════════════════════════════════════════════╗")
+print("║           Rerank 数据集统计                     ║")
+print("╠═══════════════════════════════════════════════╣")
+print(f"║  Train  size:  {len(rerank_train):>10,} 条        ║")
+print(f"║  Test   size:  {len(rerank_test):>10,} 条        ║")
+print("╚═══════════════════════════════════════════════╝")
 
 for item in rerank_train:
     rerank_train_handler.write(json.dumps(item, ensure_ascii=False) + "\n")
@@ -270,7 +275,12 @@ for item in rerank_test:
     rerank_test_handler.write(json.dumps(item, ensure_ascii=False) + "\n")
 
 
-print("Summary Train size:", len(summary_train), "Summary Test size:", len(summary_test))
+print("╔═══════════════════════════════════════════════╗")
+print("║           Summary 数据集统计                    ║")
+print("╠═══════════════════════════════════════════════╣")
+print(f"║  Train  size:  {len(summary_train):>10,} 条        ║")
+print(f"║  Test   size:  {len(summary_test):>10,} 条        ║")
+print("╚═══════════════════════════════════════════════╝")
 summary_train_handler.write(json.dumps(summary_train, ensure_ascii=False, indent=4))
 summary_test_handler.write(json.dumps(summary_test, ensure_ascii=False, indent=4))
 
