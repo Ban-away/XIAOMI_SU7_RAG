@@ -264,8 +264,10 @@ def step5_generate_keywords():
         test_qa_pairs = json.load(f)
 
     # 对每条答案抽取关键词（去重，按答案内容去重，节省 API 调用）
-    unique_answers = list(set(item["answer"] for item in test_qa_pairs
-                              if item.get("answer") and item["answer"] != "无答案"))
+    unique_answers = list(dict.fromkeys(  # 用 dict 保持顺序去重
+        item["answer"] for item in test_qa_pairs
+        if item.get("answer") and item["answer"] != "无答案"
+    ))
     answer_docs = [
         Document(page_content=a, metadata={"unique_id": str(i)})
         for i, a in enumerate(unique_answers)
