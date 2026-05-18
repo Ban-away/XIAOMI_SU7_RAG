@@ -27,30 +27,52 @@ def main():
     print("[INFO] ✅ 豆包 API 配置检查通过")
     print(f"[INFO]   - DOUBAO_MODEL_NAME: {model_name}")
     print(f"[INFO]   - DOUBAO_API_KEY: {'*' * 48}")
-    print(f"[INFO]   - DOUBAO_BASE_URL: `{base_url}`")
+    print(f"[INFO]   - DOUBAO_BASE_URL: '{base_url}'")
     print()
 
     data_file = "data/summary_test_pred.json"
-    if os.path.exists(data_file):
+    
+    # 检查预测文件是否存在，如果不存在则先生成
+    if not os.path.exists(data_file):
+        print(f"[WARNING] 预测文件 {data_file} 不存在，开始生成预测...")
+        
+        # 生成预测（使用 INT4 量化模型）
+        import subprocess
+        result = subprocess.run(
+            ["python", "-m", "llamafactory.predict", 
+             "--model_name_or_path", "output/qwen3_lora_sft_int4",
+             "--template", "qwen3",
+             "--dataset", "summary_test",
+             "--output_dir", "data/",
+             "--predict_file", "summary_test_pred.json"],
+            capture_output=True,
+            text=True
+        )
+        
+        if result.returncode != 0:
+            print(f"[ERROR] 生成预测失败: {result.stderr}")
+            raise RuntimeError("生成预测失败，请检查模型路径和配置")
+        print(f"[INFO] 预测生成完成，结果已保存到 {data_file}")
+    else:
         print(f"[INFO] 检测到已存在预测文件: {os.path.abspath(data_file)}")
         print("[INFO] 将跳过预测阶段，直接加载已有预测结果进行评估")
-        print()
-
+    
+    print()
     print("[INFO] ========== 开始 RAG 评估 ==========")
 
     # 使用 ChatOpenAI + LangchainLLMWrapper，RAGas 官方推荐用法
     print(f"[INFO] 初始化豆包 LLM...")
     chat_llm = ChatOpenAI(
-    model=model_name,
-    api_key=api_key,
-    base_url=base_url,
-    temperature=0.01,
-    model_kwargs={
-        "extra_body": {
-            "system": "You are a helpful assistant. Always respond in English with exact JSON format as instructed. Do not add extra fields."
+        model=model_name,
+        api_key=api_key,
+        base_url=base_url,
+        temperature=0.01,
+        model_kwargs={
+            "extra_body": {
+                "system": "You are a helpful assistant. Always respond in English with exact JSON format as instructed. Do not add extra fields."
+            }
         }
-    }
-)
+    )
     evaluator_llm = LangchainLLMWrapper(chat_llm)
     print(f"[INFO] 评估模型: 豆包 API ({model_name})")
 
@@ -106,14 +128,14 @@ def main():
     print("[INFO] 开始评估...")
     try:
         result = evaluate(
-        dataset=dataset,
-        metrics=metrics,
-        run_config=RunConfig(
-            timeout=100,   # 默认30秒，改成100秒
-            max_retries=3, # 最大重试次数
-            max_wait=50,   # 重试间隔最大等待50秒
+            dataset=dataset,
+            metrics=metrics,
+            run_config=RunConfig(
+                timeout=100,   # 默认30秒，改成100秒
+                max_retries=3, # 最大重试次数
+                max_wait=50,   # 重试间隔最大等待50秒
+            )
         )
-    )
 
         print("[INFO] 评估完成!")
         print(result)
