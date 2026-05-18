@@ -79,6 +79,7 @@ def step1_generate_raw_qa():
         splitted_docs = pickle.load(f)
 
     print(f"📄 待处理文档数: {len(splitted_docs)}")
+    print(f"[INFO] 已过滤过滤 chunk_size < 100 字符的文档块")
     result = gen_qa(splitted_docs, CONTEXT_PROMPT_TPL, QA_PATH, expand=False, force=args.force)
     print(f"✅ {QA_PATH} 生成完成，共 {len(result)} 条")
     return True

@@ -80,11 +80,10 @@ def report_score(result):
             )
 
         result[idx]["score"] = score
-        print("\n【打印低分样本：】\n")
         if score < 0.6:
             print(f"低分样本: {item['question']}")
-            print(f"参考回答: {gold}")
-            print(f"模型回答: {pred}")
+            print(f"参考答案: {gold}")
+            print(f"模型预测: {pred}")
             print(f"得分: {score:.3f}")
             print("-" * 100)
     return result
