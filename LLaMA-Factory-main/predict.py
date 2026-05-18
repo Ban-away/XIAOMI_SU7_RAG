@@ -153,9 +153,9 @@ def main():
             dataset=dataset,
             metrics=metrics,
             run_config=RunConfig(
-                timeout=100,
-                max_retries=3,
-                max_wait=50,
+                timeout=100,   # 默认30秒，改成100秒
+                max_retries=3, # 最大重试次数
+                max_wait=50,   # 重试间隔最大等待50秒
             )
         )
 

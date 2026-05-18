@@ -556,18 +556,18 @@ ls -l data/summary_train.json data/summary_test.json data/summary_test_pred.json
 
 | 文件路径 | 作用 | 记录数 | 生成时机 |
 |:---|:---|:---|:---|
-| `data/qa_pairs/qa_pair.json` | 原始 QA 对（每个语义块生成5个问题） | 2,616 | Step 3 (`generate_all_data.py`) |
-| `data/qa_pairs/expand_qa_pair.json` | 扩展 QA 对（每个问题生成5个同义问法） | 12,288 | Step 3 (`generate_all_data.py`) |
-| `data/qa_pairs/train_qa_pair.json` | 训练集（90%数据） | 21,727 | Step 3 (`generate_all_data.py`) |
-| `data/qa_pairs/test_qa_pair.json` | 测试集（10%数据，含关键词） | 2,399 | Step 3 (`generate_all_data.py`) |
-| `data/qa_pairs/test_keywords_pair.json` | 测试集答案关键词标注 | 2,399 | Step 3 (`generate_all_data.py`) |
-| `data/qa_pairs/test_qa_pair_verify.json` | 评估输入文件 | 2,399 | Step 3 (`generate_all_data.py`) |
-| `data/qa_pairs/train_data.json` | SFT 训练数据（含检索上下文） | 21,727 | Step 3 (`generate_all_data.py`) |
-| `data/summary_data/train.json` | 摘要训练集 | 19,996 | Step 4 (`generate_sft_data.py`) |
-| `data/summary_data/test.json` | 摘要测试集 | 1,731 | Step 4 (`generate_sft_data.py`) |
-| `data/rerank_data/train.json` | 重排训练集 | 48,999 | Step 4 (`generate_sft_data.py`) |
-| `data/rerank_data/dev.json` | 重排验证集 | 1,000 | Step 4 (`generate_sft_data.py`) |
-| `data/rerank_data/test.json` | 重排测试集 | 1,234 | Step 4 (`generate_sft_data.py`) |
+| `data/qa_pairs/qa_pair.json` | 原始 QA 对（每个语义块生成） | 823 | Step 3 (`generate_all_data.py`) |
+| `data/qa_pairs/expand_qa_pair.json` | 扩展 QA 对（每个问题生成5个同义问法） | 3,864 | Step 3 (`generate_all_data.py`) |
+| `data/qa_pairs/train_qa_pair.json` | 训练集（质量审核后） | 21,595 | Step 3 (`generate_all_data.py`) |
+| `data/qa_pairs/test_qa_pair.json` | 测试集（质量审核后，含关键词） | 2,325 | Step 3 (`generate_all_data.py`) |
+| `data/qa_pairs/test_keywords_pair.json` | 测试集答案关键词标注（去重后） | 1,754 | Step 3 (`generate_all_data.py`) |
+| `data/qa_pairs/test_qa_pair_verify.json` | 评估输入文件 | 2,325 | Step 3 (`generate_all_data.py`) |
+| `data/qa_pairs/train_data.json` | SFT 训练数据（含检索上下文） | 21,595 | Step 3 (`generate_all_data.py`) |
+| `data/summary_data/train.json` | 摘要训练集 | 19,878 | Step 4 (`generate_sft_data.py`) |
+| `data/summary_data/test.json` | 摘要测试集 | 1,717 | Step 4 (`generate_sft_data.py`) |
+| `data/rerank_data/train.json` | 重排训练集 | 40,849 | Step 4 (`generate_sft_data.py`) |
+| `data/rerank_data/dev.json` | 重排验证集 | - | Step 4 (`generate_sft_data.py`) |
+| `data/rerank_data/test.json` | 重排测试集 | 936 | Step 4 (`generate_sft_data.py`) |
 
 #### LLaMA-Factory 训练数据 (`LLaMA-Factory-main/data/`)
 
