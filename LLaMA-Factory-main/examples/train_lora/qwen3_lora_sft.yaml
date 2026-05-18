@@ -25,7 +25,6 @@ output_dir: saves/qwen3-8b/lora/sft
 logging_steps: 10
 save_steps: 100
 eval_steps: 100
-evaluation_strategy: steps
 plot_loss: true
 overwrite_output_dir: true
 save_only_model: false
