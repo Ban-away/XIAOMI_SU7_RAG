@@ -326,9 +326,10 @@ def main():
         "improvement_pct": improvement,
         "total_samples": len(results),
     }
-    with open(os.path.join(BASE_DIR, "data/comparison_result.json"), "w", encoding="utf-8") as f:
+    comparison_file = os.path.join(BASE_DIR, f"data/comparison_{args.model}_result.json")
+    with open(comparison_file, "w", encoding="utf-8") as f:
         json.dump(compare, f, ensure_ascii=False, indent=2)
-    print("[INFO] 对比结果已保存：data/comparison_result.json")
+    print(f"[INFO] 对比结果已保存：data/comparison_{args.model}_result.json")
 
 
 if __name__ == "__main__":
