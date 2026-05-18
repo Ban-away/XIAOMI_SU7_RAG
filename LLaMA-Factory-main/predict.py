@@ -33,10 +33,9 @@ def main():
     data_file = "data/summary_test_pred.json"
     abs_data_file = os.path.abspath(data_file)
     
-    # 检查预测文件是否存在，如果不存在则先生成
+    # 检查预测文件是否存在，如果不存在或不完整则先生成
     need_regenerate = True
     if os.path.exists(data_file):
-        # 检查文件是否包含模型预测（response 字段）
         try:
             with open(data_file, "r", encoding="utf-8") as f:
                 test_data = json.load(f)
@@ -50,43 +49,50 @@ def main():
     if need_regenerate:
         print(f"[INFO] 开始生成模型预测...")
         
-        import subprocess
-        abs_output_dir = os.path.dirname(abs_data_file)
-        os.makedirs(abs_output_dir, exist_ok=True)
+        # 手动加载模型进行推理
+        from llamafactory.chat import ChatModel
+        from llamafactory.hparams import get_infer_args
         
-        # 运行预测命令（指定预测文件名）
-        result = subprocess.run(
-            ["llamafactory-cli", "predict", 
-             "--model_name_or_path", "output/qwen3_lora_sft_int4",
-             "--template", "qwen3",
-             "--dataset", "summary_test",
-             "--output_dir", abs_output_dir,
-             "--prediction_key", "response"],
-            capture_output=True,
-            text=True
-        )
+        model_args = get_infer_args()
+        model_args.model_name_or_path = "output/qwen3_lora_sft_int4"
+        model_args.template = "qwen3"
         
-        if result.returncode != 0:
-            print(f"[ERROR] 生成预测失败: {result.stderr}")
-            raise RuntimeError("生成预测失败，请检查模型路径和配置")
+        chat_model = ChatModel(model_args)
         
-        # 查找生成的文件（LLaMA-Factory 默认生成 *_predictions.json）
-        generated_file = None
-        if os.path.exists(abs_output_dir):
-            for filename in os.listdir(abs_output_dir):
-                if ("summary_test" in filename.lower() or "predictions" in filename.lower()) and filename.endswith(".json"):
-                    generated_file = os.path.join(abs_output_dir, filename)
-                    break
+        # 加载测试数据集
+        import pandas as pd
+        from datasets import load_dataset
         
-        if not generated_file:
-            print(f"[ERROR] 未找到生成的预测文件")
-            raise RuntimeError("预测文件生成失败")
+        try:
+            ds = load_dataset("json", data_files="data/summary_test.json")["train"]
+        except:
+            # 尝试从 data 目录查找
+            import glob
+            test_files = glob.glob(os.path.join(os.path.dirname(abs_data_file), "*summary*test*.json"))
+            if test_files:
+                ds = load_dataset("json", data_files=test_files[0])["train"]
+            else:
+                raise RuntimeError("未找到测试数据集")
         
-        # 重命名
-        if generated_file != abs_data_file:
-            os.rename(generated_file, abs_data_file)
+        # 生成预测
+        predictions = []
+        for item in ds:
+            query = item.get("query", item.get("instruction", ""))
+            response = chat_model.chat(query)
+            predictions.append({
+                "query": query,
+                "context": item.get("context", ""),
+                "output": item.get("output", ""),
+                "response": response,
+            })
+        
+        # 保存预测结果
+        os.makedirs(os.path.dirname(abs_data_file), exist_ok=True)
+        with open(abs_data_file, "w", encoding="utf-8") as f:
+            json.dump(predictions, f, ensure_ascii=False, indent=2)
         
         print(f"[INFO] 预测生成完成，结果已保存到 {abs_data_file}")
+        chat_model.close()  # 释放资源
     
     print()
     print("[INFO] ========== 开始 RAG 评估 ==========")
