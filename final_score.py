@@ -76,7 +76,7 @@ def report_score(result):
             join_keywords  = [w for w in keywords if w in pred]
             keyword_score  = calc_jaccard(join_keywords, keywords)
             score = semantic_score if not keywords else (
-                0.15 * keyword_score + 0.85 * semantic_score
+                0.2 * keyword_score + 0.8 * semantic_score
             )
 
         result[idx]["score"] = score
