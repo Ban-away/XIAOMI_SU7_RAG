@@ -103,6 +103,8 @@ def step2_generate_expanded_qa():
 
     # 使用 gen_qa 内部的断点续传机制，移除提前跳过逻辑
     
+    # 生成问题列表，同时去重
+    seen_questions = set()
     question_docs = []
     with open(QA_PATH, "r", encoding="utf-8") as f:
         for line in f:
@@ -113,7 +115,8 @@ def step2_generate_expanded_qa():
                 continue
             for qa in resp:
                 q = qa.get("question", "").strip()
-                if q:
+                if q and q not in seen_questions:
+                    seen_questions.add(q)
                     # 使用问题内容作为 unique_id，与 gen_qa 内部存储格式完全一致
                     question_docs.append(
                         Document(page_content=q, metadata={"unique_id": q})
