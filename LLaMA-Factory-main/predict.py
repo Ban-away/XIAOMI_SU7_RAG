@@ -117,16 +117,24 @@ def main():
         raise
 
     print("[INFO] 准备评估数据格式...")
+    # 检查数据字段
+    if test_data:
+        print(f"[DEBUG] 数据字段: {list(test_data[0].keys())}")
+    
     # 过滤无答案条目：
     # 1. RAGas 无法对空答案/无答案做有效分类，会持续报 "did not return a valid classification"
     # 2. 过滤后评估结果更准确，不会被空值拉低得分
     NO_ANSWER_SET = {"无答案", "没有答案", "无", "-", ""}
     ragas_data = []
     skip_count = 0
+    
     for item in test_data:
-        response  = item.get("response", "").strip()   # 模型预测答案
-        reference = item.get("output", "").strip()     # 标准答案
+        # 支持多种字段名：response 或 prediction（模型预测答案）
+        response  = item.get("response", item.get("prediction", "")).strip()
+        # 支持多种字段名：output 或 reference（标准答案）
+        reference = item.get("output", item.get("reference", "")).strip()
         context   = item.get("context", "").strip()
+        query     = item.get("query", item.get("instruction", "")).strip()
 
         if not response or not reference or not context:
             skip_count += 1
@@ -136,13 +144,20 @@ def main():
             continue
 
         ragas_data.append({
-            "user_input":         item.get("query", ""),
+            "user_input":         query,
             "retrieved_contexts": [context],
             "response":           response,
             "reference":          reference,
         })
 
     print(f"[INFO] 过滤后有效数据: {len(ragas_data)} 条，跳过无答案: {skip_count} 条")
+    
+    # 检查是否有有效数据
+    if not ragas_data:
+        print("[ERROR] 没有找到有效数据！请检查数据格式")
+        print("[DEBUG] 数据可能缺少 'response' 字段（模型预测答案）")
+        print("[DEBUG] 第一条数据示例:", json.dumps(test_data[0], ensure_ascii=False, indent=2)[:500])
+        raise RuntimeError("没有有效数据可评估")
 
     # 使用 EvaluationDataset（RAGas 新版推荐，替代旧版 HuggingFace Dataset）
     dataset = EvaluationDataset.from_list(ragas_data)
