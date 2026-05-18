@@ -39,7 +39,7 @@ def main():
         # 生成预测（使用 INT4 量化模型）
         import subprocess
         result = subprocess.run(
-            ["python", "-m", "llamafactory.predict", 
+            ["llamafactory-cli", "predict", 
              "--model_name_or_path", "output/qwen3_lora_sft_int4",
              "--template", "qwen3",
              "--dataset", "summary_test",
