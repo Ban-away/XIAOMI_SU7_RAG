@@ -11,7 +11,8 @@
   Step6: test_qa_pair_verify.json       （最终高质量评估集）
   Step7: SFT训练数据生成
 """
-
+import sys
+sys.setrecursionlimit(10000)
 import os
 import json
 import pickle
