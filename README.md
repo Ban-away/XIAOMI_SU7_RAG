@@ -395,17 +395,17 @@ export MONGO_AUTH_SOURCE=admin
 
 ### 🗂️ 核心路径配置
 
-编辑 `src\constant.py` 中的路径（当前默认为 Linux 路径）：
+编辑 `src\constant.py` 中的 `base_dir`（根据自己的环境选择）：
 
 ```python
-# ❌ Linux (Azure autodl-tmp 环境)
+# Linux/Mac 环境
+base_dir = "/path/to/your/XIAOMI_SU7_RAG/"
+
+# Windows 环境
+base_dir = "D:\\path\\to\\your\\XIAOMI_SU7_RAG\\"
+
+# Azure AutoDL 环境示例
 base_dir = "/root/autodl-tmp/XIAOMI_SU7_RAG/"
-
-# ✅ Windows (本地开发)
-base_dir = "D:\\Development\\Exercise\\0_personal_project\\XIAOMI_SU7_RAG\\"
-
-# ✅ Linux (本地开发)
-base_dir = "/home/user/XIAOMI_SU7_RAG/"
 ```
 
 ---
@@ -711,8 +711,6 @@ python deploy/benchmark.py
 #   吞吐率：1,523 → 3,128 token/s  (+105.4%)
 # ============================================================
 ```
-
-> ✅ **文档解析准确率达 96%+**，满足项目要求。
 
 ---
 
