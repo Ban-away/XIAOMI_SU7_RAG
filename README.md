@@ -659,24 +659,38 @@ python evaluate_parse_quality.py
 # ============================================================
 ```
 
-#### GPT-4o 基线对比测试
+#### 基线对比测试
+
+支持三种模型进行对比测试，可根据需求选择：
 
 ```bash
-# 设置 OpenAI API Key（使用 GPT-4o 进行对比）
-export OPENAI_API_KEY=sk-xxx
+# 1. 使用本地模型（推荐，完全免费，无需 API）
+# 需先启动 vLLM 服务：python deploy/auto_vllm_server.py --model LLaMA-Factory-main/output/qwen3_lora_sft_int4 --port 8000
+python deploy/baseline_gpt4o.py --model local
 
-# 运行基线测试（使用 GPT-4o + OpenAI Embeddings）
-python deploy/baseline_gpt4o.py
+# 2. 使用豆包 API（较便宜）
+# 需配置环境变量：export DOUBAO_API_KEY=sk-xxx
+python deploy/baseline_gpt4o.py --model doubao
+
+# 3. 使用 OpenAI API（GPT-4o 等）
+# 需配置环境变量：export OPENAI_API_KEY=sk-xxx
+python deploy/baseline_gpt4o.py --model openai
 
 # 输出示例：
 # ============================================================
 # 📊 对比结果
 # ============================================================
-# GPT-4o + OpenAI Embeddings 得分：0.7234
-# 本系统得分：                     0.8536
-# 提升幅度：                       +18.0%
+# 本地 Qwen3-8B 得分：0.7654
+# 本系统得分：         0.8934
+# 提升幅度：           +16.7%
 # ============================================================
 ```
+
+| 模型选项 | 成本 | 需要条件 |
+|---------|------|----------|
+| `--model local` | **免费** | 启动 vLLM 服务 |
+| `--model doubao` | 便宜 (~$0.001/千token) | DOUBAO_API_KEY |
+| `--model openai` | 较贵 (~$0.01/千token) | OPENAI_API_KEY |
 
 #### vLLM 性能压测
 
