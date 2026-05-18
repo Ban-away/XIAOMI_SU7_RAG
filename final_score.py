@@ -11,8 +11,10 @@ load_dotenv()
 
 import os
 import json
+import time
 import threading
 import numpy as np
+import torch
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -37,7 +39,8 @@ MILVUS_RETRIEVE_SIZE = 20
 RERANK_SIZE          = 8
 HYDE                 = 1
 QUERY_REWRITE        = 1
-MAX_WORKERS          = 5   # 并发线程数（IO密集部分）
+# 并发线程数（考虑到 vLLM 已占用大量显存，设置较小值避免 OOM）
+MAX_WORKERS          = 4
 # ────────────────────────────────────────────────────────────
 
 # 预热检索器、重排器、向量评估模型
@@ -93,35 +96,46 @@ def report_score(result):
 def process_one(item):
     """对单条测试数据执行完整推理链路，返回带 pred 字段的 item。"""
     query = item["question"].strip()
+    max_retries = 2
+    
+    for attempt in range(max_retries):
+        try:
+            # 1. Query 纠错改写（API，可并发）
+            rewritten_query = request_query_rewrite(query) if QUERY_REWRITE else query
 
-    # 1. Query 纠错改写（API，可并发）
-    rewritten_query = request_query_rewrite(query) if QUERY_REWRITE else query
+            # 2. HyDE 扩写（API，可并发）
+            retrieve_query = rewritten_query
+            if HYDE:
+                hyde_text      = request_hyde(rewritten_query)
+                retrieve_query = rewritten_query + "\n" + hyde_text
 
-    # 2. HyDE 扩写（API，可并发）
-    retrieve_query = rewritten_query
-    if HYDE:
-        hyde_text      = request_hyde(rewritten_query)
-        retrieve_query = rewritten_query + "\n" + hyde_text
+            # 3. 检索（BM25 CPU + Milvus 网络，可并发）
+            bm25_docs   = bm25_retriever.retrieve_topk(retrieve_query, topk=BM25_RETRIEVE_SIZE)
+            milvus_docs = milvus_retriever.retrieve_topk(retrieve_query, topk=MILVUS_RETRIEVE_SIZE)
+            merged_docs = merge_docs(bm25_docs, milvus_docs)
 
-    # 3. 检索（BM25 CPU + Milvus 网络，可并发）
-    bm25_docs   = bm25_retriever.retrieve_topk(retrieve_query, topk=BM25_RETRIEVE_SIZE)
-    milvus_docs = milvus_retriever.retrieve_topk(retrieve_query, topk=MILVUS_RETRIEVE_SIZE)
-    merged_docs = merge_docs(bm25_docs, milvus_docs)
+            # 4. 精排（GPU，串行保护）
+            with _rerank_lock:
+                ranked_docs = reranker.rank(retrieve_query, merged_docs, topk=RERANK_SIZE)
 
-    # 4. 精排（GPU，串行保护）
-    with _rerank_lock:
-        ranked_docs = reranker.rank(retrieve_query, merged_docs, topk=RERANK_SIZE)
+            # 5. 生成（vLLM 网络 API，可并发）
+            context  = "\n".join([f"【{i+1}】{doc.page_content}" for i, doc in enumerate(ranked_docs)])
+            response = request_chat(query, context)
+            answer   = post_processing(response, ranked_docs)
 
-    # 5. 生成（vLLM 网络 API，可并发）
-    context  = "\n".join([f"【{i+1}】{doc.page_content}" for i, doc in enumerate(ranked_docs)])
-    response = request_chat(query, context)
-    answer   = post_processing(response, ranked_docs)
-
-    item = dict(item)   # 避免修改原始数据
-    item["pred"]          = answer
-    item["context"]       = context
-    item["rewritten_query"] = retrieve_query  # 保存改写后的查询
-    return item
+            item = dict(item)   # 避免修改原始数据
+            item["pred"]          = answer
+            item["context"]       = context
+            item["rewritten_query"] = retrieve_query  # 保存改写后的查询
+            return item
+            
+        except RuntimeError as e:
+            if "CUDA out of memory" in str(e) and attempt < max_retries - 1:
+                print(f"[WARN] 显存不足，第 {attempt+1}/{max_retries} 次重试...")
+                torch.cuda.empty_cache()
+                time.sleep(2)
+                continue
+            raise
 
 
 # ── 主流程 ───────────────────────────────────────────────────
