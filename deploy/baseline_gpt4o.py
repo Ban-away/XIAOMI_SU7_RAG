@@ -125,9 +125,14 @@ def main():
         import pickle
         faiss_cache = os.path.join(BASE_DIR, "data/saved_index/faiss_bge.db")
         
+        # 使用本地已有的 BGE 模型，避免网络下载
+        local_bge_path = os.path.join(BASE_DIR, "models/BAAI/bge-large-zh-v1.5")
+        if not os.path.exists(local_bge_path):
+            local_bge_path = "BAAI/bge-large-zh-v1.5"  # 回退到 HuggingFace 下载
+        
         from langchain_community.embeddings import HuggingFaceEmbeddings
         embeddings = HuggingFaceEmbeddings(
-            model_name="BAAI/bge-large-zh-v1.5",
+            model_name=local_bge_path,
             model_kwargs={"device": "cuda:0"},
             encode_kwargs={"normalize_embeddings": True}
         )
