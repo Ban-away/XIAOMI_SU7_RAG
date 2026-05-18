@@ -49,24 +49,34 @@ def main():
     if need_regenerate:
         print(f"[INFO] 开始生成模型预测...")
         
-        # 手动加载模型进行推理
-        from llamafactory.chat import ChatModel
-        from llamafactory.hparams import get_infer_args
+        # 使用 transformers 直接加载模型
+        from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
         
-        model_args = get_infer_args()
-        model_args.model_name_or_path = "output/qwen3_lora_sft_int4"
-        model_args.template = "qwen3"
+        model_path = "output/qwen3_lora_sft_int4"
+        tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
+        model = AutoModelForCausalLM.from_pretrained(
+            model_path, 
+            device_map="auto", 
+            trust_remote_code=True,
+            load_in_4bit=True
+        )
         
-        chat_model = ChatModel(model_args)
+        # 创建文本生成管道
+        generator = pipeline(
+            "text-generation",
+            model=model,
+            tokenizer=tokenizer,
+            max_new_tokens=512,
+            temperature=0.1,
+            do_sample=False,
+        )
         
         # 加载测试数据集
-        import pandas as pd
         from datasets import load_dataset
         
         try:
             ds = load_dataset("json", data_files="data/summary_test.json")["train"]
         except:
-            # 尝试从 data 目录查找
             import glob
             test_files = glob.glob(os.path.join(os.path.dirname(abs_data_file), "*summary*test*.json"))
             if test_files:
@@ -78,7 +88,7 @@ def main():
         predictions = []
         for item in ds:
             query = item.get("query", item.get("instruction", ""))
-            response = chat_model.chat(query)
+            response = generator(query)[0]["generated_text"].replace(query, "").strip()
             predictions.append({
                 "query": query,
                 "context": item.get("context", ""),
@@ -92,7 +102,6 @@ def main():
             json.dump(predictions, f, ensure_ascii=False, indent=2)
         
         print(f"[INFO] 预测生成完成，结果已保存到 {abs_data_file}")
-        chat_model.close()  # 释放资源
     
     print()
     print("[INFO] ========== 开始 RAG 评估 ==========")
