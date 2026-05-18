@@ -290,20 +290,6 @@ XIAOMI_SU7_RAG/
    └─ download_models.py        # 一键下载项目公开模型（core/all）
 ```
 
-#### 📌 Git 跟踪状态说明
-
-| 目录 | 状态 | 说明 |
-|:---:|:---:|:---:|
-| `src/` | ✅ 已跟踪 | 核心业务代码 |
-| `LLaMA-Factory-main/` | ✅ 已跟踪 | 训练/量化框架 |
-| `RAG-Retrieval/` | ✅ 部分跟踪 | 检索训练代码 |
-| `data/processed_docs/` | ❌ 未跟踪 | 动态生成 |
-| `data/saved_index/` | ❌ 未跟踪 | 动态生成 |
-| `data/qa_pairs/` | ❌ 未跟踪 | 动态生成 |
-| `log/` | ❌ 未跟踪 | 运行日志 |
-| `models/` | ❌ 未跟踪 | 本地模型缓存 |
-| `mongodb-7.0.20/` | ❌ 未跟踪 | 本地服务二进制 |
-
 ---
 
 ## 🔄 端到端流程
