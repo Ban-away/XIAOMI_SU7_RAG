@@ -261,10 +261,10 @@ rerank_train = [item for item in rerank_train if len(item["query"]) > 0 and len(
 rerank_dev = rerank_train[-RERANK_DEV_SIZE:]
 random.shuffle(rerank_train)
 print("╔═══════════════════════════════════════════════╗")
-print("║           Rerank 数据集统计                     ║")
+print("║           Rerank 数据集统计                    ║")
 print("╠═══════════════════════════════════════════════╣")
-print(f"║  Train  size:  {len(rerank_train):>10,} 条        ║")
-print(f"║  Test   size:  {len(rerank_test):>10,} 条        ║")
+print(f"  Train  size:  {len(rerank_train):>10,} 条")
+print(f"  Test   size:  {len(rerank_test):>10,} 条")
 print("╚═══════════════════════════════════════════════╝")
 
 for item in rerank_train:
@@ -276,10 +276,10 @@ for item in rerank_test:
 
 
 print("╔═══════════════════════════════════════════════╗")
-print("║           Summary 数据集统计                    ║")
+print("║           Summary 数据集统计                   ║")
 print("╠═══════════════════════════════════════════════╣")
-print(f"║  Train  size:  {len(summary_train):>10,} 条        ║")
-print(f"║  Test   size:  {len(summary_test):>10,} 条        ║")
+print(f"  Train  size:  {len(summary_train):>10,} 条")
+print(f"  Test   size:  {len(summary_test):>10,} 条")
 print("╚═══════════════════════════════════════════════╝")
 summary_train_handler.write(json.dumps(summary_train, ensure_ascii=False, indent=4))
 summary_test_handler.write(json.dumps(summary_test, ensure_ascii=False, indent=4))
