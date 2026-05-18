@@ -33,10 +33,11 @@ from src.constant import split_docs_path, text2vec_model_path
 # ── 配置 ─────────────────────────────────────────────────────
 OPENAI_API_KEY  = os.getenv("OPENAI_API_KEY")
 OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
+OPENAI_MODEL_NAME = os.getenv("OPENAI_MODEL_NAME", "gpt-4o")
 EMBED_MODEL     = "text-embedding-3-large"
-CHAT_MODEL      = "gpt-4o"
+CHAT_MODEL      = OPENAI_MODEL_NAME
 TOPK            = 8
-MAX_WORKERS     = 5   # GPT-4o 并发数，避免触发 rate limit
+MAX_WORKERS     = 5   # 并发数，避免触发 rate limit
 
 # 评估数据路径（使用绝对路径，避免运行目录问题）
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
