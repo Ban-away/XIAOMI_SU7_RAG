@@ -8,6 +8,8 @@ from dotenv import load_dotenv
 from ragas import evaluate
 from ragas.metrics import LLMContextRecall, LLMContextPrecisionWithReference
 from ragas.run_config import RunConfig
+from openai import OpenAI
+from tqdm import tqdm
 
 load_dotenv()
 
@@ -30,83 +32,62 @@ def main():
     print(f"[INFO]   - DOUBAO_BASE_URL: {base_url}")
     print()
 
-    data_file = "data/summary_test_pred.json"
-    abs_data_file = os.path.abspath(data_file)
+    pred_data_path = "data/summary_test_pred.json"
+    test_data_path = "data/summary_test.json"
     
-    # 检查预测文件是否存在，如果不存在或不完整则先生成
-    need_regenerate = True
-    if os.path.exists(data_file):
-        try:
-            with open(data_file, "r", encoding="utf-8") as f:
-                test_data = json.load(f)
-                if test_data and "response" in test_data[0]:
-                    need_regenerate = False
-                    print(f"[INFO] 检测到已存在有效的预测文件: {abs_data_file}")
-                    print("[INFO] 将跳过预测阶段，直接加载已有预测结果进行评估")
-        except:
-            pass
-    
-    if need_regenerate:
-        print(f"[INFO] 开始生成模型预测...")
-        
-        # 使用 transformers 直接加载模型
-        from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
-        
-        model_path = "output/qwen3_lora_sft_int4"
-        tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
-        model = AutoModelForCausalLM.from_pretrained(
-            model_path, 
-            device_map="auto", 
-            trust_remote_code=True,
-            load_in_4bit=True
+    if os.path.exists(pred_data_path):
+        print(f"\n[INFO] 检测到已存在预测文件: {pred_data_path}")
+        print("[INFO] 将跳过预测阶段，直接加载已有预测结果进行评估")
+        with open(pred_data_path, "r", encoding="utf-8") as f:
+            test_data = json.load(f)
+    else:
+        with open(test_data_path, "r", encoding="utf-8") as f:
+            test_data = json.load(f)
+
+        print("\n[INFO] ========== 开始预测任务 ==========")
+        print(f"[INFO] 预测数据: {len(test_data)} 条")
+
+        # 初始化 OpenAI 客户端连接本地 vLLM 服务
+        openai_api_base = "http://localhost:8000/v1"
+        client = OpenAI(
+            base_url=openai_api_base,
+            api_key="dummy_key",
         )
-        
-        # 创建文本生成管道
-        generator = pipeline(
-            "text-generation",
-            model=model,
-            tokenizer=tokenizer,
-            max_new_tokens=512,
-            temperature=0.1,
-            do_sample=False,
-        )
-        
-        # 加载测试数据集
-        from datasets import load_dataset
-        
-        try:
-            ds = load_dataset("json", data_files="data/summary_test.json")["train"]
-        except:
-            import glob
-            test_files = glob.glob(os.path.join(os.path.dirname(abs_data_file), "*summary*test*.json"))
-            if test_files:
-                ds = load_dataset("json", data_files=test_files[0])["train"]
-            else:
-                raise RuntimeError("未找到测试数据集")
-        
-        # 生成预测
-        predictions = []
-        for item in ds:
-            query = item.get("query", item.get("instruction", ""))
-            response = generator(query)[0]["generated_text"].replace(query, "").strip()
-            predictions.append({
-                "query": query,
-                "context": item.get("context", ""),
-                "output": item.get("output", ""),
-                "response": response,
-            })
-        
-        # 保存预测结果
-        os.makedirs(os.path.dirname(abs_data_file), exist_ok=True)
-        with open(abs_data_file, "w", encoding="utf-8") as f:
-            json.dump(predictions, f, ensure_ascii=False, indent=2)
-        
-        print(f"[INFO] 预测生成完成，结果已保存到 {abs_data_file}")
-    
+
+        print(f"[INFO] 预测模型: 本地 vLLM 服务 (qwen3_lora_sft_int4)")
+        print(f"[INFO] 服务地址: {openai_api_base}")
+
+        for info in tqdm(test_data):
+            model_path = os.path.join(os.getcwd(), "output", "qwen3_lora_sft_int4")
+            model_path = os.path.abspath(model_path)
+            
+            chat_response = client.chat.completions.create(
+                model=model_path,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": info["instruction"]
+                    }
+                ],
+                max_tokens=4096,
+                frequency_penalty=2.0,
+                temperature=0.001,
+                top_p=0.95,
+                extra_body={
+                    "top_k": 1,
+                    "chat_template_kwargs": {"enable_thinking": False},
+                },
+            )
+            info["response"] = chat_response.choices[0].message.content
+
+        with open(pred_data_path, "w", encoding="utf-8") as fd:
+            json.dump(test_data, fd, ensure_ascii=False, indent=4)
+
+        print(f"\n[INFO] 预测完成，结果已保存到 {pred_data_path}")
+
     print()
     print("[INFO] ========== 开始 RAG 评估 ==========")
 
-    # 使用 ChatOpenAI + LangchainLLMWrapper，RAGas 官方推荐用法
     print(f"[INFO] 初始化豆包 LLM...")
     chat_llm = ChatOpenAI(
         model=model_name,
@@ -123,35 +104,19 @@ def main():
     print(f"[INFO] 评估模型: 豆包 API ({model_name})")
 
     print("[INFO] 加载评估数据集...")
-    try:
-        with open(data_file, "r", encoding="utf-8") as f:
-            test_data = json.load(f)
-        print(f"[INFO] 原始数据: {len(test_data)} 条")
-        print("[DEBUG] 第一条数据字段:", list(test_data[0].keys()))
-        print("[DEBUG] 第一条数据示例:", json.dumps(test_data[0], ensure_ascii=False, indent=2)[:500])
-    except Exception as e:
-        print(f"[ERROR] 加载数据集失败: {e}")
-        raise
+    print(f"[INFO] 原始数据: {len(test_data)} 条")
+    print("[DEBUG] 第一条数据字段:", list(test_data[0].keys()))
+    print("[DEBUG] 第一条数据示例:", json.dumps(test_data[0], ensure_ascii=False, indent=2)[:500])
 
     print("[INFO] 准备评估数据格式...")
-    # 检查数据字段
-    if test_data:
-        print(f"[DEBUG] 数据字段: {list(test_data[0].keys())}")
-    
-    # 过滤无答案条目：
-    # 1. RAGas 无法对空答案/无答案做有效分类，会持续报 "did not return a valid classification"
-    # 2. 过滤后评估结果更准确，不会被空值拉低得分
     NO_ANSWER_SET = {"无答案", "没有答案", "无", "-", ""}
     ragas_data = []
     skip_count = 0
     
     for item in test_data:
-        # 支持多种字段名：response 或 prediction（模型预测答案）
-        response  = item.get("response", item.get("prediction", "")).strip()
-        # 支持多种字段名：output 或 reference（标准答案）
-        reference = item.get("output", item.get("reference", "")).strip()
+        response  = item.get("response", "").strip()
+        reference = item.get("output", "").strip()
         context   = item.get("context", "").strip()
-        query     = item.get("query", item.get("instruction", "")).strip()
 
         if not response or not reference or not context:
             skip_count += 1
@@ -161,22 +126,18 @@ def main():
             continue
 
         ragas_data.append({
-            "user_input":         query,
+            "user_input":         item.get("query", ""),
             "retrieved_contexts": [context],
             "response":           response,
             "reference":          reference,
         })
 
     print(f"[INFO] 过滤后有效数据: {len(ragas_data)} 条，跳过无答案: {skip_count} 条")
-    
-    # 检查是否有有效数据
+
     if not ragas_data:
-        print("[ERROR] 没有找到有效数据！请检查数据格式")
-        print("[DEBUG] 数据可能缺少 'response' 字段（模型预测答案）")
-        print("[DEBUG] 第一条数据示例:", json.dumps(test_data[0], ensure_ascii=False, indent=2)[:500])
+        print("[ERROR] 没有找到有效数据！")
         raise RuntimeError("没有有效数据可评估")
 
-    # 使用 EvaluationDataset（RAGas 新版推荐，替代旧版 HuggingFace Dataset）
     dataset = EvaluationDataset.from_list(ragas_data)
 
     print("[INFO] 初始化评估指标...")
@@ -192,9 +153,9 @@ def main():
             dataset=dataset,
             metrics=metrics,
             run_config=RunConfig(
-                timeout=100,   # 默认30秒，改成100秒
-                max_retries=3, # 最大重试次数
-                max_wait=50,   # 重试间隔最大等待50秒
+                timeout=100,
+                max_retries=3,
+                max_wait=50,
             )
         )
 
