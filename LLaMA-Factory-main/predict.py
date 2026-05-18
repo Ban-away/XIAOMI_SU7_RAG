@@ -27,7 +27,7 @@ def main():
     print("[INFO] ✅ 豆包 API 配置检查通过")
     print(f"[INFO]   - DOUBAO_MODEL_NAME: {model_name}")
     print(f"[INFO]   - DOUBAO_API_KEY: {'*' * 48}")
-    print(f"[INFO]   - DOUBAO_BASE_URL: '{base_url}'")
+    print(f"[INFO]   - DOUBAO_BASE_URL: {base_url}")
     print()
 
     data_file = "data/summary_test_pred.json"
@@ -38,21 +38,50 @@ def main():
         
         # 生成预测（使用 INT4 量化模型）
         import subprocess
+        
+        # 使用绝对路径确保文件保存位置正确
+        abs_data_file = os.path.abspath(data_file)
+        abs_output_dir = os.path.dirname(abs_data_file)
+        
+        # 确保输出目录存在
+        os.makedirs(abs_output_dir, exist_ok=True)
+        
         result = subprocess.run(
             ["llamafactory-cli", "predict", 
              "--model_name_or_path", "output/qwen3_lora_sft_int4",
              "--template", "qwen3",
              "--dataset", "summary_test",
-             "--output_dir", "data/",
-             "--predict_file", "summary_test_pred.json"],
+             "--output_dir", abs_output_dir],
             capture_output=True,
             text=True
         )
         
         if result.returncode != 0:
             print(f"[ERROR] 生成预测失败: {result.stderr}")
+            print(f"[DEBUG] stdout: {result.stdout}")
             raise RuntimeError("生成预测失败，请检查模型路径和配置")
-        print(f"[INFO] 预测生成完成，结果已保存到 {data_file}")
+        
+        # 查找生成的预测文件（LLaMA-Factory 默认生成的文件名可能不同）
+        generated_file = None
+        if os.path.exists(abs_output_dir):
+            for filename in os.listdir(abs_output_dir):
+                if "summary_test" in filename.lower() and filename.endswith(".json"):
+                    generated_file = os.path.join(abs_output_dir, filename)
+                    break
+        
+        if not generated_file:
+            print(f"[ERROR] 预测命令执行成功，但未找到生成的文件")
+            print(f"[DEBUG] 检查 {abs_output_dir} 目录内容")
+            if os.path.exists(abs_output_dir):
+                print(f"[DEBUG] 目录内容: {os.listdir(abs_output_dir)}")
+            raise RuntimeError("预测文件生成失败")
+        
+        # 如果生成的文件名不是预期的，重命名
+        if generated_file != abs_data_file:
+            os.rename(generated_file, abs_data_file)
+            print(f"[INFO] 将 {os.path.basename(generated_file)} 重命名为 {os.path.basename(data_file)}")
+        
+        print(f"[INFO] 预测生成完成，结果已保存到 {abs_data_file}")
     else:
         print(f"[INFO] 检测到已存在预测文件: {os.path.abspath(data_file)}")
         print("[INFO] 将跳过预测阶段，直接加载已有预测结果进行评估")
