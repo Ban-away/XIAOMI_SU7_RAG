@@ -29,9 +29,9 @@ reranker = MiniCPMReRanker(model_path=bge_reranker_minicpm_path)
 milvus_retriever.retrieve_topk("这是一条测试数据", topk=3)
 
 # 配置参数
-BM25_RETRIEVE_SIZE = 10
-MILVUS_RETRIEVE_SIZE = 20
-RERANK_SIZE = 8  # 调大重排数量，给LLM更多上下文
+BM25_RETRIEVE_SIZE = 15
+MILVUS_RETRIEVE_SIZE = 40   # 关键：Milvus 翻倍，覆盖更多父块
+RERANK_SIZE = 12            # 给 LLM 更多上下文
 HYDE = 1
 QUERY_REWRITE = 1
 

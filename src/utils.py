@@ -112,11 +112,11 @@ def merge_docs(docs1, docs2, use_wrrf=True):
     docs2_unique = dedup_single_list(docs2)
 
     if use_wrrf:
-        # BM25 权重 0.4，Milvus 权重 0.6
+        # BM25 权重 0.5，Milvus 权重 0.7
         # WRRF 内部会对两路中都出现的文档累加分数，自动实现跨路去重和重新排名
         return wrrf_fusion(
             [docs1_unique, docs2_unique],
-            weights=[0.4, 0.6],
+            weights=[0.5, 0.7],
             k=60
         )
     else:

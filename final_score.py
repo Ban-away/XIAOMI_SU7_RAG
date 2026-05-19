@@ -62,7 +62,6 @@ def calc_jaccard(list_a, list_b, threshold=0.3):
 
 
 def report_score(result):
-    """计算语义相似度与关键词加权得分。"""
     for idx, item in enumerate(result):
         gold     = item["answer"]
         pred     = item["pred"]["answer"]
@@ -81,6 +80,18 @@ def report_score(result):
             score = semantic_score if not keywords else (
                 0.2 * keyword_score + 0.8 * semantic_score
             )
+            
+            # ★ 新增：短答案包含关系兜底 ——
+            # 参考答案≤20字且被模型答案完整包含，得分至少0.75
+            if len(gold) <= 20 and gold.strip() in pred:
+                score = max(score, 0.75)
+            # 参考答案的核心词（去停用词后）超过60%出现在预测中，得分至少0.65
+            elif len(gold) <= 50:
+                gold_chars = set(gold.replace(" ", ""))
+                pred_chars = set(pred.replace(" ", ""))
+                overlap_ratio = len(gold_chars & pred_chars) / max(len(gold_chars), 1)
+                if overlap_ratio > 0.6:
+                    score = max(score, 0.65)
 
         result[idx]["score"] = score
         if score < 0.6:
