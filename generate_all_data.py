@@ -340,15 +340,12 @@ def step5_generate_keywords():
             keywords = [k.strip() for k in info["raw_resp"].split(",")
                         if k.strip() not in ["无", "SU7", ""]]
             keywords_mapping[info["unique_id"]] = keywords
+            # ↑ unique_id 就是答案文本，直接用答案文本做 key
 
     for item in test_qa_pairs:
         ans = item.get("answer", "")
         if ans and ans != "无答案":
-            try:
-                idx = str(unique_answers.index(ans))
-                item["keywords"] = keywords_mapping.get(idx, [])
-            except ValueError:
-                item["keywords"] = []
+            item["keywords"] = keywords_mapping.get(ans, [])  # ← 直接用答案文本查
         else:
             item["keywords"] = []
 
