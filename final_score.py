@@ -180,21 +180,22 @@ def main():
  
         result = [] 
         # ThreadPoolExecutor 并发处理：IO密集部分（检索+API）并发，GPU部分锁串行 
-        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor: 
-            futures = {executor.submit(process_one, item): item for item in test_qa_pairs} 
-            for future in tqdm(as_completed(futures), total=len(futures), 
-                               desc="推理进度", unit="问题"): 
-                try: 
-                    item = future.result() 
-                    result.append(item) 
-                    print(f"【原始问题】：{item['question']}") 
-                    if QUERY_REWRITE: 
-                        print(f"【改写后】：{item.get('rewritten_query', '')}") 
-                    print(f"【答案】：{item['pred']['answer']}") 
-                    print(f"【引用页码】：{item['pred'].get('cite_pages', [])}, 【相关图片】：{item['pred'].get('related_images', [])}") 
-                    print("-" * 100) 
-                except Exception as e: 
-                    print(f"[WARN] 单条推理失败: {e}") 
+        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+            futures = {executor.submit(process_one, item): item for item in test_qa_pairs}
+            pbar = tqdm(as_completed(futures), total=len(futures),
+                        desc="推理进度", unit="问题")
+            for future in pbar:
+                try:
+                    item = future.result()
+                    result.append(item)
+                    pbar.write(f"【原始问题】：{item['question']}")
+                    if QUERY_REWRITE:
+                        pbar.write(f"【改写后】：{item.get('rewritten_query', '')}")
+                    pbar.write(f"【答案】：{item['pred']['answer']}")
+                    pbar.write(f"【引用页码】：{item['pred'].get('cite_pages', [])}, 【相关图片】：{item['pred'].get('related_images', [])}")
+                    pbar.write("-" * 100)
+                except Exception as e:
+                    pbar.write(f"[WARN] 单条推理失败: {e}") 
  
  
         # 保存推理结果 
