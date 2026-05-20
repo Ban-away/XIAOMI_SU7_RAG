@@ -62,7 +62,7 @@ def request_chat(query, context, stream=False):
         ],
         # 生成参数：尽量降低随机性，提高可复现性
         # max_tokens 需要考虑上下文长度，模型最大长度为 8192
-        max_tokens=2048,
+        max_tokens=1024,
         frequency_penalty=0.3,
         temperature=0.001,
         top_p=0.95,
