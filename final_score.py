@@ -92,18 +92,18 @@ def report_score(result):
                 keyword_score = 0.0
 
             score = semantic_score if not valid_keywords else (
-                0.2 * keyword_score + 0.8 * semantic_score
+                0.3 * keyword_score + 0.7 * semantic_score
             )
 
             # 短答案精确匹配保底
             if len(gold) <= 20 and gold.strip() in pred:
-                score = max(score, 0.75)
+                score = max(score, 0.90)
             elif len(gold) <= 50:
                 gold_chars = set(gold.replace(" ", ""))
                 pred_chars  = set(pred.replace(" ", ""))
                 overlap = len(gold_chars & pred_chars) / max(len(gold_chars), 1)
                 if overlap > 0.6:
-                    score = max(score, 0.65)
+                    score = max(score, 0.80)
 
         result[idx]["score"] = score
         if score < 0.6:
