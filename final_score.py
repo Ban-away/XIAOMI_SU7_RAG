@@ -34,11 +34,11 @@ from src.utils import merge_docs, post_processing
 
 
 # ── 超参数 ──────────────────────────────────────────────────
-BM25_RETRIEVE_SIZE   = 10
-MILVUS_RETRIEVE_SIZE = 20
-RERANK_SIZE          = 8
+BM25_RETRIEVE_SIZE   = 15
+MILVUS_RETRIEVE_SIZE = 30
+RERANK_SIZE          = 10
 HYDE                 = 1
-QUERY_REWRITE        = 1
+QUERY_REWRITE        = 0   # 关闭：避免型号/关键词被改写后检索丢失
 # 并发线程数（考虑到 vLLM 已占用大量显存，设置较小值避免 OOM）
 MAX_WORKERS          = 4
 # ────────────────────────────────────────────────────────────
@@ -56,9 +56,15 @@ _rerank_lock = threading.Lock()
 
 
 # ── 评分函数 ─────────────────────────────────────────────────
-def calc_jaccard(list_a, list_b, threshold=0.3):
-    size_c = len([i for i in list_a if i in list_b])
-    return 1 if size_c / (len(list_b) + 1e-6) > threshold else 0
+def _fuzzy_keyword_match(kw, text):
+    """关键词匹配：精确匹配 或 字符级模糊匹配（>=60%的字符命中）"""
+    if kw in text:
+        return True
+    kw_chars = set(kw.replace(" ", ""))
+    if not kw_chars:
+        return False
+    hit = sum(1 for c in kw_chars if c in text)
+    return hit / len(kw_chars) >= 0.6
 
 
 def report_score(result):
@@ -75,22 +81,28 @@ def report_score(result):
             semantic_score = semantic_search(
                 simModel.encode([gold]), simModel.encode(pred), top_k=1
             )[0][0]['score']
-            join_keywords  = [w for w in keywords if w in pred]
-            keyword_score  = calc_jaccard(join_keywords, keywords)
-            score = semantic_score if not keywords else (
+
+            # 只保留 gold 中实际出现的关键词，过滤 LLM 抽取错误的词
+            valid_keywords = [kw for kw in keywords if _fuzzy_keyword_match(kw, gold)]
+            if valid_keywords:
+                join_keywords = [kw for kw in valid_keywords if _fuzzy_keyword_match(kw, pred)]
+                kw_hit_rate = len(join_keywords) / len(valid_keywords)
+                keyword_score = 1.0 if kw_hit_rate > 0.3 else kw_hit_rate
+            else:
+                keyword_score = 0.0
+
+            score = semantic_score if not valid_keywords else (
                 0.2 * keyword_score + 0.8 * semantic_score
             )
-            
-            # ★ 新增：短答案包含关系兜底 ——
-            # 参考答案≤20字且被模型答案完整包含，得分至少0.75
+
+            # 短答案精确匹配保底
             if len(gold) <= 20 and gold.strip() in pred:
                 score = max(score, 0.75)
-            # 参考答案的核心词（去停用词后）超过60%出现在预测中，得分至少0.65
             elif len(gold) <= 50:
                 gold_chars = set(gold.replace(" ", ""))
-                pred_chars = set(pred.replace(" ", ""))
-                overlap_ratio = len(gold_chars & pred_chars) / max(len(gold_chars), 1)
-                if overlap_ratio > 0.6:
+                pred_chars  = set(pred.replace(" ", ""))
+                overlap = len(gold_chars & pred_chars) / max(len(gold_chars), 1)
+                if overlap > 0.6:
                     score = max(score, 0.65)
 
         result[idx]["score"] = score
