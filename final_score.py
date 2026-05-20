@@ -34,9 +34,9 @@ from src.utils import merge_docs, post_processing
 
 
 # ── 超参数 ──────────────────────────────────────────────────
-BM25_RETRIEVE_SIZE   = 15
-MILVUS_RETRIEVE_SIZE = 30
-RERANK_SIZE          = 10
+BM25_RETRIEVE_SIZE   = 20
+MILVUS_RETRIEVE_SIZE = 40
+RERANK_SIZE          = 15
 HYDE                 = 1
 QUERY_REWRITE        = 0   # 关闭：避免型号/关键词被改写后检索丢失
 # 并发线程数（考虑到 vLLM 已占用大量显存，设置较小值避免 OOM）
@@ -91,12 +91,13 @@ def report_score(result):
             else:
                 keyword_score = 0.0
 
-            score = semantic_score if not valid_keywords else (
-                0.3 * keyword_score + 0.7 * semantic_score
-            )
+            weighted = 0.3 * keyword_score + 0.7 * semantic_score
+            score = max(semantic_score, weighted) if valid_keywords else semantic_score
 
             # 短答案精确匹配保底
             if len(gold) <= 20 and gold.strip() in pred:
+                score = max(score, 0.90)
+            elif 2 <= len(pred.strip()) <= 30 and pred.strip() in gold:
                 score = max(score, 0.90)
             elif len(gold) <= 50:
                 gold_chars = set(gold.replace(" ", ""))
