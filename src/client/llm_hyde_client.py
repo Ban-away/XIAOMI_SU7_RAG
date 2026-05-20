@@ -50,7 +50,7 @@ def request_hyde(query):
             {"role": "system", "content": "你是一个有用的人工智能助手."},
             {"role": "user", "content": prompt}
         ],
-        top_p=0,
+        top_p=0.95,
         temperature=0.001
     )
     result = completion.choices[0].message.content

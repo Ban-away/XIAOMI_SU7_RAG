@@ -60,6 +60,31 @@ from src.constant import bge_reranker_minicpm_path, split_docs_path
 from src.utils import merge_docs, post_processing
 
 
+# ── 负样本过滤器 ──────────────────────────────────────────────
+# 汽车相关关键词：包含这些词的问题不应作为负样本（RAG系统应该能回答）
+_CAR_NEGATIVE_FILTER = {
+    "车门", "车窗", "车灯", "车锁", "天窗", "后视镜", "雨刷", "雨刮",
+    "刹车", "油门", "方向盘", "安全带", "后备箱", "轮胎", "胎压",
+    "大灯", "远光灯", "近光灯", "雾灯", "转向灯", "尾灯", "氛围灯",
+    "仪表盘", "挡位",
+    "行车记录仪", "辅助驾驶", "自动驾驶", "巡航",
+    "倒车影像", "电子眼", "车机", "中控", "车载", "鹰眼",
+    "充电桩", "动力电池",
+    "座椅", "空调",
+    "保养", "年检",
+}
+
+
+def _is_valid_negative_sample(question: str) -> bool:
+    q = question.strip()
+    if len(q) < 5 or len(q) > 80:
+        return False
+    for kw in _CAR_NEGATIVE_FILTER:
+        if kw in q:
+            return False
+    return True
+
+
 # ── Step1：生成原始 QA ────────────────────────────────────────
 def step1_generate_raw_qa():
     print("\n" + "="*60)
@@ -71,12 +96,16 @@ def step1_generate_raw_qa():
         return False
 
     if os.path.exists(QA_PATH) and os.path.getsize(QA_PATH) > 0 and not args.force:
-        count = sum(1 for _ in open(QA_PATH))
+        count = sum(1 for _ in open(QA_PATH, encoding="utf-8"))
         print(f"✅ {QA_PATH} 已存在 ({count} 条)，跳过")
         return True
 
     with open(split_docs_path, "rb") as f:
         splitted_docs = pickle.load(f)
+
+    # force 模式下删除旧文件，避免 gen_qa append 导致重复
+    if args.force and os.path.exists(QA_PATH):
+        os.remove(QA_PATH)
 
     print(f"📄 待处理文档数: {len(splitted_docs)}")
     print(f"[INFO] 已过滤过滤 chunk_size < 100 字符的文档块")
@@ -179,7 +208,7 @@ def step2_generate_expanded_qa():
     
     # 统计最终结果
     if os.path.exists(OUTPUT_PATH):
-        count = sum(1 for _ in open(OUTPUT_PATH))
+        count = sum(1 for _ in open(OUTPUT_PATH, encoding="utf-8"))
         print(f"\n✅ {OUTPUT_PATH} 生成完成，共 {count} 条记录")
         return True
     return False
@@ -202,7 +231,7 @@ def step3_split_and_filter():
 
     # 加载原始 QA
     qa_dict = {}
-    with open(QA_PATH) as f:
+    with open(QA_PATH, encoding="utf-8") as f:
         for line in f:
             info = json.loads(line)
             qa_dict[info["unique_id"]] = info
@@ -210,7 +239,7 @@ def step3_split_and_filter():
     # 加载扩展问法
     expand_qa_pairs = {}
     if os.path.exists(OUTPUT_PATH) and os.path.getsize(OUTPUT_PATH) > 0:
-        with open(OUTPUT_PATH) as f:
+        with open(OUTPUT_PATH, encoding="utf-8") as f:
             for line in f:
                 try:
                     info = json.loads(line)
@@ -260,7 +289,13 @@ def step3_split_and_filter():
     neg_questions = []
     for p in [chats_path, chats_path2]:
         if os.path.exists(p):
-            neg_questions += [l.strip() for l in open(p) if l.strip()]
+            neg_questions += [l.strip() for l in open(p, encoding="utf-8") if l.strip()]
+
+    # 去重 + 过滤：移除汽车相关问题（RAG应能回答）、过短/过长/乱码文本
+    neg_questions = list(dict.fromkeys(neg_questions))
+    before_filter = len(neg_questions)
+    neg_questions = [q for q in neg_questions if _is_valid_negative_sample(q)]
+    print(f"负样本过滤：{before_filter} → {len(neg_questions)} 条（移除汽车相关/过短/过长）")
 
     random.seed(42)
     for line in neg_questions:
@@ -325,22 +360,32 @@ def step5_generate_keywords():
         if item.get("answer") and item["answer"] != "无答案"
     ))
     answer_docs = [
-        Document(page_content=a, metadata={"unique_id": str(i)})
-        for i, a in enumerate(unique_answers)
+        Document(page_content=a, metadata={"unique_id": a})
+        for a in unique_answers
     ]
 
     print(f"📄 待抽取关键词答案数（去重后）: {len(answer_docs)}")
+    # force 模式下删除旧文件，避免 gen_qa append 导致重复
+    if args.force and os.path.exists(TEST_KEYWORDS_PATH):
+        os.remove(TEST_KEYWORDS_PATH)
     gen_qa(answer_docs, KEYWORDS_PROMPT_TPL, TEST_KEYWORDS_PATH, expand=True, force=args.force)
 
-    # 把关键词写回测试集
+    # 把关键词写回测试集（只保留在答案中实际出现的关键词）
     keywords_mapping = {}
     with open(TEST_KEYWORDS_PATH, "r", encoding="utf-8") as f:
         for line in f:
             info = json.loads(line)
-            keywords = [k.strip() for k in info["raw_resp"].split(",")
-                        if k.strip() not in ["无", "SU7", ""]]
-            keywords_mapping[info["unique_id"]] = keywords
-            # ↑ unique_id 就是答案文本，直接用答案文本做 key
+            answer_text = info["unique_id"]
+            raw = info.get("raw_resp", "").strip()
+            if raw == "无":
+                keywords_mapping[answer_text] = []
+            else:
+                raw_keywords = [k.strip() for k in raw.split(",") if k.strip()]
+                # 验证：只保留在答案文本中实际出现的关键词
+                keywords_mapping[answer_text] = [
+                    k for k in raw_keywords
+                    if k in answer_text and k not in ["无", "SU7", ""]
+                ]
 
     for item in test_qa_pairs:
         ans = item.get("answer", "")
@@ -370,7 +415,7 @@ def step6_prepare_verify():
 
     import shutil
     shutil.copy(TEST_PATH, verify_path)
-    with open(verify_path) as f:
+    with open(verify_path, encoding="utf-8") as f:
         data = json.load(f)
 
     has_kw = sum(1 for d in data if d.get("keywords"))
@@ -387,7 +432,7 @@ def step7_generate_train_data():
     output_path = "data/qa_pairs/train_data.json"
 
     if os.path.exists(output_path) and os.path.getsize(output_path) > 0 and not args.force:
-        count = sum(1 for _ in open(output_path))
+        count = sum(1 for _ in open(output_path, encoding="utf-8"))
         print(f"✅ {output_path} 已存在 ({count} 条)，跳过")
         return True
 

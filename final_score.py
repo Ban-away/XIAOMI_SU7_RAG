@@ -167,11 +167,11 @@ def main():
     pred_file = "data/qa_pairs/test_qa_pair_pred.json" 
     if os.path.exists(pred_file): 
         print(f"[INFO] 发现已保存的推理结果，直接加载") 
-        with open(pred_file, 'r') as f: 
+        with open(pred_file, 'r', encoding="utf-8") as f:
             result = json.load(f) 
         print(f"[INFO] 推理结果已加载，共 {len(result)} 条") 
     else: 
-        fd = open("data/qa_pairs/test_qa_pair_verify.json") 
+        fd = open("data/qa_pairs/test_qa_pair_verify.json", encoding="utf-8")
         test_qa_pairs = json.load(fd) 
         fd.close() 
         print(f"[INFO] 共 {len(test_qa_pairs)} 条测试数据，MAX_WORKERS={MAX_WORKERS}") 
@@ -198,7 +198,7 @@ def main():
  
  
         # 保存推理结果 
-        with open(pred_file, "w") as fw: 
+        with open(pred_file, "w", encoding="utf-8") as fw:
             fw.write(json.dumps(result, ensure_ascii=False, indent=4)) 
         print(f"[INFO] 推理结果已保存，共 {len(result)} 条")
 
@@ -257,7 +257,7 @@ def main():
         "context_recall": ragas_result["context_recall"],
         "llm_context_precision_with_reference": ragas_result["llm_context_precision_with_reference"],
     }
-    with open("data/ragas_evaluation_result.json", "w") as f:
+    with open("data/ragas_evaluation_result.json", "w", encoding="utf-8") as f:
         json.dump(save_data, f, ensure_ascii=False, indent=2)
     print("[INFO] 结果已保存到 data/ragas_evaluation_result.json")
 
