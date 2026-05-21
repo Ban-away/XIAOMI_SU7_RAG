@@ -36,7 +36,7 @@ from src.utils import merge_docs, post_processing
 # ── 超参数 ──────────────────────────────────────────────────
 BM25_RETRIEVE_SIZE   = 20
 MILVUS_RETRIEVE_SIZE = 40
-RERANK_SIZE          = 15
+RERANK_SIZE          = 12
 HYDE                 = 1
 QUERY_REWRITE        = 0   # 关闭：避免型号/关键词被改写后检索丢失
 # 并发线程数（考虑到 vLLM 已占用大量显存，设置较小值避免 OOM）

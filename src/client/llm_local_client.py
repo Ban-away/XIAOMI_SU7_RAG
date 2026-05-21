@@ -49,6 +49,13 @@ def request_chat(query, context, stream=False):
     - context: 检索上下文
     - stream: 是否流式返回（True 返回迭代器；False 返回字符串）
     """
+    # 截断上下文防止超出模型最大长度
+    # 模型 max_model_len=8192，prompt 模板+system 约 300 token，max_tokens=1024
+    # 剩余约 6800 token 给 context，中文约 1 token ≈ 1.5 字符，取 9000 字符为安全上限
+    MAX_CONTEXT_CHARS = 9000
+    if len(context) > MAX_CONTEXT_CHARS:
+        context = context[:MAX_CONTEXT_CHARS]
+
     # 统一用模板组织上下文与问题
     prompt = LLM_CHAT_PROMPT.format(context=context, query=query) 
 
