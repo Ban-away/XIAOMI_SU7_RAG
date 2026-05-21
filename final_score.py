@@ -10,7 +10,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import os
-import re
 import json
 import time
 import threading
@@ -251,13 +250,6 @@ def main():
             continue
         if response in NO_ANSWER_SET or reference in NO_ANSWER_SET:
             continue
-        # RAGas 评估只取前 5 篇文档（reranker 已按相关性排序）
-        # 减少噪声，避免长上下文干扰评估器判断
-        docs = re.split(r'(?=【\d+】)', context)
-        docs = [d for d in docs if d.strip()]
-        if len(docs) > 5:
-            docs = docs[:5]
-            context = "\n".join(docs)
         ragas_data.append({
             "user_input":         item["question"],
             "retrieved_contexts": [context],
