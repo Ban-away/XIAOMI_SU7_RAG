@@ -72,7 +72,7 @@ class MiniCPMReRanker(object):
 
         return self.tokenizer.pad(
             all_inputs,
-            padding=True,
+            padding="max_length",
             max_length=max_length + len(self.sep_ids) + len(self.instruction_ids),
             pad_to_multiple_of=8,
             return_tensors='pt',
@@ -91,9 +91,15 @@ class MiniCPMReRanker(object):
                 return_dict=True,
                 cutoff_layers=[self.cutoff_layers],
             )
-            # outputs[0] 是 cutoff_layers 输出的 logits 列表
-            all_logits = outputs[0][0]
-            scores = all_logits[:, -1, self.yes_loc].view(-1).float()
+            logits = outputs.logits if hasattr(outputs, "logits") else outputs[0]
+            if isinstance(logits, (list, tuple)):
+                logits = logits[0]
+            if logits.dim() == 3:
+                scores = logits[:, -1, self.yes_loc].view(-1).float()
+            elif logits.dim() == 2:
+                scores = logits[:, self.yes_loc].view(-1).float()
+            else:
+                raise RuntimeError(f"Unexpected logits dim: {logits.dim()}")
 
         scores = scores.detach().cpu().numpy()
 
