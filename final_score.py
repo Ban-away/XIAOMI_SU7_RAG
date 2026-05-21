@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import os
+import re
 import json
 import time
 import threading
@@ -238,9 +239,14 @@ def main():
             continue
         if response in NO_ANSWER_SET or reference in NO_ANSWER_SET:
             continue
+        # 按【N】拆分为独立文档，让 RAGas 正确评估 context_precision
+        docs = re.split(r'(?=【\d+】)', context)
+        docs = [re.sub(r'^【\d+】', '', d).strip() for d in docs if d.strip()]
+        if not docs:
+            docs = [context]
         ragas_data.append({
             "user_input":         item["question"],
-            "retrieved_contexts": [context],
+            "retrieved_contexts": docs,
             "response":           response,
             "reference":          reference,
         })
