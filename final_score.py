@@ -31,17 +31,15 @@ from src.client.llm_local_client import request_chat
 from src.client.llm_hyde_client import request_hyde, request_query_rewrite
 from src.reranker.minicpm_reranker import MiniCPMReRanker
 from src.constant import bge_reranker_minicpm_path, text2vec_model_path
-from src.utils import merge_docs, post_processing, wrrf_fusion
+from src.utils import merge_docs, post_processing
 
 
 # ── 超参数 ──────────────────────────────────────────────────
-BM25_RETRIEVE_SIZE   = 25
-MILVUS_RETRIEVE_SIZE = 60
-RERANK_SIZE          = 16
-MAX_RERANK_CANDIDATES = 160  # 控制重排候选规模，避免噪声和显存压力
-EVAL_CONTEXT_SIZE     = 24   # 评测用上下文条数（独立于生成），提升RAGas召回
+BM25_RETRIEVE_SIZE   = 15
+MILVUS_RETRIEVE_SIZE = 30
+RERANK_SIZE          = 10
 HYDE                 = 1
-QUERY_REWRITE        = 1   # 开启：保留原问题并加入改写候选，提升召回覆盖
+QUERY_REWRITE        = 0   # 关闭：避免型号/关键词被改写后检索丢失
 # 并发线程数（考虑到 vLLM 已占用大量显存，设置较小值避免 OOM）
 MAX_WORKERS          = 4
 # ────────────────────────────────────────────────────────────
@@ -131,33 +129,15 @@ def process_one(item):
             rewritten_query = request_query_rewrite(query) if QUERY_REWRITE else query
 
             # 2. HyDE 扩写（API，可并发）
-            hyde_text = ""
+            retrieve_query = rewritten_query
             if HYDE:
-                hyde_text = request_hyde(rewritten_query)
+                hyde_text      = request_hyde(rewritten_query)
+                retrieve_query = rewritten_query + "\n" + hyde_text
 
-            # 3. 多路检索（BM25 + Milvus），多查询融合提高召回
-            query_variants = [query]
-            if QUERY_REWRITE and rewritten_query and rewritten_query != query:
-                query_variants.append(rewritten_query)
-            if HYDE and hyde_text:
-                query_variants.append(rewritten_query + "\n" + hyde_text)
-
-            merged_lists = []
-            for qv in query_variants:
-                bm25_docs = bm25_retriever.retrieve_topk(qv, topk=BM25_RETRIEVE_SIZE)
-                milvus_docs = milvus_retriever.retrieve_topk(qv, topk=MILVUS_RETRIEVE_SIZE)
-                merged_lists.append(merge_docs(bm25_docs, milvus_docs))
-
-            if len(merged_lists) == 1:
-                merged_docs = merged_lists[0]
-            else:
-                # 原问题权重大，改写/HyDE权重低，兼顾召回与精度
-                weights = [1.0] + [0.7] * (len(merged_lists) - 1)
-                merged_docs = wrrf_fusion(merged_lists, weights=weights, k=60)
-
-            # 截断重排候选规模，减少噪声与重排开销
-            if len(merged_docs) > MAX_RERANK_CANDIDATES:
-                merged_docs = merged_docs[:MAX_RERANK_CANDIDATES]
+            # 3. 检索（BM25 CPU + Milvus 网络，可并发）
+            bm25_docs   = bm25_retriever.retrieve_topk(retrieve_query, topk=BM25_RETRIEVE_SIZE)
+            milvus_docs = milvus_retriever.retrieve_topk(retrieve_query, topk=MILVUS_RETRIEVE_SIZE)
+            merged_docs = merge_docs(bm25_docs, milvus_docs)
 
             # 4. 精排（GPU，串行保护）
             with _rerank_lock:
@@ -179,10 +159,8 @@ def process_one(item):
 
             item = dict(item)   # 避免修改原始数据
             item["pred"]          = answer
-            # 评测用上下文：用更多条数提升RAGas召回，生成仍用RERANK_SIZE
-            eval_docs = ranked_docs[:EVAL_CONTEXT_SIZE]
-            item["context"]       = "\n".join([f"【{i+1}】{doc.page_content}" for i, doc in enumerate(eval_docs)])
-            item["rewritten_query"] = " || ".join(query_variants)  # 保存多查询候选
+            item["context"]       = context
+            item["rewritten_query"] = retrieve_query  # 保存改写后的查询
             return item
             
         except RuntimeError as e:
