@@ -36,9 +36,9 @@ from src.utils import merge_docs, post_processing
 
 
 # ── 超参数 ──────────────────────────────────────────────────
-BM25_RETRIEVE_SIZE   = 20
-MILVUS_RETRIEVE_SIZE = 40
-RERANK_SIZE          = 12
+BM25_RETRIEVE_SIZE   = 15
+MILVUS_RETRIEVE_SIZE = 30
+RERANK_SIZE          = 10
 HYDE                 = 1
 QUERY_REWRITE        = 0   # 关闭：避免型号/关键词被改写后检索丢失
 # 并发线程数（考虑到 vLLM 已占用大量显存，设置较小值避免 OOM）
@@ -251,14 +251,16 @@ def main():
             continue
         if response in NO_ANSWER_SET or reference in NO_ANSWER_SET:
             continue
-        # 按【N】拆分为独立文档，让 RAGas 正确评估 context_precision
+        # RAGas 评估只取前 5 篇文档（reranker 已按相关性排序）
+        # 减少噪声，避免长上下文干扰评估器判断
         docs = re.split(r'(?=【\d+】)', context)
-        docs = [re.sub(r'^【\d+】', '', d).strip() for d in docs if d.strip()]
-        if not docs:
-            docs = [context]
+        docs = [d for d in docs if d.strip()]
+        if len(docs) > 5:
+            docs = docs[:5]
+            context = "\n".join(docs)
         ragas_data.append({
             "user_input":         item["question"],
-            "retrieved_contexts": docs,
+            "retrieved_contexts": [context],
             "response":           response,
             "reference":          reference,
         })

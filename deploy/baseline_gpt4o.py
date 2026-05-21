@@ -1,24 +1,19 @@
 # -*- coding: utf-8 -*-
 """
 基线对比实验
-支持多种模型：GPT-4o / 豆包 / 自定义 OpenAI 兼容 API
+支持多种模型：GPT-4o / 自定义 OpenAI 兼容 API
 
 对比指标：语义相似度 + 关键词加权得分，与本系统结果做比较
 
 运行前准备：
-  1. 使用豆包 API（推荐，更便宜）：
-     export DOUBAO_API_KEY=sk-xxx
-     python deploy/baseline_gpt4o.py --model doubao
-  
-  2. 使用本地模型（完全免费，无需API）：
+  1. 使用本地模型（完全免费，无需API）：
      python deploy/baseline_gpt4o.py --model local
-     
-  3. 使用 OpenAI API（GPT-4o等）：
+
+  2. 使用 OpenAI API（GPT-4o等）：
      export OPENAI_API_KEY=sk-xxx
      python deploy/baseline_gpt4o.py --model openai
 
 运行：
-  python deploy/baseline_gpt4o.py --model doubao   # 豆包API（便宜）
   python deploy/baseline_gpt4o.py --model local    # 本地模型（免费）
   python deploy/baseline_gpt4o.py --model openai   # OpenAI API（GPT-4o等）
 """
@@ -46,23 +41,18 @@ from src.constant import split_docs_path, text2vec_model_path, qwen3_8b_tune_mod
 def main():
     # ── 解析命令行参数 ─────────────────────────────────────────────
     parser = argparse.ArgumentParser(description="基线对比实验")
-    parser.add_argument("--model", type=str, default="local", 
-                        choices=["doubao", "openai", "local"],
-                        help="选择对比模型：doubao（豆包）、openai（GPT-4o等）、local（本地模型，免费）")
+    parser.add_argument("--model", type=str, default="local",
+                        choices=["openai", "local"],
+                        help="选择对比模型：openai（GPT-4o等）、local（本地模型，免费）")
     args = parser.parse_args()
-    
+
     # ── 配置 ─────────────────────────────────────────────────────
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     TOPK = 8
     RESULT_FILE = os.path.join(BASE_DIR, f"data/baseline_{args.model}_result.json")
-    
+
     # 根据选择的模型加载配置
-    if args.model == "doubao":
-        API_KEY = os.getenv("DOUBAO_API_KEY")
-        BASE_URL = os.getenv("DOUBAO_BASE_URL", "https://ark.cn-beijing.volces.com/api/v3")
-        CHAT_MODEL = os.getenv("DOUBAO_MODEL_NAME", "doubao-1-5-lite-32k-250115")
-        print(f"[INFO] 使用模型：豆包 {CHAT_MODEL}")
-    elif args.model == "openai":
+    if args.model == "openai":
         API_KEY = os.getenv("OPENAI_API_KEY")
         BASE_URL = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
         CHAT_MODEL = os.getenv("OPENAI_MODEL_NAME", "gpt-4o")
@@ -261,7 +251,7 @@ def main():
             "context": context,
         }
 
-    model_desc = "本地Qwen3" if args.model == "local" else ("豆包" if args.model == "doubao" else CHAT_MODEL)
+    model_desc = "本地Qwen3" if args.model == "local" else CHAT_MODEL
     
     for batch_idx in range(total_batches):
         start_idx = batch_idx * BATCH_SIZE
@@ -335,7 +325,7 @@ def main():
     print("\n" + "=" * 60)
     print("📊 对比结果")
     print("=" * 60)
-    model_label = f"本地 Qwen3-8B" if args.model == "local" else (f"豆包 {CHAT_MODEL}" if args.model == "doubao" else f"{CHAT_MODEL}")
+    model_label = f"本地 Qwen3-8B" if args.model == "local" else f"{CHAT_MODEL}"
     print(f"{model_label} 得分：{baseline_score:.4f}")
 
     # 读取本系统得分
