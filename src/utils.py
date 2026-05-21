@@ -168,6 +168,11 @@ def post_processing(response, docs):
 
     pages = sorted(list(set(pages)))
 
+    # 无答案时清除引用页码和图片
+    if answer.strip() in ("无答案", "没有答案", "无", ""):
+        pages = []
+        related_images = []
+
     return {
         "answer": answer,
         "cite_pages": pages,
