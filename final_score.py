@@ -233,6 +233,11 @@ def main():
         base_url=base_url,
         temperature=0.01,
         max_tokens=4096,
+        model_kwargs={
+            "extra_body": {
+                "system": "You are a helpful assistant. Always respond in English with exact JSON format as instructed. Do not add extra fields."
+            }
+        },
     )
     evaluator_llm = LangchainLLMWrapper(llm)
 
