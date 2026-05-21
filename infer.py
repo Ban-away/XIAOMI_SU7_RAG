@@ -25,7 +25,7 @@ jieba.initialize()
 print("[INFO] jieba 分词器加载完成")
 bm25_retriever = BM25(docs=None, retrieve=True)
 milvus_retriever = MilvusRetriever(docs=None, retrieve=True) 
-reranker = MiniCPMReRanker(model_path=bge_reranker_minicpm_path)
+reranker = MiniCPMReRanker(model_path=bge_reranker_minicpm_path, cutoff_layers=28)
 milvus_retriever.retrieve_topk("这是一条测试数据", topk=3)
 
 # 配置参数

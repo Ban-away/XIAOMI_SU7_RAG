@@ -141,7 +141,7 @@ def process_one(item):
 
             # 4. 精排（GPU，串行保护）
             with _rerank_lock:
-                ranked_docs = reranker.rank(retrieve_query, merged_docs, topk=RERANK_SIZE)
+                ranked_docs = reranker.rank(query, merged_docs, topk=RERANK_SIZE)
 
             # 5. 生成（vLLM 网络 API，可并发）
             context  = "\n".join([f"【{i+1}】{doc.page_content}" for i, doc in enumerate(ranked_docs)])
@@ -234,7 +234,7 @@ def main():
         max_tokens=4096,
         model_kwargs={
             "extra_body": {
-                "system": "You are a helpful assistant. Always respond in English with exact JSON format as instructed. Do not add extra fields."
+                "system": "You are an expert RAG evaluation assistant. You must respond in English with valid JSON only — no extra text.\n\nFor context_recall: Check if EACH claim in the reference answer can be inferred from the context. Be generous — if the context contains substantially supporting information, count the claim as present. Output exact JSON as instructed.\n\nFor context_precision: Rate whether each retrieved context chunk is relevant to the question. A chunk is relevant if it contains information that could help answer the question. Be lenient with partially relevant chunks."
             }
         },
     )

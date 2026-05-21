@@ -296,7 +296,7 @@ class MilvusRetriever:
         hybrid_results = self.hybrid_search(
             query_embeddings["dense"][0],
             query_embeddings["sparse"][0],
-            sparse_weight=0.7,
+            sparse_weight=1.0,
             dense_weight=1.0,
             limit=topk
         )[0]
