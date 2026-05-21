@@ -97,7 +97,7 @@ def report_score(result):
             # 短答案精确匹配保底
             if len(gold) <= 20 and gold.strip() in pred:
                 score = max(score, 0.90)
-            elif 2 <= len(pred.strip()) <= 30 and pred.strip() in gold:
+            elif 4 <= len(pred.strip()) <= 30 and pred.strip() in gold:
                 score = max(score, 0.90)
             elif len(gold) <= 50:
                 gold_chars = set(gold.replace(" ", ""))
@@ -146,6 +146,15 @@ def process_one(item):
             context  = "\n".join([f"【{i+1}】{doc.page_content}" for i, doc in enumerate(ranked_docs)])
             response = request_chat(query, context)
             answer   = post_processing(response, ranked_docs)
+
+            # 6. 无答案重试：只用 top-3 最相关文档，减少噪声干扰
+            if answer["answer"].strip() in ("无答案", "无", "") and len(ranked_docs) > 3:
+                top3_docs  = ranked_docs[:3]
+                context3   = "\n".join([f"【{i+1}】{doc.page_content}" for i, doc in enumerate(top3_docs)])
+                response3  = request_chat(query, context3)
+                answer3    = post_processing(response3, top3_docs)
+                if answer3["answer"].strip() not in ("无答案", "无", ""):
+                    answer = answer3
 
             item = dict(item)   # 避免修改原始数据
             item["pred"]          = answer
