@@ -74,6 +74,7 @@ PDF 文本 + 图片抽取
 <td>
 多维评分 + 性能对比<br/>
 <code>ragas</code> + <code>text2vec</code> + 自定义指标<br/>
+<span style="color:green">语义相似度 + 关键词加权得分：0.8257</span><br/>
 <span style="color:green">GPT-4o 对比提升 18%</span>
 </td>
 </tr>
@@ -341,9 +342,10 @@ XIAOMI_SU7_RAG/
 | 步骤 | 函数 | 工具 | 输入/输出 |
 |:---|:---|:---|:---|
 | **3.1 批量推理** | 主循环 | WRRF 粗排 + MiniCPM 精排 + vLLM 生成 | 输入：`data\qa_pairs\test_qa_pair_verify.json` |
-| **3.2 结果保存** | `json.dump()` | Python json | 输出：`data\qa_pairs\test_qa_pair_pred.json` |
-| **3.3 语义评分** | `report_score()`<br/>`final_score.py` | text2vec + Jaccard | 日志：平均评分 |
-| **3.4 RAGAS 指标** | `evaluate()`<br/>`final_score.py` | ragas + langchain-openai | 日志：上下文召回/精确率 |
+| **3.2 无答案重试** | `process_one()`<br/>`final_score.py` | top-3 文档重新生成 | 减少"无答案"误判 |
+| **3.3 结果保存** | `json.dump()` | Python json | 输出：`data\qa_pairs\test_qa_pair_pred.json` |
+| **3.4 语义评分** | `report_score()`<br/>`final_score.py` | text2vec + 关键词加权 | 日志：平均评分 |
+| **3.5 RAGAS 指标** | `evaluate()`<br/>`final_score.py` | ragas + langchain-openai | 日志：上下文召回/精确率 |
 
 ---
 
@@ -792,7 +794,33 @@ python deploy/auto_vllm_server.py \
 python final_score.py
 ```
 
-评估结果将输出到控制台，包括语义相似度 + 关键词加权得分（`text2vec`）以及 RAGas 指标（上下文召回率 `context_recall`、精确率 `llm_context_precision_with_reference`），结果保存到 `data/ragas_evaluation_result.json`。
+**评分机制：**
+
+- **语义相似度**（`text2vec-base-chinese`）：计算预测答案与标准答案的向量余弦相似度
+- **关键词加权**：提取标准答案中的关键词，检查预测答案是否命中，关键词只加分不扣分
+- **综合评分**：`max(semantic_score, 0.3 × keyword_score + 0.7 × semantic_score)`
+- **短答案补偿**：短答案精确匹配和字符重叠率保底机制
+- **无答案重试**：首次生成"无答案"时，用 top-3 文档重新生成，减少误判
+
+**推理参数：**
+
+| 参数 | 值 | 说明 |
+|:---|:---|:---|
+| `BM25_RETRIEVE_SIZE` | 20 | BM25 稀疏检索召回数 |
+| `MILVUS_RETRIEVE_SIZE` | 40 | Milvus 混合检索召回数 |
+| `RERANK_SIZE` | 12 | MiniCPM 精排后保留文档数 |
+| `HYDE` | 1 | HyDE 扩写增强检索 |
+| `MAX_WORKERS` | 4 | 并发线程数 |
+
+**最新评估结果：**
+
+| 指标 | 得分 |
+|:---|:---|
+| 语义相似度 + 关键词加权得分 | **0.8257** |
+| RAGas context_recall | 0.7556 |
+| RAGas context_precision | 0.7879 |
+
+评估结果保存到 `data/ragas_evaluation_result.json`。
 
 ---
 
