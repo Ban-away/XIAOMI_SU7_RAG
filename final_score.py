@@ -201,7 +201,7 @@ def main():
                     pbar.write(f"【原始问题】：{item['question']}")
                     if QUERY_REWRITE:
                         pbar.write(f"【改写后】：{item.get('rewritten_query', '')}")
-                    pbar.write(f"【答案】：{item['pred']['answer']}")
+                    pbar.write(f"【预测答案】：{item['pred']['answer']}")
                     pbar.write(f"【引用页码】：{item['pred'].get('cite_pages', [])}, 【相关图片】：{item['pred'].get('related_images', [])}")
                     pbar.write("-" * 100)
                 except Exception as e:
