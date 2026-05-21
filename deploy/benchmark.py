@@ -26,13 +26,11 @@ import numpy as np
 import os
 from tqdm import tqdm
 from typing import List, Tuple
-from dotenv import load_dotenv
-
-load_dotenv()
 
 # ── 配置 ─────────────────────────────────────────────────────
 API_URL      = "http://localhost:8000/v1/chat/completions"
-RESULT_FILE  = "data/benchmark_result.json"
+BASE_DIR     = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+RESULT_FILE  = os.path.join(BASE_DIR, "data/benchmark_result.json")
 
 # 压测用的测试问题，覆盖长短不同的问题
 TEST_PROMPTS = [
@@ -102,17 +100,15 @@ async def measure_throughput(
     并发压测，返回 (token/s, total_tokens)
     """
     total_tokens = 0
-    request_count = 0
 
     async def send_one(session, prompt):
-        nonlocal total_tokens, request_count
+        nonlocal total_tokens
         payload = build_payload(prompt, stream=False, model_name=model_name)
         try:
             async with session.post(API_URL, json=payload) as resp:
                 result = await resp.json()
                 tokens = result["usage"]["completion_tokens"]
                 total_tokens += tokens
-                request_count += 1
         except Exception as e:
             print(f"[WARN] 请求失败: {e}")
 
@@ -253,7 +249,6 @@ async def main_async(args):
 
 
 def main():
-    import os
     parser = argparse.ArgumentParser(description="vLLM 性能压测")
     parser.add_argument("--concurrency",   type=int, default=8,  help="并发数（吞吐率测试）")
     parser.add_argument("--n-requests",    type=int, default=100, help="总请求数（吞吐率测试）")

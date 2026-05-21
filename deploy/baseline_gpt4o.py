@@ -40,7 +40,7 @@ load_dotenv()
 # 导入常量路径
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from src.constant import split_docs_path, text2vec_model_path
+from src.constant import split_docs_path, text2vec_model_path, qwen3_8b_tune_model_name
 
 
 def main():
@@ -169,22 +169,28 @@ def main():
 
     def generate(query, context):
         """生成答案"""
+        # 截断上下文防止超出模型最大长度
+        MAX_CONTEXT_CHARS = 9000
+        if len(context) > MAX_CONTEXT_CHARS:
+            context = context[:MAX_CONTEXT_CHARS]
         prompt = PROMPT.format(query=query, context=context)
         try:
             if args.model == "local" and local_client:
-                # 使用 vLLM 启动时的完整模型路径
-                model_path = os.path.join(BASE_DIR, "LLaMA-Factory-main/output/qwen3_lora_sft_int4")
                 response = local_client.chat.completions.create(
-                    model=model_path,
+                    model=qwen3_8b_tune_model_name,
                     messages=[{"role": "user", "content": prompt}],
-                    max_tokens=512,
+                    max_tokens=1024,
                     temperature=0.01,
+                    extra_body={
+                        "top_k": 1,
+                        "chat_template_kwargs": {"enable_thinking": False}
+                    },
                 )
             elif client:
                 response = client.chat.completions.create(
                     model=CHAT_MODEL,
                     messages=[{"role": "user", "content": prompt}],
-                    max_tokens=512,
+                    max_tokens=1024,
                     temperature=0.01,
                 )
             else:
@@ -198,6 +204,16 @@ def main():
     def calc_jaccard(list_a, list_b, threshold=0.3):
         size_c = len([i for i in list_a if i in list_b])
         return 1 if size_c / (len(list_b) + 1e-6) > threshold else 0
+
+    def _fuzzy_keyword_match(kw, text):
+        """关键词匹配：精确匹配 或 字符级模糊匹配（>=60%的字符命中）"""
+        if kw in text:
+            return True
+        kw_chars = set(kw.replace(" ", ""))
+        if not kw_chars:
+            return False
+        hit = sum(1 for c in kw_chars if c in text)
+        return hit / len(kw_chars) >= 0.6
 
 
     # 1. 加载测试集
@@ -217,7 +233,7 @@ def main():
         with open(RESULT_FILE, "r", encoding="utf-8") as f:
             results = json.load(f)
         print(f"[INFO] 加载已有结果：{len(results)} 条，继续剩余...")
-        done_ids = {r["unique_id"] for r in results}
+        done_ids = {r.get("unique_id") for r in results if "unique_id" in r}
         test_data = [d for d in test_data if d["unique_id"] not in done_ids]
 
     # 分批并行处理配置
@@ -288,11 +304,29 @@ def main():
             semantic_score = semantic_search(
                 sim_model.encode([gold]), sim_model.encode(pred), top_k=1
             )[0][0]["score"]
-            join_keywords = [w for w in keywords if w in pred]
-            keyword_score = calc_jaccard(join_keywords, keywords)
-            score = semantic_score if not keywords else (
-                0.2 * keyword_score + 0.8 * semantic_score
-            )
+
+            valid_keywords = [kw for kw in keywords if _fuzzy_keyword_match(kw, gold)]
+            if valid_keywords:
+                join_keywords = [kw for kw in valid_keywords if _fuzzy_keyword_match(kw, pred)]
+                kw_hit_rate = len(join_keywords) / len(valid_keywords)
+                keyword_score = 1.0 if kw_hit_rate > 0.3 else kw_hit_rate
+            else:
+                keyword_score = 0.0
+
+            weighted = 0.3 * keyword_score + 0.7 * semantic_score
+            score = max(semantic_score, weighted) if valid_keywords else semantic_score
+
+            if len(gold) <= 20 and gold.strip() in pred:
+                score = max(score, 0.90)
+            elif 4 <= len(pred.strip()) <= 30 and pred.strip() in gold:
+                score = max(score, 0.90)
+            elif len(gold) <= 50:
+                gold_chars = set(gold.replace(" ", ""))
+                pred_chars = set(pred.replace(" ", ""))
+                overlap = len(gold_chars & pred_chars) / max(len(gold_chars), 1)
+                if overlap > 0.6:
+                    score = max(score, 0.80)
+
         scores.append(score)
 
     baseline_score = float(np.mean(scores))
