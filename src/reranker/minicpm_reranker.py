@@ -90,7 +90,10 @@ class MiniCPMReRanker(object):
                 return_dict=True,
                 cutoff_layers=[self.cutoff_layers],
             )
-            all_logits = outputs[0][0]
+            # 使用 outputs.logits 获取正确的 logits 输出
+            # cutoff_layers 会导致 outputs[0] 返回隐藏状态而非 logits
+            all_logits = outputs.logits
+            
             # 兼容不同输出维度
             if all_logits.dim() == 2:
                 # [batch, vocab]，直接取
