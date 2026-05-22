@@ -728,6 +728,24 @@ python deploy/benchmark.py
 # ============================================================
 ```
 
+**多卡部署与扩展效率**
+
+```bash
+# 多卡自动检测（支持张量并行）
+python deploy/auto_vllm_server.py --model LLaMA-Factory-main/output/qwen3_lora_sft_int4 --port 8000
+
+# 手动指定张量并行数（如 8 卡）
+python deploy/auto_vllm_server.py --model LLaMA-Factory-main/output/qwen3_lora_sft_int4 --port 8000 -- --tensor-parallel-size 8
+```
+
+| 配置 | 吞吐量 | 扩展效率 |
+|------|--------|----------|
+| 单卡（非量化） | 465 token/s | - |
+| 单卡（INT4） | 669 token/s | +43.8% |
+| 8卡（INT4，85%效率） | ~4,550 token/s | 6.8x |
+
+> **说明**：多卡扩展效率通常在 70%-90% 之间，取决于 GPU 型号和网络带宽（NVLink > PCIe）。
+
 ---
 
 #### 方式二：手动逐服务启动
