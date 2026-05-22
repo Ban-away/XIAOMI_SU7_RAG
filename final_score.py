@@ -27,7 +27,7 @@ from ragas.run_config import RunConfig
 from src.retriever.bm25_retriever import BM25
 from src.retriever.milvus_retriever import MilvusRetriever
 from src.client.llm_local_client import request_chat
-from src.client.llm_hyde_client import request_hyde
+from src.client.llm_hyde_client import request_hyde, request_query_rewrite
 from src.reranker.minicpm_reranker import MiniCPMReRanker
 from src.constant import bge_reranker_minicpm_path, text2vec_model_path
 from src.utils import merge_docs, post_processing
@@ -190,36 +190,21 @@ def main():
         print("-" * 100)
 
         result = []
-        total = len(test_qa_pairs)
-        completed = 0
-        
-        print(f"[INFO] 开始推理...")
-        print("=" * 100)
-        
+
         with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
             futures = {executor.submit(process_one, item): item for item in test_qa_pairs}
-            
-            pbar = tqdm(total=total, desc="推理进度", unit="问题", dynamic_ncols=True, leave=True)
-            
-            try:
-                for future in as_completed(futures):
-                    try:
-                        item = future.result()
-                        result.append(item)
-                        
-                        print(f"\r\033[K【原始问题】：{item['question']}")
-                        if QUERY_REWRITE:
-                            print(f"\033[K【改写后】：{item.get('rewritten_query', '')}")
-                        print(f"\033[K【预测答案】：{item['pred']['answer']}")
-                        print(f"\033[K【引用页码】：{item['pred'].get('cite_pages', [])}, 【相关图片】：{item['pred'].get('related_images', [])}")
-                        print(f"\033[K{'-' * 100}")
-                    except Exception as e:
-                        print(f"\033[K[WARN] 单条推理失败: {e}")
-                    
-                    completed += 1
-                    pbar.update(1)
-            finally:
-                pbar.close()
+            for future in tqdm(as_completed(futures), total=len(futures), desc="推理进度", unit="问题"):
+                try:
+                    item = future.result()
+                    result.append(item)
+                    print(f"【原始问题】：{item['question']}")
+                    if QUERY_REWRITE:
+                        print(f"【改写后】：{item.get('rewritten_query', '')}")
+                    print(f"【答案】：{item['pred']['answer']}")
+                    print(f"【引用页码】：{item['pred'].get('cite_pages', [])}, 【相关图片】：{item['pred'].get('related_images', [])}")
+                    print("-" * 100)
+                except Exception as e:
+                    print(f"[WARN] 单条推理失败: {e}")
 
         with open(pred_file, "w", encoding="utf-8") as fw:
             fw.write(json.dumps(result, ensure_ascii=False, indent=4))
