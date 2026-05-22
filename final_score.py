@@ -193,7 +193,7 @@ def main():
 
         with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
             futures = {executor.submit(process_one, item): item for item in test_qa_pairs}
-            for future in tqdm(as_completed(futures), total=len(futures), desc="推理进度", unit="问题"):
+            for future in tqdm(as_completed(futures), total=len(futures), desc="推理进度", unit="问题", disable=True):
                 try:
                     item = future.result()
                     result.append(item)
