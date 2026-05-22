@@ -35,10 +35,10 @@ from src.utils import merge_docs, post_processing
 
 # ── 超参数 ──────────────────────────────────────────────────
 BM25_RETRIEVE_SIZE   = 20   # 从10增加到20，提高BM25精确匹配覆盖
-MILVUS_RETRIEVE_SIZE = 40   # 从20增加到40，提高语义召回覆盖
-RERANK_SIZE          = 12   # 从8增加到12，给模型更多上下文
+MILVUS_RETRIEVE_SIZE = 60   # 从20增加到60，提高语义召回覆盖
+RERANK_SIZE          = 15   # 从8增加到15，给模型更多上下文
 HYDE                 = 1    # 保留HyDE，语义扩写有助于召回
-QUERY_REWRITE        = 0    # 关闭：型号/专业术语改写后反而召回变差
+QUERY_REWRITE        = 1    # 开启口语化改写，提升检索覆盖
 MAX_WORKERS          = 16
 # ────────────────────────────────────────────────────────────
 
@@ -118,26 +118,35 @@ def report_score(result):
 def process_one(item):
     query = item["question"].strip()
 
-    # 1. HyDE 扩写（API，可并发）
-    retrieve_query = query
+    # 1. 先改写query（口语→正式）
+    try:
+        rewritten_query = request_query_rewrite(query)
+    except Exception:
+        rewritten_query = query
+
+    # 2. HyDE 基于改写后的query生成假设答案
+    retrieve_query = rewritten_query
     if HYDE:
         try:
-            hyde_text      = request_hyde(query)
-            retrieve_query = query + "\n" + hyde_text
+            hyde_text = request_hyde(rewritten_query)
+            retrieve_query = rewritten_query + "\n" + hyde_text
         except Exception:
-            retrieve_query = query
+            retrieve_query = rewritten_query
 
-    # 2. BM25 检索（非线程安全，加锁串行）
+    # 3. 双路BM25：原始query + 改写query，各取一半
     with _bm25_lock:
-        bm25_docs = bm25_retriever.retrieve_topk(retrieve_query, topk=BM25_RETRIEVE_SIZE)
+        bm25_docs_orig = bm25_retriever.retrieve_topk(query, topk=BM25_RETRIEVE_SIZE // 2)
+    with _bm25_lock:
+        bm25_docs_rewrite = bm25_retriever.retrieve_topk(rewritten_query, topk=BM25_RETRIEVE_SIZE // 2)
+    bm25_docs = bm25_docs_orig + bm25_docs_rewrite
 
-    # 3. Milvus 检索（线程安全，可并发）
+    # 4. Milvus 用 HyDE 增强的改写query
     milvus_docs = milvus_retriever.retrieve_topk(retrieve_query, topk=MILVUS_RETRIEVE_SIZE)
 
-    # 4. 合并去重
+    # 5. 合并去重
     merged_docs = merge_docs(bm25_docs, milvus_docs)
 
-    # 5. 精排（GPU，加锁串行）
+    # 6. 精排（GPU，加锁串行）
     # 限制进入 reranker 的候选数，避免 batch 过大导致 OOM 或张量维度错误
     rerank_candidates = merged_docs[:30]
     with _rerank_lock:
