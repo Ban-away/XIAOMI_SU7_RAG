@@ -90,17 +90,34 @@ class MiniCPMReRanker(object):
                 return_dict=True,
                 cutoff_layers=[self.cutoff_layers],
             )
-            # 使用 outputs.logits 获取正确的 logits 输出
-            # cutoff_layers 会导致 outputs[0] 返回隐藏状态而非 logits
+            
+            # cutoff_layers 模式下，outputs.logits 是元组，包含各层输出
+            # 需要从元组中提取正确的 logits
             all_logits = outputs.logits
+            if isinstance(all_logits, tuple):
+                # cutoff_layers 返回元组，取最后一个元素（指定层的输出）
+                if len(all_logits) > 0:
+                    all_logits = all_logits[-1]
+                else:
+                    raise RuntimeError("cutoff_layers 返回空元组")
+            
+            # 确保 all_logits 是张量
+            if not isinstance(all_logits, torch.Tensor):
+                raise RuntimeError(f"模型输出格式错误，期望张量但得到: {type(all_logits)}")
+            
+            # 确保在正确的设备上
+            if all_logits.device != self.device:
+                all_logits = all_logits.to(self.device)
             
             # 兼容不同输出维度
             if all_logits.dim() == 2:
                 # [batch, vocab]，直接取
                 scores = all_logits[:, self.yes_loc].view(-1).float()
-            else:
+            elif all_logits.dim() == 3:
                 # [batch, seq_len, vocab]，取最后一个token
                 scores = all_logits[:, -1, self.yes_loc].view(-1).float()
+            else:
+                raise RuntimeError(f"logits 维度错误: {all_logits.dim()}")
 
         scores = scores.detach().cpu().numpy()
 
