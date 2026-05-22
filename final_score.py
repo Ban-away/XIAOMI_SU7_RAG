@@ -167,8 +167,9 @@ def process_one(item):
             context = context3
 
     item = dict(item)
-    item["pred"]    = answer
-    item["context"] = context
+    item["pred"]          = answer
+    item["context"]       = context
+    item["rewritten_query"] = rewritten_query
     return item
 
 
@@ -196,8 +197,11 @@ def main():
                 try:
                     item = future.result()
                     result.append(item)
-                    pbar.write(f"【问题】：{item['question']}")
-                    pbar.write(f"【预测】：{item['pred']['answer'][:80]}")
+                    pbar.write(f"【原始问题】：{item['question']}")
+                    if QUERY_REWRITE:
+                        pbar.write(f"【改写后】：{item.get('rewritten_query', '')}")
+                    pbar.write(f"【答案】：{item['pred']['answer']}")
+                    pbar.write(f"【引用页码】：{item['pred'].get('cite_pages', [])}, 【相关图片】：{item['pred'].get('related_images', [])}")
                     pbar.write("-" * 100)
                 except Exception as e:
                     pbar.write(f"[WARN] 单条推理失败: {e}")
