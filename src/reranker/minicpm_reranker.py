@@ -90,9 +90,14 @@ class MiniCPMReRanker(object):
                 return_dict=True,
                 cutoff_layers=[self.cutoff_layers],
             )
-            # outputs[0] 是 cutoff_layers 输出的 logits 列表
             all_logits = outputs[0][0]
-            scores = all_logits[:, -1, self.yes_loc].view(-1).float()
+            # 兼容不同输出维度
+            if all_logits.dim() == 2:
+                # [batch, vocab]，直接取
+                scores = all_logits[:, self.yes_loc].view(-1).float()
+            else:
+                # [batch, seq_len, vocab]，取最后一个token
+                scores = all_logits[:, -1, self.yes_loc].view(-1).float()
 
         scores = scores.detach().cpu().numpy()
 
