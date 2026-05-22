@@ -81,7 +81,8 @@ PDF 文本 + 图片抽取
 <td><b>⚡ 性能</b></td>
 <td>
 TTFT 均值：52 ms<br/>
-吞吐率：669 token/s<br/>
+单卡吞吐率：669 token/s<br/>
+8卡吞吐率：~4,550 token/s<br/>
 <code>vLLM</code> + <code>AWQ INT4</code> 量化（提升 43.8%）
 </td>
 </tr>
