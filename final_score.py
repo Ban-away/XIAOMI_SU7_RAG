@@ -192,19 +192,24 @@ def main():
         result = []
         with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
             futures = {executor.submit(process_one, item): item for item in test_qa_pairs}
-            pbar = tqdm(as_completed(futures), total=len(futures), desc="推理进度", unit="问题")
+            pbar = tqdm(as_completed(futures), total=len(futures), desc="推理进度", unit="问题", dynamic_ncols=True)
             for future in pbar:
                 try:
                     item = future.result()
                     result.append(item)
-                    pbar.write(f"【原始问题】：{item['question']}")
+                    
+                    pbar.clear()
+                    print(f"【原始问题】：{item['question']}")
                     if QUERY_REWRITE:
-                        pbar.write(f"【改写后】：{item.get('rewritten_query', '')}")
-                    pbar.write(f"【答案】：{item['pred']['answer']}")
-                    pbar.write(f"【引用页码】：{item['pred'].get('cite_pages', [])}, 【相关图片】：{item['pred'].get('related_images', [])}")
-                    pbar.write("-" * 100)
+                        print(f"【改写后】：{item.get('rewritten_query', '')}")
+                    print(f"【预测答案】：{item['pred']['answer']}")
+                    print(f"【引用页码】：{item['pred'].get('cite_pages', [])}, 【相关图片】：{item['pred'].get('related_images', [])}")
+                    print("-" * 100)
+                    pbar.refresh()
                 except Exception as e:
-                    pbar.write(f"[WARN] 单条推理失败: {e}")
+                    pbar.clear()
+                    print(f"[WARN] 单条推理失败: {e}")
+                    pbar.refresh()
 
         with open(pred_file, "w", encoding="utf-8") as fw:
             fw.write(json.dumps(result, ensure_ascii=False, indent=4))
