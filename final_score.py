@@ -138,8 +138,10 @@ def process_one(item):
     merged_docs = merge_docs(bm25_docs, milvus_docs)
 
     # 5. 精排（GPU，加锁串行）
+    # 限制进入 reranker 的候选数，避免 batch 过大导致 OOM 或张量维度错误
+    rerank_candidates = merged_docs[:30]
     with _rerank_lock:
-        ranked_docs = reranker.rank(retrieve_query, merged_docs, topk=RERANK_SIZE)
+        ranked_docs = reranker.rank(retrieve_query, rerank_candidates, topk=RERANK_SIZE)
 
     # 无答案重试：只用 top-3 文档，减少噪声干扰
     context  = "\n".join([f"【{i+1}】{doc.page_content}" for i, doc in enumerate(ranked_docs)])

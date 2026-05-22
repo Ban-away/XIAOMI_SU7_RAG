@@ -73,6 +73,7 @@ class MiniCPMReRanker(object):
         return self.tokenizer.pad(
             all_inputs,
             padding=True,
+            truncation=True,   # ← 加这一行，解决 max_length 被忽略的 warning
             max_length=max_length + len(self.sep_ids) + len(self.instruction_ids),
             pad_to_multiple_of=8,
             return_tensors='pt',
