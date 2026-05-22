@@ -74,16 +74,15 @@ PDF 文本 + 图片抽取
 <td>
 多维评分 + 性能对比<br/>
 <code>ragas</code> + <code>text2vec</code> + 自定义指标<br/>
-<span style="color:green">语义相似度 + 关键词加权得分：0.8257</span><br/>
-<span style="color:green">GPT-4o 对比提升 18%</span>
+<span style="color:green">语义相似度 + 关键词加权得分：0.8965</span>
 </td>
 </tr>
 <tr>
 <td><b>⚡ 性能</b></td>
 <td>
-首字延迟降低 57%<br/>
-吞吐率：3K+ token/s<br/>
-<code>vLLM</code> + <code>AWQ INT4</code> 量化
+TTFT 均值：52 ms<br/>
+吞吐率：669 token/s<br/>
+<code>vLLM</code> + <code>AWQ INT4</code> 量化（提升 43.8%）
 </td>
 </tr>
 </table>
@@ -663,18 +662,14 @@ python evaluate_parse_quality.py
 
 #### 基线对比测试
 
-支持三种模型进行对比测试，可根据需求选择：
+支持两种模型进行对比测试，可根据需求选择：
 
 ```bash
 # 1. 使用本地模型（推荐，完全免费，无需 API）
 # 需先启动 vLLM 服务：python deploy/auto_vllm_server.py --model LLaMA-Factory-main/output/qwen3_lora_sft_int4 --port 8000
 python deploy/baseline_gpt4o.py --model local
 
-# 2. 使用豆包 API（较便宜）
-# 需配置环境变量：export DOUBAO_API_KEY=sk-xxx
-python deploy/baseline_gpt4o.py --model doubao
-
-# 3. 使用 OpenAI API（GPT-4o 等）
+# 2. 使用 OpenAI API（GPT-4o 等）
 # 需配置环境变量：export OPENAI_API_KEY=sk-xxx
 python deploy/baseline_gpt4o.py --model openai
 
@@ -682,16 +677,15 @@ python deploy/baseline_gpt4o.py --model openai
 # ============================================================
 # 📊 对比结果
 # ============================================================
-# 本地 Qwen3-8B 得分：0.7654
-# 本系统得分：         0.8934
-# 提升幅度：           +16.7%
+# 本地 Qwen3-8B 得分：0.8910
+# 本系统得分：         0.8965
+# 提升幅度：           +0.6%
 # ============================================================
 ```
 
 | 模型选项 | 成本 | 需要条件 |
 |---------|------|----------|
 | `--model local` | **免费** | 启动 vLLM 服务 |
-| `--model doubao` | 便宜 (~$0.001/千token) | DOUBAO_API_KEY |
 | `--model openai` | 较贵 (~$0.01/千token) | OPENAI_API_KEY |
 
 #### vLLM 性能压测
@@ -708,9 +702,9 @@ python deploy/benchmark.py
 # 📊 性能测试结果
 # ============================================================
 # 模型：qwen3_lora_sft
-# TTFT 均值：126 ms
-# TTFT P95：189 ms
-# 吞吐率：1,523 token/s
+# TTFT 均值：56 ms
+# TTFT P95：43 ms
+# 吞吐率：465 token/s
 # ============================================================
 
 # 换为 INT4 量化模型，重启 vLLM
@@ -724,13 +718,13 @@ python deploy/benchmark.py
 # 📊 性能测试结果
 # ============================================================
 # 模型：qwen3_lora_sft_int4
-# TTFT 均值：54 ms
-# TTFT P95：82 ms
-# 吞吐率：3,128 token/s
+# TTFT 均值：52 ms
+# TTFT P95：33 ms
+# 吞吐率：669 token/s
 # ============================================================
 # 对比上次结果（qwen3_lora_sft）：
-#   TTFT：126 ms → 54 ms  (-57.1%)
-#   吞吐率：1,523 → 3,128 token/s  (+105.4%)
+#   TTFT：56 ms → 52 ms  (+7.0%)
+#   吞吐率：465 → 669 token/s  (+43.8%)
 # ============================================================
 ```
 
@@ -816,9 +810,9 @@ python final_score.py
 
 | 指标 | 得分 |
 |:---|:---|
-| 语义相似度 + 关键词加权得分 | **0.8257** |
-| RAGas context_recall | 0.7556 |
-| RAGas context_precision | 0.7879 |
+| 语义相似度 + 关键词加权得分 | **0.8965** |
+| RAGas context_recall | 0.9386 |
+| RAGas llm_context_precision_with_reference | 0.9488 |
 
 评估结果保存到 `data/ragas_evaluation_result.json`。
 

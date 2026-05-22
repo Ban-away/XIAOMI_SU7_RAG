@@ -203,7 +203,7 @@ def main():
                     print(f"【原始问题】：{item['question']}")
                     if QUERY_REWRITE:
                         print(f"【改写后】：{item.get('rewritten_query', '')}")
-                    print(f"【答案】：{item['pred']['answer']}")
+                    print(f"【预测答案】：{item['pred']['answer']}")
                     print(f"【引用页码】：{item['pred'].get('cite_pages', [])}, 【相关图片】：{item['pred'].get('related_images', [])}")
                     print("-" * 100)
                 except Exception as e:
