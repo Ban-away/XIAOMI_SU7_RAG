@@ -11,6 +11,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import os
+# Suppress nested tqdm bars from third-party libs; keep our main bar explicit.
+os.environ.setdefault("TQDM_DISABLE", "1")
+
 import json
 import threading
 import numpy as np
@@ -193,7 +196,7 @@ def main():
 
         with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
             futures = {executor.submit(process_one, item): item for item in test_qa_pairs}
-            for future in tqdm(as_completed(futures), total=len(futures), desc="推理进度", unit="问题", disable=True):
+            for future in tqdm(as_completed(futures), total=len(futures), desc="推理进度", unit="问题", disable=False):
                 try:
                     item = future.result()
                     result.append(item)
