@@ -1,21 +1,39 @@
 # -*- coding: utf-8 -*-
 """MiniCPM 重排器 - bge-reranker-v2-minicpm-layerwise 官方用法
 
-使用 AutoModelForCausalLM 加载，配合官方 prompt 格式：
-  "A: {query}\nB: {passage}\n{instruction}"
-通过 logits[:, -1, yes_loc] 提取相关性分数。
+使用 FlagEmbedding 库的 FlagAutoReranker 加载，这是官方推荐方式。
 """
 
 import os
 import torch
 from langchain_core.documents import Document
-from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
 class MiniCPMReRanker(object):
     def __init__(self, model_path, max_length=2048, cutoff_layers=None):
         print(f"[INFO] 加载重排模型: {os.path.basename(model_path)}")
 
+        try:
+            from FlagEmbedding import FlagAutoReranker
+            self.reranker = FlagAutoReranker.from_finetuned(
+                model_path,
+                query_max_length=max_length // 2,
+                passage_max_length=max_length // 2,
+                use_fp16=True,
+                cutoff_layers=cutoff_layers if cutoff_layers else [28]
+            )
+            self.use_flag_embedding = True
+        except ImportError:
+            print("[WARN] FlagEmbedding 库未安装，使用原生 transformers 方式")
+            self._init_with_transformers(model_path, max_length, cutoff_layers)
+            self.use_flag_embedding = False
+
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        print(f"[INFO] MiniCPM 重排模型加载完成，cutoff_layers={cutoff_layers or 28}, device={self.device}")
+
+    def _init_with_transformers(self, model_path, max_length, cutoff_layers):
+        from transformers import AutoModelForCausalLM, AutoTokenizer
+        
         self.tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
         self.model = AutoModelForCausalLM.from_pretrained(
             model_path,
@@ -23,27 +41,20 @@ class MiniCPMReRanker(object):
             torch_dtype=torch.bfloat16,
         )
         self.model.eval()
+        self.model.to(self.device)
 
         self.cutoff_layers = cutoff_layers or 28
         self.max_length = max_length
 
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.model.to(self.device)
-
-        # 预计算 Yes token id
         self.yes_loc = self.tokenizer('Yes', add_special_tokens=False)['input_ids'][0]
 
-        # 预编码 instruction 和 separator
         self.instruction = "Given a query A and a passage B, determine whether the passage contains an answer to the query by providing a prediction of either 'Yes' or 'No'."
         self.instruction_ids = self.tokenizer(
             self.instruction, return_tensors=None, add_special_tokens=False
         )['input_ids']
         self.sep_ids = self.tokenizer("\n", return_tensors=None, add_special_tokens=False)['input_ids']
 
-        print(f"[INFO] MiniCPM 重排模型加载完成，cutoff_layers={self.cutoff_layers}, device={self.device}")
-
     def _get_inputs(self, pairs, max_length=None):
-        """按官方格式组装输入: BOS + A: query + \n + B: passage + \n + instruction"""
         if max_length is None:
             max_length = self.max_length
 
@@ -81,53 +92,57 @@ class MiniCPMReRanker(object):
         if not candidate_docs:
             return []
 
-        pairs = [(query, doc.page_content) for doc in candidate_docs]
-        inputs = self._get_inputs(pairs).to(self.device)
-
-        with torch.no_grad():
-            outputs = self.model(
-                **inputs,
-                return_dict=True,
-                cutoff_layers=[self.cutoff_layers],
-            )
+        if self.use_flag_embedding:
+            pairs = [(query, doc.page_content) for doc in candidate_docs]
+            scores = self.reranker.compute_score(pairs, normalize=False)
             
-            # cutoff_layers 模式下，outputs.logits 是元组，包含各层输出
-            # 需要从元组中提取正确的 logits
-            all_logits = outputs.logits
-            if isinstance(all_logits, tuple):
-                # cutoff_layers 返回元组，取最后一个元素（指定层的输出）
-                if len(all_logits) > 0:
-                    all_logits = all_logits[-1]
+            ranked = [
+                doc
+                for score, doc in sorted(
+                    zip(scores, candidate_docs), reverse=True, key=lambda x: x[0]
+                )
+            ][:topk]
+            return ranked
+        else:
+            pairs = [(query, doc.page_content) for doc in candidate_docs]
+            inputs = self._get_inputs(pairs).to(self.device)
+
+            with torch.no_grad():
+                outputs = self.model(
+                    **inputs,
+                    return_dict=True,
+                    cutoff_layers=[self.cutoff_layers],
+                )
+
+                all_logits = outputs.logits
+                if isinstance(all_logits, tuple):
+                    if len(all_logits) > 0:
+                        all_logits = all_logits[-1]
+                    else:
+                        raise RuntimeError("cutoff_layers 返回空元组")
+
+                if not isinstance(all_logits, torch.Tensor):
+                    raise RuntimeError(f"模型输出格式错误，期望张量但得到: {type(all_logits)}")
+
+                if all_logits.device != self.device:
+                    all_logits = all_logits.to(self.device)
+
+                if all_logits.dim() == 2:
+                    scores = all_logits[:, self.yes_loc].view(-1).float()
+                elif all_logits.dim() == 3:
+                    scores = all_logits[:, -1, self.yes_loc].view(-1).float()
                 else:
-                    raise RuntimeError("cutoff_layers 返回空元组")
-            
-            # 确保 all_logits 是张量
-            if not isinstance(all_logits, torch.Tensor):
-                raise RuntimeError(f"模型输出格式错误，期望张量但得到: {type(all_logits)}")
-            
-            # 确保在正确的设备上
-            if all_logits.device != self.device:
-                all_logits = all_logits.to(self.device)
-            
-            # 兼容不同输出维度
-            if all_logits.dim() == 2:
-                # [batch, vocab]，直接取
-                scores = all_logits[:, self.yes_loc].view(-1).float()
-            elif all_logits.dim() == 3:
-                # [batch, seq_len, vocab]，取最后一个token
-                scores = all_logits[:, -1, self.yes_loc].view(-1).float()
-            else:
-                raise RuntimeError(f"logits 维度错误: {all_logits.dim()}")
+                    raise RuntimeError(f"logits 维度错误: {all_logits.dim()}")
 
-        scores = scores.detach().cpu().numpy()
+            scores = scores.detach().cpu().numpy()
 
-        ranked = [
-            doc
-            for score, doc in sorted(
-                zip(scores, candidate_docs), reverse=True, key=lambda x: x[0]
-            )
-        ][:topk]
-        return ranked
+            ranked = [
+                doc
+                for score, doc in sorted(
+                    zip(scores, candidate_docs), reverse=True, key=lambda x: x[0]
+                )
+            ][:topk]
+            return ranked
 
 
 if __name__ == "__main__":
