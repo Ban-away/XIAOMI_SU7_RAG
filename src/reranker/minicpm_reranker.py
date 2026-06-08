@@ -95,13 +95,17 @@ class MiniCPMReRanker(object):
         if self.use_flag_embedding:
             pairs = [(query, doc.page_content) for doc in candidate_docs]
             scores = self.reranker.compute_score(pairs, normalize=False)
-            
-            ranked = [
-                doc
-                for score, doc in sorted(
-                    zip(scores, candidate_docs), reverse=True, key=lambda x: x[0]
+
+            ranked = []
+            for score, doc in sorted(
+                zip(scores, candidate_docs), reverse=True, key=lambda x: x[0]
+            )[:topk]:
+                # 将重排分数写入 metadata，供下游使用
+                ranked_doc = Document(
+                    page_content=doc.page_content,
+                    metadata={**doc.metadata, "relevance_score": float(score)},
                 )
-            ][:topk]
+                ranked.append(ranked_doc)
             return ranked
         else:
             pairs = [(query, doc.page_content) for doc in candidate_docs]
@@ -136,12 +140,16 @@ class MiniCPMReRanker(object):
 
             scores = scores.detach().cpu().numpy()
 
-            ranked = [
-                doc
-                for score, doc in sorted(
-                    zip(scores, candidate_docs), reverse=True, key=lambda x: x[0]
+            ranked = []
+            for score, doc in sorted(
+                zip(scores, candidate_docs), reverse=True, key=lambda x: x[0]
+            )[:topk]:
+                # 将重排分数写入 metadata，供下游使用
+                ranked_doc = Document(
+                    page_content=doc.page_content,
+                    metadata={**doc.metadata, "relevance_score": float(score)},
                 )
-            ][:topk]
+                ranked.append(ranked_doc)
             return ranked
 
 

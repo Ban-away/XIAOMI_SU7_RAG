@@ -431,7 +431,9 @@ def process_one(
     local_docs, max_score = local_tool.search(local_query)
 
     # ── Step 2：判断是否需要网络兜底 ──────────────────────
-    need_web = (max_score < RELEVANCE_THRESHOLD) or (len(local_docs) == 0)
+    # web_fallback_questions.json 中的问题本身就是需要网络兜底的，
+    # 因此无条件触发网络搜索，但仍保留本地检索结果作为轨迹中的上下文。
+    need_web = True
 
     if not need_web:
         # 本地信息充足，跳过（此脚本专门处理需要网络兜底的问题）
