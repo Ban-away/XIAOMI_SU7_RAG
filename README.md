@@ -190,12 +190,17 @@ XIAOMI_SU7_RAG/
 ├─ .env.example                                     # 环境变量模板（复制后按需加载）
 ├─ requirements.txt                                 # 依赖清单
 ├─ config.ini                                       # 环境变量模板
+├─ Dockerfile                                       # 主应用容器镜像
+├─ docker-compose.yml                               # 多服务编排（MongoDB + vLLM + 应用）
 │
 ├─ 📂 入口脚本
-│  ├─ build_index.py          # 离线建库：解析 → 切分 → 向量 → 存储
-│  ├─ infer.py               # 在线问答：检索 → 重排 → 生成
-│  ├─ final_score.py         # 离线评估：批量推理 + 多维评分
-│  └─ generate_sft_data.py   # 数据构造：QA/Summary/Rerank 数据集
+│  ├─ build_index.py            # 离线建库：解析 → 切分 → 向量 → 存储
+│  ├─ infer.py                  # 在线问答：检索 → 重排 → 生成
+│  ├─ final_score.py            # 离线评估：批量推理 + 多维评分
+│  ├─ generate_all_data.py      # 全量数据生成：QA / 扩展 / 训练集 / 测试集
+│  ├─ generate_sft_data.py      # 数据构造：Summary / Rerank 数据集
+│  ├─ evaluate_parse_quality.py # 文档解析质量评估报告
+│  └─ check_training_data.py    # 训练数据质量检查
 │
 ├─ 📂 src/  核心业务代码
 │  ├─ constant.py            # 全局路径 & 模型配置
@@ -203,7 +208,8 @@ XIAOMI_SU7_RAG/
 │  │
 │  ├─ 📂 parser/            # PDF 解析与处理
 │  │  ├─ pdf_parse.py       # PDF 文本/表格/布局抽取 (pdfplumber)
-│  │  └─ image_handler.py   # 图片检测/抽取/存储 (PyMuPDF)
+│  │  ├─ image_handler.py   # 图片检测/抽取/存储 (PyMuPDF)
+│  │  └─ parse_evaluator.py # 文档解析质量评估工具
 │  │
 │  ├─ 📂 client/            # 模型客户端
 │  │  ├─ llm_chat_client.py         # 云端 API (Doubao)
@@ -241,10 +247,12 @@ XIAOMI_SU7_RAG/
 │  │  ├─ reward_model.py         # 6 维度奖励函数
 │  │  ├─ environment.py          # 工具调用路由环境（local/web/read_page）
 │  │  ├─ train_grpo.py           # GRPO 训练入口
+│  │  ├─ batch_eval.py           # RL 模型批量评测（与 baseline 对比）
 │  │  └─ infer_rl.py             # RL 增强推理（边生成边检索 + 深度阅读）
 │  │
 │  └─ 📂 gen_qa/           # QA 与训练数据生成
-│     └─ run.py            # QA 生成 & 问题扩写
+│     ├─ run.py            # QA 生成 & 问题扩写
+│     └─ qa_filter.py      # QA 质量过滤工具
 │
 ├─ 📂 data/  数据与产物
 │  ├─ Xiaomi_SU7_Manual.pdf                  # 原始手册 (PDF 源)
@@ -275,7 +283,9 @@ XIAOMI_SU7_RAG/
 │  │  ├─ web_fallback_questions.json         # 网络兜底问题库（66条/10类）
 │  │  ├─ web_fallback_trajectories.json      # 生成的原始轨迹
 │  │  ├─ web_fallback_trajectories_sft.json  # SFT 格式
-│  │  └─ web_fallback_trajectories_grpo.jsonl # GRPO 格式
+│  │  ├─ web_fallback_trajectories_grpo.jsonl # GRPO 格式
+│  │  ├─ rl_eval_results.json               # RL 模型评测结果
+│  │  └─ rl_eval_ckpt.jsonl                 # 评测断点续传检查点
 │  │
 │  ├─ 📂 saved_images/                       # PDF 抽取图片
 │  │  └─ page_*.png / figure_*.png
@@ -389,39 +399,68 @@ XIAOMI_SU7_RAG/
 
 ### 📌 环境变量
 
-创建 `.env` 或在 Shell 中设置：
+复制 `.env.example` 为 `.env` 并填入实际值：
 
 ```bash
-# Doubao API 配置 (云端)
-export DOUBAO_API_KEY=sk-xxx
-export DOUBAO_BASE_URL=https://api.doubao.com/v1
-export DOUBAO_MODEL_NAME=doubao-pro-4k
-
-# MongoDB 配置
-export MONGO_HOST=localhost
-export MONGO_PORT=27017
-export MONGO_DB_NAME=mydatabase
-export MONGO_USERNAME=
-export MONGO_PASSWORD=
-export MONGO_AUTH_SOURCE=admin
+cp .env.example .env
+# 编辑 .env 填入你的实际配置
 ```
 
-可直接参考 `.env.example` 中的完整变量模板。
+或直接在 Shell 中设置：
+
+```bash
+# ── 🔴 必需配置 ──
+
+# 豆包 LLM API 配置 (云端生成模型)
+# 获取地址: https://console.volcengine.com/ark/
+export DOUBAO_API_KEY="sk-your-api-key-here"
+export DOUBAO_BASE_URL="https://ark.cn-beijing.volces.com/api/v3"
+export DOUBAO_MODEL_NAME="ep-20250206xxxxx"  # 替换为你的部署 ID
+
+# 项目根目录（推荐设置，避免手动改代码）
+# Windows 用户必须设置
+export RAG_BASE_DIR="/root/autodl-tmp/XIAOMI_SU7_RAG/"
+# 或使用备选变量：
+# export XIAOMI_RAG_HOME="/root/autodl-tmp/XIAOMI_SU7_RAG/"
+
+# ── 🟡 可选配置（有默认值，可按需覆盖）──
+
+# SerpAPI 网络搜索配置 (RL 网络兜底检索使用)
+# 获取地址: https://serpapi.com/manage-api-key (免费额度 100 次/月)
+# 未设置时自动降级为豆包 LLM 模拟搜索
+export SERPAPI_KEY="your-serpapi-key-here"
+
+# MongoDB 配置 (默认本地 localhost:27017)
+export MONGO_HOST="localhost"
+export MONGO_PORT="27017"
+export MONGO_DB_NAME="mydatabase"
+export MONGO_USERNAME=""
+export MONGO_PASSWORD=""
+export MONGO_AUTH_SOURCE="admin"
+
+# vLLM 服务配置 (默认 http://localhost:8000/v1)
+export VLLM_BASE_URL="http://localhost:8000/v1"
+
+# 语义切分服务配置 (默认 http://localhost:6000/v1/semantic-chunks)
+export SEMANTIC_CHUNK_URL="http://localhost:6000/v1/semantic-chunks"
+```
+
+> 完整变量说明参见 `.env.example`。
 
 ### 🗂️ 核心路径配置
 
-编辑 `src\constant.py` 中的 `base_dir`（根据自己的环境选择）：
+`src/constant.py` 会自动从环境变量读取项目根目录，**无需手动编辑代码**：
 
 ```python
-# Linux/Mac 环境
-base_dir = "/path/to/your/XIAOMI_SU7_RAG/"
+# 优先级：RAG_BASE_DIR > XIAOMI_RAG_HOME > 硬编码默认值
+# 推荐通过 .env 或环境变量设置：
+export RAG_BASE_DIR="/root/autodl-tmp/XIAOMI_SU7_RAG/"
 
-# Windows 环境
-base_dir = "D:\\path\\to\\your\\XIAOMI_SU7_RAG\\"
-
-# Azure AutoDL 环境示例
-base_dir = "/root/autodl-tmp/XIAOMI_SU7_RAG/"
+# Windows 示例：
+# $env:RAG_BASE_DIR="D:\Development\Exercise\0_personal_project\XIAOMI_SU7_RAG\"
 ```
+
+> ⚠️ 若未设置环境变量，将 fallback 到硬编码路径 `/root/autodl-tmp/XIAOMI_SU7_RAG/`。
 
 ---
 
@@ -677,7 +716,47 @@ python src/rl/infer_rl.py --show-reward --show-trajectory
 （以上信息来源于www.xiaomi.com，请以小米官方最新公告为准）</answer>
 ```
 
-### 📊 数据文件说明
+16. RL 模型评测（与 baseline 对比）
+
+```bash
+# RL 模型用同一套评测指标与传统 RAG 对比效果
+# 前提：vLLM 已启动（RL 模型），检索环境就绪
+
+# 完整评测（676条手册问答，含 RAGAs）
+python src/rl/batch_eval.py --vllm-url http://localhost:8000/v1
+
+# 快速验证
+python src/rl/batch_eval.py --dry-run
+
+# 跳过 RAGAs（省 API 费用，只算语义+关键词分）
+python src/rl/batch_eval.py --skip-ragas
+
+# 断点续传
+python src/rl/batch_eval.py --resume
+```
+
+**评测原理：** 对 `test_qa_pair_verify.json`（676条）逐条运行 RL 推理，从轨迹中提取 `<answer>` 作为预测答案、`<information>` 拼接为检索上下文，复用 `final_score.py` 相同的评分逻辑（text2vec 语义相似度 + 关键词加权 + RAGAs），与 baseline 指标并列对比。额外输出 RL 6 维奖励平均分和工具调用统计。
+
+**预期输出：**
+```
+📌 传统评测指标（与 baseline 对比）：
+  ──────────────────────────────────────────────────────────
+  指标                          Baseline   RL模型
+  ──────────────────────────────────────────────────────────
+  语义相似度+关键词加权           0.8965    0.xxxx
+  RAGAs 上下文召回率              0.9386    0.xxxx
+  RAGAs 上下文精确率              0.9488    0.xxxx
+  ──────────────────────────────────────────────────────────
+
+  📌 RL 特有指标：
+  平均奖励: 0.xxxx / 1.00
+    格式完整性: 0.xxxx / 0.15  答案质量: 0.xxxx / 0.30
+    工具合理性: 0.xxxx / 0.15  来源标注: 0.xxxx / 0.10
+    领域合规:   0.xxxx / 0.15  探索深度: 0.xxxx / 0.15
+
+  📌 工具调用统计：
+  平均轮数: x.x | local: x.x | web: x.x | read_page: x.x
+```
 
 #### 项目数据目录 (`data/`)
 
@@ -912,11 +991,19 @@ python deploy/auto_vllm_server.py \
 
 ### 📊 离线评估
 
+**传统 RAG 评测：**
+
 ```bash
 python final_score.py
 ```
 
-**评分机制：**
+**RL 模型评测（与 baseline 同指标对比）：**
+
+```bash
+python src/rl/batch_eval.py --vllm-url http://localhost:8000/v1
+```
+
+**评分机制（两种评测共用）：**
 
 - **语义相似度**（`text2vec-base-chinese`）：计算预测答案与标准答案的向量余弦相似度
 - **关键词加权**：提取标准答案中的关键词，检查预测答案是否命中，关键词只加分不扣分
@@ -950,11 +1037,10 @@ python final_score.py
 
 | 限制 | 说明 | 解决方案 |
 |:---:|:---|:---|
-| 📁 目录创建 | 脚本不自动创建 `mkdir` | 需提前手动创建必要目录结构 |
-| 🤖 模型加载 | 首次加载耗时较长 (可达 5-10 分钟) | 模型会缓存到 `models/` 目录 |
-| 🔑 环境变量 | 需设置 API Key 与 Mongo 连接 | 参考 **配置要点** 章节 |
-| 🛣️ 路径耦合 | `src\constant.py` 中硬编码路径 | 本地运行前需改为实际路径 |
-| 📦 子项目 | `LLaMA-Factory-main` 与 `RAG-Retrieval` 较大 | 可独立配置或跳过 |
+| 📦 LLaMA-Factory 版本 | 仓库自带版本（0.9.3.dev0）不支持 GRPO 训练 | 升级到 0.9.4+：`cd LLaMA-Factory-main && git pull && pip install -e ".[torch,metrics]"` |
+| 📁 目录创建 | 部分脚本不自动创建输出目录 | 提前 `mkdir -p data/{processed_docs,saved_index,qa_pairs,summary_data,rerank_data,rl_data,saved_images,mongodb/{data,log}}` |
+| 🔑 网络搜索 API | RL 网络兜底依赖 SerpAPI（免费额度有限） | 未设置时自动降级为豆包 LLM 模拟搜索；也可配置 `BING_SEARCH_KEY` 作为备选后端 |
+| 🖥️ GPU 要求 | vLLM 推理 + 重排模型需要 GPU | 建议单卡 ≥ 16GB 显存；INT4 量化后约需 ~6GB |
 
 ---
 
