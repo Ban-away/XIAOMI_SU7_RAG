@@ -1,0 +1,47 @@
+### SFT Warm-up 配置（RL 训练前的格式对齐）
+### 用途：让模型学会 <search_local>/<search_web>/<answer> 标签格式
+### 训练命令：llamafactory-cli train configs/qwen3_lora_rl_sft.yaml
+
+### model
+model_name_or_path: /root/autodl-tmp/XIAOMI_SU7_RAG/models/Qwen3-8B/
+trust_remote_code: true
+
+### method
+stage: sft
+do_train: true
+do_eval: true
+finetuning_type: lora
+lora_rank: 8
+lora_target: all
+
+### dataset
+dataset: web_fallback_sft
+eval_dataset: web_fallback_sft
+template: qwen3
+cutoff_len: 4096
+max_samples: 1000
+overwrite_cache: true
+preprocessing_num_workers: 8
+dataloader_num_workers: 4
+
+### output
+output_dir: saves/qwen3-8b/lora/rl_sft
+logging_steps: 5
+save_steps: 50
+eval_steps: 50
+plot_loss: true
+overwrite_output_dir: true
+save_only_model: false
+report_to: none
+
+### train
+per_device_train_batch_size: 1
+per_device_eval_batch_size: 1
+gradient_accumulation_steps: 8
+learning_rate: 1.0e-5
+num_train_epochs: 2.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+bf16: true
+ddp_timeout: 180000000
+resume_from_checkpoint: null

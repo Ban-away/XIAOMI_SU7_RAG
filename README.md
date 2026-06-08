@@ -173,6 +173,11 @@ query → [🖥️ BGE 召回] → [🖥️ MiniCPM 精排] → [🖥️ Qwen3-8
 阶段五：离线评估（按需）
 预测结果 → [🖥️ text2vec 相似度] → [☁️ 豆包API RAGas] → 综合得分
               ↑本地                    ↑远程API
+
+阶段六：RL 强化学习（Search-R1 范式，进阶）
+问题库 → [🖥️ 本地+网络检索] → [☁️ 豆包API 生成轨迹] → SFT warm-up → GRPO 强化学习
+                                    ↑边生成边检索                    ↑自定义奖励函数
+模型自主决定何时检索、检索什么，而非固定管线检索→生成
 ```
 ---
 
@@ -227,6 +232,15 @@ XIAOMI_SU7_RAG/
 │  │
 │  ├─ 📂 fields/           # 数据结构 (Pydantic)
 │  │
+│  ├─ 📂 rl/               # RL 强化学习模块（Search-R1 范式）
+│  │  ├─ __init__.py              # 模块说明
+│  │  ├─ data_builder.py         # 网络兜底轨迹生成器
+│  │  ├─ format_converter.py     # 训练数据格式转换器
+│  │  ├─ reward_model.py         # 多维度奖励函数
+│  │  ├─ environment.py          # 工具调用路由环境
+│  │  ├─ train_grpo.py           # GRPO 训练入口
+│  │  └─ infer_rl.py             # RL 增强推理（边生成边检索）
+│  │
 │  └─ 📂 gen_qa/           # QA 与训练数据生成
 │     └─ run.py            # QA 生成 & 问题扩写
 │
@@ -254,6 +268,12 @@ XIAOMI_SU7_RAG/
 │  │
 │  ├─ 📂 rerank_data/                        # Rerank 训练数据
 │  │  ├─ train.json / val.json / test.json
+│  │
+│  ├─ 📂 rl_data/                            # RL 强化学习数据
+│  │  ├─ web_fallback_questions.json         # 网络兜底问题库（66条/10类）
+│  │  ├─ web_fallback_trajectories.json      # 生成的原始轨迹
+│  │  ├─ web_fallback_trajectories_sft.json  # SFT 格式
+│  │  └─ web_fallback_trajectories_grpo.jsonl # GRPO 格式
 │  │
 │  ├─ 📂 saved_images/                       # PDF 抽取图片
 │  │  └─ page_*.png / figure_*.png
@@ -288,7 +308,12 @@ XIAOMI_SU7_RAG/
 │
 └─ 📂 deploy/                                    # 部署脚本
    ├─ auto_vllm_server.py       # 自动识别单/多卡启动脚本
-   └─ download_models.py        # 一键下载项目公开模型（core/all）
+   ├─ download_models.py        # 一键下载项目公开模型（core/all）
+   └─ baseline_gpt4o.py         # 基线对比测试
+
+├─ 📂 configs/                                   # RL 训练配置
+   ├─ qwen3_lora_rl_sft.yaml    # SFT warm-up 配置
+   └─ qwen3_lora_grpo.yaml     # GRPO 强化学习配置
 ```
 
 ---
@@ -878,6 +903,74 @@ python final_score.py
 - **云端 API** (`llm_chat_client.py`)：Doubao 等云端模型
 - **问题扩写** (`llm_hyde_client.py`)：HyDE 提升召回
 - **文本清洗** (`llm_clean_client.py`)：可选预处理
+
+</details>
+
+<details>
+<summary><b>🧠 RL 强化学习模块 (Search-R1 范式)</b></summary>
+
+### 概述
+
+传统 RAG 采用固定管线（检索→重排→生成），模型被动接收上下文。RL 模块升级为 **Search-R1 范式**：模型自主决定何时检索、检索什么，实现 **边生成边检索** 的智能工具调用。
+
+### 核心机制
+
+```
+传统 RAG（infer.py）：
+  query → [固定检索] → [固定重排] → [生成答案]
+
+Search-R1（infer_rl.py）：
+  query → model 生成 "<search_local>关键词"
+        → 系统拦截，执行本地检索，注入 <information>
+        → model 继续生成 "<search_web>关键词"
+        → 系统拦截，执行网络搜索，注入 <information>
+        → model 生成 "<answer>最终答案"
+```
+
+### 模块结构
+
+| 文件 | 功能 |
+|:---|:---|
+| `src/rl/data_builder.py` | 网络兜底轨迹生成器（读取问题库 → 本地检索 → 网络搜索 → LLM 生成轨迹） |
+| `src/rl/format_converter.py` | 格式转换器（轨迹 → SFT / GRPO / ShareGPT 多格式） |
+| `src/rl/reward_model.py` | 5 维度奖励函数（格式 0.20 + 答案 0.35 + 工具 0.20 + 来源 0.10 + 领域 0.15） |
+| `src/rl/environment.py` | 工具调用路由环境（拦截 `<search_local>`/`<search_web>` → 执行检索 → 注入结果） |
+| `src/rl/train_grpo.py` | GRPO 训练入口（数据准备 → SFT warm-up → GRPO 训练 → 导出） |
+| `src/rl/infer_rl.py` | RL 增强推理（边生成边检索交互式问答） |
+
+### 训练流程
+
+```bash
+# 1. 生成训练轨迹（本地检索 + 网络兜底）
+python src/rl/data_builder.py
+
+# 2. 格式转换（轨迹 → SFT/GRPO 格式）
+python src/rl/format_converter.py
+
+# 3. 一键训练（SFT warm-up + GRPO 强化学习）
+python src/rl/train_grpo.py --stage all
+
+# 4. RL 增强推理（边生成边检索）
+python deploy/auto_vllm_server.py --model LLaMA-Factory-main/output/qwen3_lora_rl --port 8000
+python src/rl/infer_rl.py
+```
+
+### 训练数据
+
+**问题库**（`data/rl_data/web_fallback_questions.json`）：66 条需要网络兜底的问题，覆盖 10 个分类。
+
+| 分类 | 数量 | 示例问题 |
+|:---|:---:|:---|
+| OTA软件更新 | 13 | 小米SU7目前最新的OTA版本号是多少？ |
+| 竞品对比信息 | 8 | 小米SU7和特斯拉Model 3相比哪个更值得买？ |
+| 官方新闻动态 | 10 | 小米汽车最近有什么重大新闻？ |
+| 召回与技术服务公告 | 7 | 小米SU7有没有发过召回公告？ |
+| 价格与购车优惠 | 7 | 小米SU7现在的官方售价是多少？ |
+| 充电网络与基础设施 | 7 | 小米汽车目前在全国建了多少个充电桩？ |
+| 车主真实反馈 | 7 | 小米SU7车主普遍反映有哪些槽点？ |
+| 新能源政策 | 6 | 2025年买小米SU7还能享受哪些补贴？ |
+| 保险与金融 | 6 | 小米SU7第一年保险大概多少钱？ |
+| 维护保养费用 | 5 | 小米SU7每年保养大概要花多少钱？ |
 
 </details>
 

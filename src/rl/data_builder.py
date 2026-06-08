@@ -135,16 +135,23 @@ class LocalSearchTool:
             ranked = self.reranker.rank(query, merged[:10], topk=topk)
 
         # 用重排分数估算最大相关性（归一化处理）
-        # MiniCPM 输出的是 logit，做 sigmoid 近似
         import math
         def sigmoid(x):
             try:
                 return 1 / (1 + math.exp(-float(x)))
-            except Exception:
+            except (ValueError, OverflowError):
                 return 0.5
 
-        # 取第一条作为最高分估算
-        max_score = sigmoid(0.8) if ranked else 0.0
+        # 取第一条的实际重排分数
+        max_score = 0.0
+        if ranked:
+            raw = ranked[0].metadata.get("relevance_score",
+                     ranked[0].metadata.get("score", None))
+            if raw is not None:
+                max_score = sigmoid(raw)
+            else:
+                # 兜底：有结果但无分数时给保守分
+                max_score = min(0.3 + len(ranked) * 0.05, 0.6)
         return ranked, max_score
 
     def format_result(self, docs: list) -> str:

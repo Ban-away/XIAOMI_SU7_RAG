@@ -92,9 +92,22 @@ class LocalSearchBackend:
             parts.append(f"[{i}]{suffix} {doc.page_content[:400]}")
         result_str = "\n".join(parts)
 
-        # 相关性分数估算（基于有无结果以及结果数量）
-        score = min(0.5 + len(ranked) * 0.1, 0.9)
-        return result_str, score
+        # 相关性分数：使用重排模型实际输出的分数
+        # MiniCPM reranker 的 score 字段是 relevance logit，做 sigmoid 归一化
+        import math
+        top_score = 0.0
+        if ranked and hasattr(ranked[0], "metadata"):
+            raw = ranked[0].metadata.get("relevance_score",
+                     ranked[0].metadata.get("score", None))
+            if raw is not None:
+                try:
+                    top_score = 1 / (1 + math.exp(-float(raw)))
+                except (ValueError, OverflowError):
+                    top_score = 0.5
+        if top_score == 0.0:
+            # 兜底：有结果时给一个基于结果数量的保守分数
+            top_score = min(0.3 + len(ranked) * 0.05, 0.6)
+        return result_str, top_score
 
 
 class WebSearchBackend:

@@ -1,0 +1,66 @@
+### GRPO 强化学习训练配置
+### 用途：基于自定义奖励函数优化工具调用策略
+### 训练命令：llamafactory-cli train configs/qwen3_lora_grpo.yaml
+###
+### 前置条件：
+###   1. 已完成 SFT warm-up（saves/qwen3-8b/lora/rl_sft）
+###   2. GRPO 数据已注册到 dataset_info.json
+###   3. 奖励函数 src.rl.reward_model.reward_fn 可导入
+
+### model
+model_name_or_path: /root/autodl-tmp/XIAOMI_SU7_RAG/models/Qwen3-8B/
+adapter_name_or_path: saves/qwen3-8b/lora/rl_sft
+trust_remote_code: true
+
+### method
+stage: grpo
+do_train: true
+finetuning_type: lora
+lora_rank: 8
+lora_target: all
+
+### reward
+# 使用自定义奖励函数（多维度规则打分）
+# 函数路径: src.rl.reward_model.reward_fn
+# 奖励维度: 格式完整性 + 答案质量 + 工具合理性 + 来源标注 + 领域合规
+reward_model: src.rl.reward_model
+reward_type: function
+
+### dataset
+dataset: web_fallback_grpo
+template: qwen3
+cutoff_len: 4096
+max_samples: 10000
+overwrite_cache: true
+preprocessing_num_workers: 8
+dataloader_num_workers: 4
+
+### output
+output_dir: saves/qwen3-8b/lora/grpo
+logging_steps: 5
+save_steps: 50
+plot_loss: true
+overwrite_output_dir: true
+save_only_model: true
+report_to: none
+
+### train
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 4
+learning_rate: 5.0e-6
+num_train_epochs: 1.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+bf16: true
+ddp_timeout: 180000000
+
+### GRPO 特有参数
+max_new_tokens: 1024
+max_completion_length: 1024
+num_generations: 4           # 每个 prompt 生成 4 个候选
+temperature: 0.7              # 生成多样性
+top_p: 0.9
+# KL 散度惩罚系数（防止策略偏移过大）
+beta: 0.04
+
+resume_from_checkpoint: null
