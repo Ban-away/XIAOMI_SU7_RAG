@@ -27,15 +27,18 @@ from src.retriever.milvus_retriever import MilvusRetriever
 from src.reranker.minicpm_reranker import MiniCPMReRanker
 from src.constant import bge_reranker_minicpm_path
 from src.utils import merge_docs
+from src.rl.web_reader import WebPageReader
 
 # ── 相关性判断阈值 ──────────────────────────────────────────
 RELEVANCE_THRESHOLD = 0.35
 LOCAL_TOPK          = 3
 MAX_SEARCH_STEPS    = 4   # 单次推理最多调用搜索工具的次数（防止死循环）
+MAX_READ_PAGE_HOPS  = 2   # 最大页面深度阅读次数（垂直搜索）
 
 # ── 工具标签正则 ──────────────────────────────────────────
 _RE_SEARCH_LOCAL = re.compile(r"<search_local>(.*?)</search_local>", re.DOTALL)
 _RE_SEARCH_WEB   = re.compile(r"<search_web>(.*?)</search_web>",   re.DOTALL)
+_RE_READ_PAGE    = re.compile(r"<read_page>(.*?)</read_page>",     re.DOTALL)
 _RE_ANSWER       = re.compile(r"<answer>(.*?)</answer>",            re.DOTALL)
 _RE_INFORMATION  = re.compile(r"<information>(.*?)</information>",  re.DOTALL)
 
@@ -144,9 +147,10 @@ class WebSearchBackend:
         results = resp.json().get("webPages", {}).get("value", [])
         if not results:
             return "网络搜索未找到相关结果。"
-        return "\n\n".join(
-            f"【{r['name']}】\n{r['snippet']}" for r in results[:4]
-        )
+        parts = []
+        for i, r in enumerate(results[:4], 1):
+            parts.append(f"[{i}]【{r['name']}】\n{r['snippet']}\n网址：{r['url']}")
+        return "\n\n".join(parts)
 
     def _serpapi(self, query: str) -> str:
         import requests
@@ -159,9 +163,12 @@ class WebSearchBackend:
         results = resp.json().get("organic_results", [])
         if not results:
             return "网络搜索未找到相关结果。"
-        return "\n\n".join(
-            f"【{r.get('title','')}】\n{r.get('snippet','')}" for r in results[:4]
-        )
+        parts = []
+        for r in results[:4]:
+            parts.append(
+                f"【{r.get('title','')}】\n{r.get('snippet','')}\n网址：{r.get('link','')}"
+            )
+        return "\n\n".join(parts)
 
     def _doubao(self, query: str) -> str:
         from openai import OpenAI
@@ -199,6 +206,7 @@ class RetrievalEnvironment:
     def __init__(self):
         self.local_backend = LocalSearchBackend.get_instance()
         self.web_backend   = WebSearchBackend()
+        self.page_reader   = WebPageReader()
 
     # ── 核心接口：处理一段生成文本，返回需要拼回的内容 ──────
     def step(self, generated_text: str) -> tuple[str | None, bool]:
@@ -215,29 +223,35 @@ class RetrievalEnvironment:
         if _RE_ANSWER.search(generated_text):
             return None, True
 
-        # 检测 local 搜索调用
+        # 检测各类工具调用
         local_match = _RE_SEARCH_LOCAL.findall(generated_text)
         web_match   = _RE_SEARCH_WEB.findall(generated_text)
+        read_match  = _RE_READ_PAGE.findall(generated_text)
 
         # 已有信息块数量（避免重复处理）
         info_count   = len(_RE_INFORMATION.findall(generated_text))
-        total_calls  = len(local_match) + len(web_match)
+        total_calls  = len(local_match) + len(web_match) + len(read_match)
 
         if total_calls <= info_count:
-            # 所有已有的 search 调用都已经有了对应的 information，无需处理
+            # 所有已有的调用都已经有了对应的 information，无需处理
             return None, False
+
+        # 检查 read_page 跳数限制
+        if len(read_match) > MAX_READ_PAGE_HOPS:
+            return "<information>已达到最大页面阅读次数限制，请基于已有信息作答。</information>", False
 
         if total_calls > MAX_SEARCH_STEPS:
             # 超过最大步数，强制终止
             return "<information>已达到最大检索次数限制。</information>\n<answer>根据已检索到的信息暂时无法给出完整答案，建议访问小米汽车官网获取最新信息。</answer>", True
 
-        # 处理最新一次未被响应的搜索调用
-        # 优先处理 local（按出现顺序）
+        # 按出现顺序收集所有调用
         all_calls = []
         for m in _RE_SEARCH_LOCAL.finditer(generated_text):
             all_calls.append(("local", m.group(1).strip(), m.start()))
         for m in _RE_SEARCH_WEB.finditer(generated_text):
             all_calls.append(("web",   m.group(1).strip(), m.start()))
+        for m in _RE_READ_PAGE.finditer(generated_text):
+            all_calls.append(("read_page", m.group(1).strip(), m.start()))
         all_calls.sort(key=lambda x: x[2])  # 按出现位置排序
 
         # 取第 info_count 个调用（即下一个待响应的）
@@ -257,9 +271,14 @@ class RetrievalEnvironment:
             else:
                 info_block = f"<information>{result_str}</information>"
 
-        else:  # web
+        elif call_type == "web":
             result_str = self.web_backend.search(query)
             info_block = f"<information>{result_str}</information>"
+
+        else:  # read_page
+            url = query.strip()
+            page_content = self.page_reader.fetch(url)
+            info_block = f"<information>{page_content}</information>"
 
         return info_block, False
 
@@ -284,6 +303,7 @@ class RetrievalEnvironment:
     @staticmethod
     def count_search_calls(full_text: str) -> dict:
         return {
-            "local": len(_RE_SEARCH_LOCAL.findall(full_text)),
-            "web":   len(_RE_SEARCH_WEB.findall(full_text)),
+            "local":     len(_RE_SEARCH_LOCAL.findall(full_text)),
+            "web":       len(_RE_SEARCH_WEB.findall(full_text)),
+            "read_page": len(_RE_READ_PAGE.findall(full_text)),
         }

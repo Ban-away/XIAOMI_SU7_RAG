@@ -6,11 +6,12 @@ RL 奖励函数 - 多维度轨迹质量评分
   为 GRPO 训练提供奖励信号，评估模型生成的工具调用轨迹质量。
 
   奖励维度（总分 1.0）：
-    1. 格式完整性  (0.20) - 标签是否齐全、正确闭合
-    2. 答案质量    (0.35) - 回答是否准确、信息量是否充足
-    3. 工具合理性  (0.20) - 检索关键词是否精准、调用顺序是否合理
+    1. 格式完整性  (0.15) - 标签是否齐全、正确闭合
+    2. 答案质量    (0.30) - 回答是否准确、信息量是否充足
+    3. 工具合理性  (0.15) - 检索关键词是否精准、调用顺序是否合理
     4. 来源标注    (0.10) - 网络信息是否正确注明来源
     5. 领域合规    (0.15) - 是否正确拒答非 SU7 问题
+    6. 探索深度    (0.15) - 是否有效利用 read_page 进行垂直搜索
 
   支持两种使用模式：
     - 规则模式（默认）：基于正则 + 启发式规则打分，无需 GPU
@@ -31,6 +32,7 @@ from typing import Optional
 _RE_ANSWER       = re.compile(r"<answer>(.*?)</answer>",            re.DOTALL)
 _RE_SEARCH_LOCAL = re.compile(r"<search_local>(.*?)</search_local>", re.DOTALL)
 _RE_SEARCH_WEB   = re.compile(r"<search_web>(.*?)</search_web>",   re.DOTALL)
+_RE_READ_PAGE    = re.compile(r"<read_page>(.*?)</read_page>",     re.DOTALL)
 _RE_INFORMATION  = re.compile(r"<information>(.*?)</information>",  re.DOTALL)
 
 # ── SU7 领域关键词 ─────────────────────────────────────────
@@ -55,7 +57,7 @@ _REFUSAL_PATTERNS = [
 
 
 # ────────────────────────────────────────────────────────────
-# 维度 1：格式完整性 (0.0 ~ 0.20)
+# 维度 1：格式完整性 (0.0 ~ 0.15)
 # ────────────────────────────────────────────────────────────
 
 def score_format(trajectory: str) -> float:
@@ -64,8 +66,9 @@ def score_format(trajectory: str) -> float:
 
     完整轨迹应包含：
       <search_local> → <information> → <search_web> → <information> → <answer>
+      可选：<read_page> → <information>（垂直搜索）
 
-    每缺失一个关键标签扣 0.05，最低 0 分。
+    每缺失一个关键标签扣 0.04，最低 0 分。
     """
     score = 0.0
     checks = {
@@ -75,11 +78,11 @@ def score_format(trajectory: str) -> float:
         "answer":       bool(_RE_ANSWER.search(trajectory)),
     }
 
-    # 每个标签存在得 0.05
-    score += sum(0.05 for exists in checks.values() if exists)
+    # 每个标签存在得 0.04
+    score += sum(0.04 for exists in checks.values() if exists)
 
     # 标签闭合检查：开闭标签数量是否匹配
-    for tag in ["search_local", "search_web", "information", "answer"]:
+    for tag in ["search_local", "search_web", "read_page", "information", "answer"]:
         opens  = trajectory.count(f"<{tag}>")
         closes = trajectory.count(f"</{tag}>")
         if opens > 0 and opens == closes:
@@ -87,11 +90,11 @@ def score_format(trajectory: str) -> float:
         elif opens > 0 and opens != closes:
             score -= 0.02  # 标签不匹配扣分
 
-    return max(0.0, min(0.20, score))
+    return max(0.0, min(0.15, score))
 
 
 # ────────────────────────────────────────────────────────────
-# 维度 2：答案质量 (0.0 ~ 0.35)
+# 维度 2：答案质量 (0.0 ~ 0.30)
 # ────────────────────────────────────────────────────────────
 
 def score_answer_quality(trajectory: str, question: str = "") -> float:
@@ -99,10 +102,10 @@ def score_answer_quality(trajectory: str, question: str = "") -> float:
     评估 <answer> 内容的质量。
 
     评分标准：
-      - 非空得基础分 0.10
-      - 答案长度 > 30 字得 0.05
-      - 包含具体数据/规格得 0.05
-      - 语言自然流畅（非纯复制）得 0.05
+      - 非空得基础分 0.08
+      - 答案长度 > 30 字得 0.04
+      - 包含具体数据/规格得 0.04
+      - 语言自然流畅（非纯复制）得 0.04
       - 答案与问题主题相关得 0.10
     """
     answer_match = _RE_ANSWER.search(trajectory)
@@ -113,17 +116,17 @@ def score_answer_quality(trajectory: str, question: str = "") -> float:
     if not answer:
         return 0.0
 
-    score = 0.10  # 非空基础分
+    score = 0.08  # 非空基础分
 
     # 长度奖励
     if len(answer) > 30:
-        score += 0.05
+        score += 0.04
     if len(answer) > 80:
         score += 0.02
 
     # 包含具体数据（数字、单位、规格）
     if re.search(r"\d+[\.\d]*\s*(km|kW|N·m|V|Ah|mm|英寸|%|万元|秒|公里|马力)", answer):
-        score += 0.05
+        score += 0.04
 
     # 包含专业术语
     tech_terms = [
@@ -149,11 +152,11 @@ def score_answer_quality(trajectory: str, question: str = "") -> float:
             ratio = len(overlap) / max(len(q_keywords), 1)
             score += min(0.10, ratio * 0.15)
 
-    return max(0.0, min(0.35, score))
+    return max(0.0, min(0.30, score))
 
 
 # ────────────────────────────────────────────────────────────
-# 维度 3：工具调用合理性 (0.0 ~ 0.20)
+# 维度 3：工具调用合理性 (0.0 ~ 0.15)
 # ────────────────────────────────────────────────────────────
 
 def score_tool_usage(trajectory: str, question: str = "") -> float:
@@ -161,10 +164,10 @@ def score_tool_usage(trajectory: str, question: str = "") -> float:
     评估工具调用的合理性。
 
     评分标准：
-      - search_local 先于 search_web 出现得 0.08
-      - 检索关键词简洁（<20 字）且不含冗余得 0.04
-      - search_web 关键词包含 "小米SU7" 前缀得 0.04
-      - 总调用次数合理（1-3 次 local + 1 次 web）得 0.04
+      - search_local 先于 search_web 出现得 0.06
+      - 检索关键词简洁（<20 字）且不含冗余得 0.03
+      - search_web 关键词包含 "小米SU7" 前缀得 0.03
+      - 总调用次数合理（1-3 次 local + 1 次 web）得 0.03
     """
     score = 0.0
 
@@ -172,16 +175,16 @@ def score_tool_usage(trajectory: str, question: str = "") -> float:
     local_pos = trajectory.find("<search_local>")
     web_pos   = trajectory.find("<search_web>")
     if local_pos >= 0 and web_pos >= 0 and local_pos < web_pos:
-        score += 0.08
+        score += 0.06
     elif local_pos >= 0 and web_pos < 0:
-        score += 0.06  # 只有 local 调用也合理
+        score += 0.05  # 只有 local 调用也合理
 
     # local 检索关键词质量
     local_match = _RE_SEARCH_LOCAL.search(trajectory)
     if local_match:
         local_query = local_match.group(1).strip()
         if len(local_query) <= 20 and len(local_query) >= 2:
-            score += 0.04
+            score += 0.03
         elif len(local_query) > 20:
             score += 0.01  # 太长扣分
 
@@ -190,17 +193,18 @@ def score_tool_usage(trajectory: str, question: str = "") -> float:
     if web_match:
         web_query = web_match.group(1).strip()
         if "小米" in web_query or "SU7" in web_query:
-            score += 0.04
+            score += 0.03
 
     # 调用次数合理性
     local_count = len(_RE_SEARCH_LOCAL.findall(trajectory))
     web_count   = len(_RE_SEARCH_WEB.findall(trajectory))
+    read_count  = len(_RE_READ_PAGE.findall(trajectory))
     if 1 <= local_count <= 3 and 1 <= web_count <= 2:
-        score += 0.04
-    elif local_count + web_count > 5:
-        score -= 0.04  # 过度调用扣分
+        score += 0.03
+    elif local_count + web_count + read_count > 6:
+        score -= 0.03  # 过度调用扣分
 
-    return max(0.0, min(0.20, score))
+    return max(0.0, min(0.15, score))
 
 
 # ────────────────────────────────────────────────────────────
@@ -309,6 +313,90 @@ def _is_su7_question(question: str) -> bool:
 
 
 # ────────────────────────────────────────────────────────────
+# 维度 6：探索深度 (0.0 ~ 0.15)
+# ────────────────────────────────────────────────────────────
+
+def score_exploration_depth(trajectory: str) -> float:
+    """
+    评估是否有效利用 read_page 进行垂直搜索（WebWalker 式深度探索）。
+
+    评分标准：
+      - 有 web 搜索但无 read_page：0.03（仅表面搜索）
+      - 有 read_page 且 URL 有效（http/https 开头）：+0.05
+      - read_page 内容被 answer 引用：+0.04
+      - 多次 read_page（≤2，符合限制）：+0.03
+      - read_page 出现在 search_web 之前：-0.03（顺序错误）
+    """
+    score = 0.0
+
+    has_web = bool(_RE_SEARCH_WEB.search(trajectory))
+    read_matches = _RE_READ_PAGE.findall(trajectory)
+    read_count = len(read_matches)
+
+    # 基础分：有 web 搜索给了探索机会
+    if has_web and read_count == 0:
+        # 有 web 搜索但没有深入阅读——仅表面搜索
+        score = 0.03
+        return max(0.0, min(0.15, score))
+
+    if read_count == 0:
+        return 0.0
+
+    # read_page URL 有效性
+    valid_urls = 0
+    for url in read_matches:
+        url = url.strip()
+        if url.startswith(("http://", "https://")):
+            valid_urls += 1
+
+    if valid_urls > 0:
+        score += 0.05
+
+    # read_page 内容被 answer 引用
+    answer_match = _RE_ANSWER.search(trajectory)
+    if answer_match and read_count > 0:
+        answer = answer_match.group(1).strip()
+        # 检查是否有从 read_page 获得的详细信息被引用
+        # 简单启发式：答案长度较长且包含 read_page 的页面域名
+        for url in read_matches:
+            from urllib.parse import urlparse
+            try:
+                domain = urlparse(url.strip()).netloc
+                if domain and domain in answer:
+                    score += 0.04
+                    break
+            except Exception:
+                pass
+        # 备选：答案足够详细且出现了 read_page 之后的 information 内容关键词
+        if score < 0.09 and len(answer) > 50:
+            # 检查 read_page 之后的 information 块
+            read_pos = trajectory.find("<read_page>")
+            if read_pos >= 0:
+                post_text = trajectory[read_pos:]
+                info_match = _RE_INFORMATION.search(post_text)
+                if info_match:
+                    info_text = info_match.group(1).strip()
+                    # 取 information 中的关键词，看是否在 answer 中出现
+                    info_keywords = set(re.findall(r"[一-鿿]{2,}", info_text[:200]))
+                    ans_keywords = set(re.findall(r"[一-鿿]{2,}", answer))
+                    if info_keywords & ans_keywords:
+                        score += 0.04
+
+    # 多次有效 read_page（≤2 为合理范围）
+    if 1 < read_count <= 2:
+        score += 0.03
+
+    # 顺序检查：read_page 应出现在 search_web 之后
+    web_pos = trajectory.find("<search_web>")
+    for rm in _RE_READ_PAGE.finditer(trajectory):
+        if rm.start() < web_pos:
+            score -= 0.03  # 顺序错误：read_page 不应在 web 搜索之前
+            break
+
+    return max(0.0, min(0.15, score))
+
+
+# ────────────────────────────────────────────────────────────
 # 综合奖励函数
 # ────────────────────────────────────────────────────────────
 
@@ -327,40 +415,44 @@ def compute_reward(
 
     Returns:
         {
-            "reward":          float,  # 总分 [0, 1]
-            "format_score":    float,  # 格式完整性
-            "answer_score":    float,  # 答案质量
-            "tool_score":      float,  # 工具合理性
-            "source_score":    float,  # 来源标注
-            "domain_score":    float,  # 领域合规
+            "reward":            float,  # 总分 [0, 1]
+            "format_score":      float,  # 格式完整性 (0.15)
+            "answer_score":      float,  # 答案质量 (0.30)
+            "tool_score":        float,  # 工具合理性 (0.15)
+            "source_score":      float,  # 来源标注 (0.10)
+            "domain_score":      float,  # 领域合规 (0.15)
+            "exploration_score": float,  # 探索深度 (0.15)
         }
     """
-    fmt    = score_format(trajectory)
-    ans    = score_answer_quality(trajectory, question)
-    tool   = score_tool_usage(trajectory, question)
-    src    = score_source_attribution(trajectory)
-    domain = score_domain_compliance(question, trajectory)
+    fmt        = score_format(trajectory)
+    ans        = score_answer_quality(trajectory, question)
+    tool       = score_tool_usage(trajectory, question)
+    src        = score_source_attribution(trajectory)
+    domain     = score_domain_compliance(question, trajectory)
+    exploration = score_exploration_depth(trajectory)
 
-    total = fmt + ans + tool + src + domain
+    total = fmt + ans + tool + src + domain + exploration
 
     result = {
-        "reward":       round(total, 4),
-        "format_score": round(fmt,    4),
-        "answer_score": round(ans,    4),
-        "tool_score":   round(tool,   4),
-        "source_score": round(src,    4),
-        "domain_score": round(domain, 4),
+        "reward":            round(total,       4),
+        "format_score":      round(fmt,         4),
+        "answer_score":      round(ans,         4),
+        "tool_score":        round(tool,        4),
+        "source_score":      round(src,         4),
+        "domain_score":      round(domain,      4),
+        "exploration_score": round(exploration,  4),
     }
 
     if verbose:
         print(f"\n{'='*50}")
         print(f"  问题: {question[:50]}...")
         print(f"{'='*50}")
-        print(f"  格式完整性:  {fmt:.3f} / 0.20")
-        print(f"  答案质量:    {ans:.3f} / 0.35")
-        print(f"  工具合理性:  {tool:.3f} / 0.20")
+        print(f"  格式完整性:  {fmt:.3f} / 0.15")
+        print(f"  答案质量:    {ans:.3f} / 0.30")
+        print(f"  工具合理性:  {tool:.3f} / 0.15")
         print(f"  来源标注:    {src:.3f} / 0.10")
         print(f"  领域合规:    {domain:.3f} / 0.15")
+        print(f"  探索深度:    {exploration:.3f} / 0.15")
         print(f"  {'─'*40}")
         print(f"  总奖励:      {total:.3f} / 1.00")
         print(f"{'='*50}")
@@ -451,6 +543,34 @@ def main():
                 ),
             },
             {
+                "question": "小米SU7最新OTA更新了什么功能？",
+                "trajectory": (
+                    "<search_local>小米SU7 OTA更新 功能</search_local>\n"
+                    "<information>[提示：本地知识库相关性较低（0.18），"
+                    "如需更准确信息可调用网络搜索]</information>\n"
+                    "<search_web>小米SU7 最新OTA版本 2025 更新内容</search_web>\n"
+                    "<information>"
+                    "【小米SU7 OTA v2.4.0 发布公告】新增城市领航辅助、HUD自定义显示等12项更新\n"
+                    "网址：https://www.xiaomi.com/ev/su7/ota\n"
+                    "【车主社区】OTA v2.4.0 详细体验报告\n"
+                    "网址：https://www.autohome.com.cn/news/202501/su7-ota</information>\n"
+                    "<read_page>https://www.xiaomi.com/ev/su7/ota</read_page>\n"
+                    "<information>[页面来源：www.xiaomi.com]\n"
+                    "小米SU7 OTA v2.4.0 正式发布，本次更新包含12项功能升级：\n"
+                    "1. 城市领航辅助（City NOA）正式上线\n"
+                    "2. HUD抬头显示新增自定义模式\n"
+                    "3. 语音助手升级，支持多轮对话\n"
+                    "4. 座椅记忆功能优化...</information>\n"
+                    "<answer>根据小米官方页面信息，小米SU7最新的OTA v2.4.0更新了以下主要功能：\n"
+                    "1. 城市领航辅助（City NOA）正式上线\n"
+                    "2. HUD抬头显示新增自定义模式\n"
+                    "3. 语音助手升级，支持多轮对话\n"
+                    "4. 座椅记忆功能优化\n"
+                    "本次更新共包含12项功能升级。"
+                    "（以上信息来源于www.xiaomi.com，请以小米官方最新公告为准）</answer>"
+                ),
+            },
+            {
                 "question": "今天天气怎么样？",
                 "trajectory": (
                     "<search_local>天气</search_local>\n"
@@ -499,16 +619,18 @@ def main():
     avg_tool   = sum(r["tool_score"] for r in results) / len(results)
     avg_src    = sum(r["source_score"] for r in results) / len(results)
     avg_domain = sum(r["domain_score"] for r in results) / len(results)
+    avg_explore = sum(r.get("exploration_score", 0) for r in results) / len(results)
 
     print("\n" + "=" * 60)
     print(f"📊 批量评估报告（{len(results)} 条）")
     print("=" * 60)
     print(f"  平均总奖励:     {avg_reward:.4f} / 1.00")
-    print(f"  格式完整性:     {avg_fmt:.4f} / 0.20")
-    print(f"  答案质量:       {avg_ans:.4f} / 0.35")
-    print(f"  工具合理性:     {avg_tool:.4f} / 0.20")
+    print(f"  格式完整性:     {avg_fmt:.4f} / 0.15")
+    print(f"  答案质量:       {avg_ans:.4f} / 0.30")
+    print(f"  工具合理性:     {avg_tool:.4f} / 0.15")
     print(f"  来源标注:       {avg_src:.4f} / 0.10")
     print(f"  领域合规:       {avg_domain:.4f} / 0.15")
+    print(f"  探索深度:       {avg_explore:.4f} / 0.15")
     print("=" * 60)
 
     # 分布统计

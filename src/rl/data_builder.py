@@ -41,6 +41,7 @@ from src.retriever.milvus_retriever import MilvusRetriever
 from src.reranker.minicpm_reranker import MiniCPMReRanker
 from src.constant import bge_reranker_minicpm_path
 from src.utils import merge_docs
+from src.rl.web_reader import WebPageReader
 
 # ── 路径配置 ────────────────────────────────────────────────
 BASE_DIR       = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -60,6 +61,7 @@ SYSTEM_PROMPT = """你是小米SU7车型的专业问答助手，服务范围严�
 回答问题时可以调用以下工具：
 - 本地知识库检索（优先）：<search_local>检索关键词</search_local>
 - 网络搜索（本地信息不足时）：<search_web>检索关键词</search_web>
+- 页面深度阅读（搜索结果不够详细时）：<read_page>URL地址</read_page>
 
 工具返回格式：<information>检索结果内容</information>
 
@@ -67,9 +69,10 @@ SYSTEM_PROMPT = """你是小米SU7车型的专业问答助手，服务范围严�
 
 注意：
 1. 优先调用本地知识库，本地无结果或信息严重不足时再调用网络搜索
-2. 与小米SU7无关的问题（闲聊、百科、娱乐等），直接输出 <answer>很抱歉，我只能回答小米SU7相关问题。</answer>
-3. 网络搜索结果来源于互联网，答案中需注明"根据网络信息"
-4. 涉及页码引用时格式为【页码】"""
+2. 网络搜索结果中包含"网址："字段，可选择最有价值的页面用 <read_page> 深入阅读，最多读取2个页面
+3. 与小米SU7无关的问题（闲聊、百科、娱乐等），直接输出 <answer>很抱歉，我只能回答小米SU7相关问题。</answer>
+4. 网络搜索结果来源于互联网，答案中需注明"根据网络信息"
+5. 涉及页码引用时格式为【页码】"""
 
 # ── 轨迹生成提示词 ─────────────────────────────────────────
 TRAJECTORY_GEN_PROMPT = """你是一个数据标注专家，需要为以下问题生成一条高质量的工具调用轨迹。
@@ -82,19 +85,23 @@ TRAJECTORY_GEN_PROMPT = """你是一个数据标注专家，需要为以下问�
 网络搜索结果：
 {web_result}
 
+{page_content_section}
+
 请严格按照以下格式生成完整轨迹（只输出assistant的回复内容，不要有任何前缀说明）：
 
 <search_local>{local_query}</search_local>
 <information>{local_result_placeholder}</information>
 <search_web>{web_query}</search_web>
 <information>{web_result_placeholder}</information>
+{read_page_section}
 <answer>基于网络信息的准确回答，语言自然流畅，注明来源为网络信息</answer>
 
 要求：
 1. search_local的query要简洁精准，提取问题核心关键词
 2. search_web的query要加上"小米SU7"前缀确保搜索精度
-3. answer要直接回答问题，不重复问题，语言自然，结尾注明"（以上信息来源于网络，请以小米官方最新公告为准）"
-4. 如果网络搜索结果也没有有效信息，answer输出"根据目前可获取的信息，暂时无法回答此问题，建议访问小米汽车官网或联系官方客服获取最新信息。"
+3. 如果有页面详细内容，需要用 <read_page>URL</read_page> + <information>详细内容</information> 的形式体现垂直搜索
+4. answer要直接回答问题，不重复问题，语言自然，结尾注明"（以上信息来源于网络，请以小米官方最新公告为准）"
+5. 如果网络搜索结果也没有有效信息，answer输出"根据目前可获取的信息，暂时无法回答此问题，建议访问小米汽车官网或联系官方客服获取最新信息。"
 """
 
 
@@ -220,7 +227,7 @@ class WebSearchTool:
             return ""
         parts = []
         for r in results[:5]:
-            parts.append(f"【{r['name']}】\n{r['snippet']}\n来源：{r['url']}")
+            parts.append(f"【{r['name']}】\n{r['snippet']}\n网址：{r['url']}")
         return "\n\n".join(parts)
 
     def _search_serpapi(self, query: str) -> str:
@@ -244,7 +251,7 @@ class WebSearchTool:
             snippet = r.get("snippet", "")
             title   = r.get("title", "")
             link    = r.get("link", "")
-            parts.append(f"【{title}】\n{snippet}\n来源：{link}")
+            parts.append(f"【{title}】\n{snippet}\n网址：{link}")
         return "\n\n".join(parts)
 
     def _search_via_doubao(self, query: str) -> str:
@@ -284,6 +291,7 @@ class TrajectoryBuilder:
             api_key=os.environ["DOUBAO_API_KEY"],
             base_url=os.environ["DOUBAO_BASE_URL"],
         )
+        self.page_reader = WebPageReader()
 
     def build(
         self,
@@ -300,6 +308,8 @@ class TrajectoryBuilder:
           <information>...</information>
           <search_web>...</search_web>
           <information>...</information>
+          <read_page>URL</read_page>          ← 可选，垂直搜索
+          <information>...</information>       ← 页面详情
           <answer>...</answer>
         """
         local_result_str = self._format_local_docs(local_docs)
@@ -307,6 +317,20 @@ class TrajectoryBuilder:
         # 若网络搜索也为空，直接构造降级回复
         if not web_result.strip():
             web_result = "网络搜索暂时未获取到有效结果。"
+
+        # ── 尝试从 web_result 中提取 URL 并抓取页面 ──
+        page_url, page_content = self._try_fetch_best_page(web_result)
+
+        # 构建 read_page 段落
+        if page_url and page_content:
+            page_content_section = f"页面深度阅读内容（来自 {page_url}）：\n{page_content}"
+            read_page_section = (
+                f"<read_page>{page_url}</read_page>\n"
+                f"<information>{page_content}</information>"
+            )
+        else:
+            page_content_section = ""
+            read_page_section = ""
 
         prompt = TRAJECTORY_GEN_PROMPT.format(
             question=question,
@@ -316,6 +340,8 @@ class TrajectoryBuilder:
             web_query=web_query,
             local_result_placeholder=local_result_str[:400] if local_result_str else "本地知识库中未检索到相关内容。",
             web_result_placeholder=web_result[:800],
+            page_content_section=page_content_section,
+            read_page_section=read_page_section,
         )
 
         completion = self.llm_client.chat.completions.create(
@@ -327,7 +353,7 @@ class TrajectoryBuilder:
         raw = completion.choices[0].message.content.strip()
 
         # 后处理：确保格式完整
-        raw = self._postprocess(raw, local_query, web_query, local_result_str, web_result)
+        raw = self._postprocess(raw, local_query, web_query, local_result_str, web_result, page_url, page_content)
         return raw
 
     def _format_local_docs(self, docs: list) -> str:
@@ -340,6 +366,26 @@ class TrajectoryBuilder:
             parts.append(f"[{i}]{suffix} {doc.page_content[:250]}")
         return "\n".join(parts)
 
+    def _try_fetch_best_page(self, web_result: str) -> tuple[str, str]:
+        """
+        从网络搜索结果中提取最有价值的 URL 并抓取页面内容。
+        返回 (url, content)，失败时返回 ("", "")
+        """
+        # 提取搜索结果中的 URL（匹配 "网址：" 或 "来源：" 前缀）
+        urls = re.findall(r"(?:网址|来源)[：:]\s*(https?://[^\s\n]+)", web_result)
+        if not urls:
+            return "", ""
+
+        # 选择第一个 URL（通常是相关性最高的官方页面）
+        best_url = urls[0].strip()
+        try:
+            content = self.page_reader.fetch(best_url, max_chars=1500)
+            if content.startswith("无法") or content.startswith("页面") or content.startswith("不支持"):
+                return "", ""
+            return best_url, content
+        except Exception:
+            return "", ""
+
     def _postprocess(
         self,
         raw:          str,
@@ -347,8 +393,10 @@ class TrajectoryBuilder:
         web_query:    str,
         local_result: str,
         web_result:   str,
+        page_url:     str  = "",
+        page_content: str  = "",
     ) -> str:
-        """确保四个关键标签齐全，缺失时补齐"""
+        """确保关键标签齐全，缺失时补齐"""
         if "<search_local>" not in raw:
             raw = f"<search_local>{local_query}</search_local>\n" + raw
         if "<information>" not in raw:
@@ -362,6 +410,13 @@ class TrajectoryBuilder:
                 "<answer>",
                 f"<search_web>{web_query}</search_web>\n"
                 f"<information>{web_result[:600]}</information>\n<answer>"
+            )
+        # 如果有页面内容但轨迹中没有 read_page，自动插入
+        if page_url and page_content and "<read_page>" not in raw:
+            raw = raw.replace(
+                "<answer>",
+                f"<read_page>{page_url}</read_page>\n"
+                f"<information>{page_content[:800]}</information>\n<answer>"
             )
         if "<answer>" not in raw:
             raw += "\n<answer>根据目前可获取的信息，暂时无法给出准确回答，建议访问小米汽车官网获取最新信息。（以上信息来源于网络，请以小米官方最新公告为准）</answer>"

@@ -50,6 +50,7 @@ SYSTEM_PROMPT = """你是小米SU7车型的专业问答助手，服务范围严�
 回答问题时可以调用以下工具：
 - 本地知识库检索（优先）：<search_local>检索关键词</search_local>
 - 网络搜索（本地信息不足时）：<search_web>检索关键词</search_web>
+- 页面深度阅读（搜索结果不够详细时）：<read_page>URL地址</read_page>
 
 工具返回格式：<information>检索结果内容</information>
 
@@ -57,14 +58,16 @@ SYSTEM_PROMPT = """你是小米SU7车型的专业问答助手，服务范围严�
 
 注意：
 1. 优先调用本地知识库，本地无结果或信息严重不足时再调用网络搜索
-2. 与小米SU7无关的问题（闲聊、百科、娱乐等），直接输出 <answer>很抱歉，我只能回答小米SU7相关问题。</answer>
-3. 网络搜索结果来源于互联网，答案中需注明"根据网络信息"
-4. 涉及页码引用时格式为【页码】"""
+2. 网络搜索结果中包含"网址："字段，可选择最有价值的页面用 <read_page> 深入阅读，最多读取2个页面
+3. 与小米SU7无关的问题（闲聊、百科、娱乐等），直接输出 <answer>很抱歉，我只能回答小米SU7相关问题。</answer>
+4. 网络搜索结果来源于互联网，答案中需注明"根据网络信息"
+5. 涉及页码引用时格式为【页码】"""
 
 # ── 标签正则 ────────────────────────────────────────────────
 _RE_ANSWER       = re.compile(r"<answer>(.*?)</answer>",            re.DOTALL)
 _RE_SEARCH_LOCAL = re.compile(r"<search_local>(.*?)</search_local>", re.DOTALL)
 _RE_SEARCH_WEB   = re.compile(r"<search_web>(.*?)</search_web>",   re.DOTALL)
+_RE_READ_PAGE    = re.compile(r"<read_page>(.*?)</read_page>",     re.DOTALL)
 _RE_INFORMATION  = re.compile(r"<information>(.*?)</information>",  re.DOTALL)
 
 
@@ -81,16 +84,18 @@ def validate_trajectory(trajectory: str) -> dict:
             "valid":        bool,
             "has_answer":   bool,
             "has_search":   bool,
+            "has_read_page": bool,
             "answer_empty": bool,
             "errors":       list[str],
         }
     """
     errors = []
-    has_answer   = bool(_RE_ANSWER.search(trajectory))
-    has_local    = bool(_RE_SEARCH_LOCAL.search(trajectory))
-    has_web      = bool(_RE_SEARCH_WEB.search(trajectory))
-    has_info     = bool(_RE_INFORMATION.search(trajectory))
-    has_search   = has_local or has_web
+    has_answer    = bool(_RE_ANSWER.search(trajectory))
+    has_local     = bool(_RE_SEARCH_LOCAL.search(trajectory))
+    has_web       = bool(_RE_SEARCH_WEB.search(trajectory))
+    has_read_page = bool(_RE_READ_PAGE.search(trajectory))
+    has_info      = bool(_RE_INFORMATION.search(trajectory))
+    has_search    = has_local or has_web
 
     if not has_answer:
         errors.append("缺少 <answer>...</answer> 标签")
@@ -101,6 +106,18 @@ def validate_trajectory(trajectory: str) -> dict:
     if has_search and not has_info:
         errors.append("存在搜索调用但缺少 <information> 响应")
 
+    # read_page 可选校验：存在时验证闭合和 URL 格式
+    if has_read_page:
+        opens  = trajectory.count("<read_page>")
+        closes = trajectory.count("</read_page>")
+        if opens != closes:
+            errors.append(f"<read_page> 标签不匹配（{opens}开 / {closes}闭）")
+        # 检查 URL 格式
+        for url in _RE_READ_PAGE.findall(trajectory):
+            url = url.strip()
+            if not url.startswith(("http://", "https://")):
+                errors.append(f"<read_page> URL 格式无效：{url[:60]}")
+
     # 检查 answer 内容是否为空
     answer_empty = False
     if has_answer:
@@ -110,11 +127,12 @@ def validate_trajectory(trajectory: str) -> dict:
             answer_empty = True
 
     return {
-        "valid":        len(errors) == 0,
-        "has_answer":   has_answer,
-        "has_search":   has_search,
-        "answer_empty": answer_empty,
-        "errors":       errors,
+        "valid":         len(errors) == 0,
+        "has_answer":    has_answer,
+        "has_search":    has_search,
+        "has_read_page": has_read_page,
+        "answer_empty":  answer_empty,
+        "errors":        errors,
     }
 
 

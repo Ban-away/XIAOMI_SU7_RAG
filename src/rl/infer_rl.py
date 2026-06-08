@@ -49,6 +49,7 @@ SYSTEM_PROMPT = """你是小米SU7车型的专业问答助手，服务范围严�
 回答问题时可以调用以下工具：
 - 本地知识库检索（优先）：<search_local>检索关键词</search_local>
 - 网络搜索（本地信息不足时）：<search_web>检索关键词</search_web>
+- 页面深度阅读（搜索结果不够详细时）：<read_page>URL地址</read_page>
 
 工具返回格式：<information>检索结果内容</information>
 
@@ -56,23 +57,27 @@ SYSTEM_PROMPT = """你是小米SU7车型的专业问答助手，服务范围严�
 
 注意：
 1. 优先调用本地知识库，本地无结果或信息严重不足时再调用网络搜索
-2. 与小米SU7无关的问题（闲聊、百科、娱乐等），直接输出 <answer>很抱歉，我只能回答小米SU7相关问题。</answer>
-3. 网络搜索结果来源于互联网，答案中需注明"根据网络信息"
-4. 涉及页码引用时格式为【页码】"""
+2. 网络搜索结果中包含"网址："字段，可选择最有价值的页面用 <read_page> 深入阅读，最多读取2个页面
+3. 与小米SU7无关的问题（闲聊、百科、娱乐等），直接输出 <answer>很抱歉，我只能回答小米SU7相关问题。</answer>
+4. 网络搜索结果来源于互联网，答案中需注明"根据网络信息"
+5. 涉及页码引用时格式为【页码】"""
 
 # ── 推理参数 ────────────────────────────────────────────────
-MAX_GENERATE_ROUNDS  = 8    # 最大生成轮数（防止无限循环）
+MAX_GENERATE_ROUNDS  = 12   # 最大生成轮数（防止无限循环）
 MAX_TOKENS_PER_ROUND = 512  # 每轮生成最大 token 数
+MAX_SEARCH_STEPS     = 4    # 单次推理最多调用搜索工具的次数
+MAX_READ_PAGE_HOPS   = 2    # 最大页面深度阅读次数（垂直搜索）
 
 # 关键：stop 在搜索标签的闭合处，让模型暂停以便注入真实检索结果
 # 不用 stop=["</answer>"]，因为那会导致 <answer> 内容永远不包含 </answer>
 # is_done 判断改由 step() 内部用 _RE_ANSWER 正则检测
-SEARCH_STOP_TOKENS = ["</search_local>", "</search_web>"]
+SEARCH_STOP_TOKENS = ["</search_local>", "</search_web>", "</read_page>"]
 
 # ── 标签正则（与 environment.py 保持一致）──────────────────
 _RE_ANSWER       = re.compile(r"<answer>(.*?)</answer>",            re.DOTALL)
 _RE_SEARCH_LOCAL = re.compile(r"<search_local>(.*?)</search_local>", re.DOTALL)
 _RE_SEARCH_WEB   = re.compile(r"<search_web>(.*?)</search_web>",   re.DOTALL)
+_RE_READ_PAGE    = re.compile(r"<read_page>(.*?)</read_page>",     re.DOTALL)
 
 
 # ────────────────────────────────────────────────────────────
@@ -122,6 +127,8 @@ def run_rl_inference(
 
     trajectory = ""
     rounds     = 0
+    read_page_count = 0  # read_page 调用计数（用于跳数限制）
+    total_search_count = 0  # 所有工具调用计数
 
     for round_idx in range(MAX_GENERATE_ROUNDS):
         rounds += 1
@@ -164,8 +171,22 @@ def run_rl_inference(
 
         if hit_search:
             # vLLM 在 stop token 处截断，需要补回闭合标签
-            # 判断是哪种搜索被触发
+            # 判断是哪种工具被触发
             if "<search_local>" in generated and "</search_local>" not in generated:
+                # ── 总搜索次数限制 ──
+                total_search_count += 1
+                if total_search_count > MAX_SEARCH_STEPS:
+                    info_block = (
+                        "<information>已达到最大检索次数限制。</information>\n"
+                        "<answer>根据已检索到的信息暂时无法给出完整答案，"
+                        "建议访问小米汽车官网获取最新信息。</answer>"
+                    )
+                    trajectory += "</search_local>\n" + info_block + "\n"
+                    messages.append({"role": "assistant", "content": generated + "</search_local>\n" + info_block + "\n"})
+                    if verbose:
+                        print(f"</search_local>\n{info_block}\n", end="", flush=True)
+                    break
+
                 trajectory += "</search_local>"
                 if verbose:
                     print("</search_local>", end="", flush=True)
@@ -185,7 +206,23 @@ def run_rl_inference(
                         f"如需更准确信息可调用网络搜索]</information>"
                     )
 
+                close_tag = "</search_local>"
+
             elif "<search_web>" in generated and "</search_web>" not in generated:
+                # ── 总搜索次数限制 ──
+                total_search_count += 1
+                if total_search_count > MAX_SEARCH_STEPS:
+                    info_block = (
+                        "<information>已达到最大检索次数限制。</information>\n"
+                        "<answer>根据已检索到的信息暂时无法给出完整答案，"
+                        "建议访问小米汽车官网获取最新信息。</answer>"
+                    )
+                    trajectory += "</search_web>\n" + info_block + "\n"
+                    messages.append({"role": "assistant", "content": generated + "</search_web>\n" + info_block + "\n"})
+                    if verbose:
+                        print(f"</search_web>\n{info_block}\n", end="", flush=True)
+                    break
+
                 trajectory += "</search_web>"
                 if verbose:
                     print("</search_web>", end="", flush=True)
@@ -196,9 +233,51 @@ def run_rl_inference(
                 # 执行网络搜索
                 result_str = env.web_backend.search(query)
                 info_block = f"<information>{result_str}</information>"
+
+                close_tag = "</search_web>"
+
+            elif "<read_page>" in generated and "</read_page>" not in generated:
+                # ── read_page 跳数限制 ──
+                read_page_count += 1
+                if read_page_count > MAX_READ_PAGE_HOPS:
+                    info_block = "<information>已达到最大页面阅读次数限制，请基于已有信息作答。</information>"
+                    trajectory += "</read_page>\n" + info_block + "\n"
+                    messages.append({"role": "assistant", "content": generated + "</read_page>\n" + info_block + "\n"})
+                    if verbose:
+                        print(f"</read_page>\n{info_block}\n", end="", flush=True)
+                    continue  # 不 break，让模型继续尝试作答
+
+                # ── 总搜索次数限制 ──
+                total_search_count += 1
+                if total_search_count > MAX_SEARCH_STEPS:
+                    info_block = (
+                        "<information>已达到最大检索次数限制。</information>\n"
+                        "<answer>根据已检索到的信息暂时无法给出完整答案，"
+                        "建议访问小米汽车官网获取最新信息。</answer>"
+                    )
+                    trajectory += "</read_page>\n" + info_block + "\n"
+                    messages.append({"role": "assistant", "content": generated + "</read_page>\n" + info_block + "\n"})
+                    if verbose:
+                        print(f"</read_page>\n{info_block}\n", end="", flush=True)
+                    break
+
+                trajectory += "</read_page>"
+                if verbose:
+                    print("</read_page>", end="", flush=True)
+                # 提取 URL
+                page_match = _RE_READ_PAGE.findall(trajectory)
+                url = page_match[-1].strip() if page_match else ""
+
+                # 执行页面深度阅读
+                result_str = env.page_reader.fetch(url) if url else "无效的URL地址"
+                info_block = f"<information>{result_str}</information>"
+
+                close_tag = "</read_page>"
+
             else:
-                # 其他 stop 原因，继续
-                info_block = None
+                # 其他 stop 原因（理论上不应触发），防御性处理
+                messages.append({"role": "assistant", "content": generated})
+                continue
 
             if info_block:
                 # 注入检索结果
@@ -206,10 +285,7 @@ def run_rl_inference(
                 # 将当前生成内容 + 检索结果作为 assistant 消息
                 messages.append({
                     "role": "assistant",
-                    "content": generated + (
-                        "</search_local>" if "<search_local>" in generated and "</search_local>" not in generated
-                        else "</search_web>"
-                    ) + "\n" + info_block + "\n",
+                    "content": generated + close_tag + "\n" + info_block + "\n",
                 })
                 if verbose:
                     print("\n" + info_block + "\n", end="", flush=True)
@@ -283,7 +359,7 @@ def main():
     print(f"  vLLM 地址: {args.vllm_url}")
     print(f"  模型:      {model_name}")
     print(f"  范式:      边生成边检索（模型自主决定检索时机）")
-    print(f"  工具:      <search_local> / <search_web>")
+    print(f"  工具:      <search_local> / <search_web> / <read_page>")
     print("=" * 80)
     print("  输入问题开始对话，输入 'quit' 退出")
     print("=" * 80)
@@ -326,14 +402,16 @@ def main():
         # ── 输出结果 ────────────────────────────────────────
         print(f"  📝 答案: {result['answer'][:200]}{'...' if len(result['answer']) > 200 else ''}")
         print(f"  ⏱️  耗时: {elapsed:.1f}s | 轮数: {result['rounds']} | "
-              f"检索: local×{result['search_calls']['local']} web×{result['search_calls']['web']}")
+              f"检索: local×{result['search_calls']['local']} web×{result['search_calls']['web']} "
+              f"read_page×{result['search_calls']['read_page']}")
 
         if args.show_reward:
             detail = result["reward_detail"]
             print(f"  📊 奖励: {result['reward']:.3f} "
                   f"(格式:{detail['format_score']:.2f} 答案:{detail['answer_score']:.2f} "
                   f"工具:{detail['tool_score']:.2f} 来源:{detail['source_score']:.2f} "
-                  f"领域:{detail['domain_score']:.2f})")
+                  f"领域:{detail['domain_score']:.2f} "
+                  f"探索:{detail.get('exploration_score', 0):.2f})")
 
         if args.show_trajectory:
             print(f"\n  📋 完整轨迹:")
