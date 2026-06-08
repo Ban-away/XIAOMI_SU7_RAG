@@ -128,7 +128,7 @@ def extract_answer(trajectory: str) -> str:
 # 格式转换函数
 # ────────────────────────────────────────────────────────────
 
-def to_sft_format(question: str, trajectory: str, system: str = SYSTEM_PROMPT) -> dict:
+def to_sft_format(question: str, trajectory: str, system: str = SYSTEM_PROMPT, **kwargs) -> dict:
     """
     转换为 LLaMA-Factory SFT 格式。
 
@@ -180,6 +180,7 @@ def to_sharegpt_format(
     question:   str,
     trajectory: str,
     system:     str = SYSTEM_PROMPT,
+    **kwargs,
 ) -> dict:
     """
     转换为 ShareGPT 多轮对话格式。

@@ -139,7 +139,7 @@ def register_dataset():
     info_path = os.path.join(LLAMA_FACTORY_DIR, "data/dataset_info.json")
     if not os.path.exists(info_path):
         print(f"  [WARN] dataset_info.json 不存在: {info_path}")
-        return
+        return True
 
     with open(info_path, encoding="utf-8") as f:
         dataset_info = json.load(f)
@@ -184,6 +184,8 @@ def register_dataset():
         print("  ✅ dataset_info.json 已更新")
     else:
         print("  ⚠️ 未找到可注册的数据文件")
+
+    return True
 
 
 # ────────────────────────────────────────────────────────────
