@@ -444,8 +444,8 @@ export HF_ENDPOINT=https://hf-mirror.com
 python deploy/download_models.py
 
 # 4. 创建必要目录结构
-mkdir -p data/{processed_docs,saved_index,qa_pairs,summary_data,rerank_data,saved_images,mongodb/{data,log}}
-mkdir -p log models
+mkdir -p data/{processed_docs,saved_index,qa_pairs,summary_data,rerank_data,rl_data,saved_images,mongodb/{data,log}}
+mkdir -p log models configs
 ```
 
 ### 生成 Qwen3 SFT 与 Int4
@@ -597,6 +597,65 @@ cd /root/autodl-tmp/XIAOMI_SU7_RAG/LLaMA-Factory-main
 ls -l data/summary_train.json data/summary_test.json data/summary_test_pred.json
 ```
 
+### 🧠 Search-R1 强化学习训练（进阶，在以上步骤完成后）
+
+> **前置条件**：步骤 1-7 已完成，`output/qwen3_lora_sft_int4` 已存在，检索索引和 MongoDB 已就绪。
+
+12. 生成 RL 训练轨迹
+
+```bash
+cd /root/autodl-tmp/XIAOMI_SU7_RAG
+
+# 读取 66 条网络兜底问题 → 本地检索 + 网络搜索 → LLM 生成完整轨迹
+python src/rl/data_builder.py                # 全量运行
+python src/rl/data_builder.py --dry-run      # 先跑 5 条验证
+python src/rl/data_builder.py --resume       # 断点续传
+```
+
+13. 格式转换（轨迹 → SFT / GRPO 格式）
+
+```bash
+python src/rl/format_converter.py
+```
+
+14. 注册数据集 + SFT warm-up + GRPO 训练
+
+```bash
+# 一键全流程：数据注册 → SFT warm-up → GRPO → 导出
+python src/rl/train_grpo.py --stage all
+
+# 或分步执行：
+python src/rl/train_grpo.py --stage data     # 只注册数据集
+python src/rl/train_grpo.py --stage sft      # SFT warm-up（学会标签格式）
+python src/rl/train_grpo.py --stage grpo     # GRPO 强化学习
+python src/rl/train_grpo.py --stage export   # 导出合并模型
+```
+
+> ⚠️ **配置检查**：`configs/qwen3_lora_rl_sft.yaml` 和 `configs/qwen3_lora_grpo.yaml` 中的 `model_name_or_path` 需指向你的 Qwen3-8B 基座模型绝对路径。
+
+15. RL 增强推理（边生成边检索）
+
+```bash
+# 启动 vLLM（使用 RL 训练后的模型）
+python deploy/auto_vllm_server.py --model LLaMA-Factory-main/output/qwen3_lora_rl --port 8000
+
+# 另一个终端：启动交互式问答
+python src/rl/infer_rl.py --show-reward --show-trajectory
+```
+
+**交互示例：**
+```
+🧑 用户 ➜ 小米SU7最新的OTA版本是什么？
+
+🤖 助手 ➜ <search_local>OTA升级 软件更新</search_local>
+<information>[1]【第45页】小米SU7支持OTA远程升级...
+[提示：本地知识库相关性较低（0.28），如需更准确信息可调用网络搜索]
+<search_web>小米SU7 最新OTA版本 2025</search_web>
+<information>【小米汽车官方公告】2025年5月OTA v2.4.0 更新...</information>
+<answer>根据最新信息，小米SU7当前OTA版本为v2.4.0...
+（以上信息来源于网络，请以小米官方最新公告为准）</answer>
+```
+
 ### 📊 数据文件说明
 
 #### 项目数据目录 (`data/`)
@@ -615,6 +674,10 @@ ls -l data/summary_train.json data/summary_test.json data/summary_test_pred.json
 | `data/rerank_data/train.json` | 重排训练集 | 40,849 | Step 4 (`generate_sft_data.py`) |
 | `data/rerank_data/dev.json` | 重排验证集 | - | Step 4 (`generate_sft_data.py`) |
 | `data/rerank_data/test.json` | 重排测试集 | 936 | Step 4 (`generate_sft_data.py`) |
+| `data/rl_data/web_fallback_questions.json` | RL 网络兜底问题库（10 个分类） | 66 | 预置 |
+| `data/rl_data/web_fallback_trajectories.json` | RL 原始轨迹数据 | - | Step 12 (`data_builder.py`) |
+| `data/rl_data/web_fallback_trajectories_sft.json` | RL SFT 格式训练数据 | - | Step 13 (`format_converter.py`) |
+| `data/rl_data/web_fallback_trajectories_grpo.jsonl` | RL GRPO 格式训练数据 | - | Step 13 (`format_converter.py`) |
 
 #### LLaMA-Factory 训练数据 (`LLaMA-Factory-main/data/`)
 
