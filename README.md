@@ -1,7 +1,8 @@
 # 🚗 XIAOMI_SU7_RAG
 
 > 基于小米 SU7 用户手册的**完整 RAG 问答系统**  
-> 覆盖文档解析、语义切分、索引构建、检索重排、答案生成、离线评估、训练数据构造全流程
+> 覆盖文档解析、语义切分、索引构建、检索重排、答案生成、离线评估、RL训练全流程  
+> Search-R1 强化学习 + WebWalker 垂直搜索：模型自主决定何时检索、检索什么、是否深度阅读页面
 
 [![Python](https://img.shields.io/badge/Python-3.9+-3776ab?logo=python&logoColor=white)](https://www.python.org)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-ee4c2c?logo=pytorch&logoColor=white)](https://pytorch.org)
