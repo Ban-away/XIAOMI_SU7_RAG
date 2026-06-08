@@ -174,10 +174,10 @@ query → [🖥️ BGE 召回] → [🖥️ MiniCPM 精排] → [🖥️ Qwen3-8
 预测结果 → [🖥️ text2vec 相似度] → [☁️ 豆包API RAGas] → 综合得分
               ↑本地                    ↑远程API
 
-阶段六：RL 强化学习（Search-R1 范式，进阶）
+阶段六：RL 强化学习（Search-R1 + WebWalker 垂直搜索，进阶）
 问题库 → [🖥️ 本地+网络检索] → [☁️ 豆包API 生成轨迹] → SFT warm-up → GRPO 强化学习
-                                    ↑边生成边检索                    ↑自定义奖励函数
-模型自主决定何时检索、检索什么，而非固定管线检索→生成
+                                    ↑边生成边检索                    ↑6维自定义奖励函数
+模型自主决定何时检索、检索什么，还可对搜索结果页面深度阅读（垂直探索），而非固定管线检索→生成
 ```
 ---
 
@@ -232,14 +232,15 @@ XIAOMI_SU7_RAG/
 │  │
 │  ├─ 📂 fields/           # 数据结构 (Pydantic)
 │  │
-│  ├─ 📂 rl/               # RL 强化学习模块（Search-R1 范式）
+│  ├─ 📂 rl/               # RL 强化学习模块（Search-R1 + WebWalker 垂直搜索）
 │  │  ├─ __init__.py              # 模块说明
-│  │  ├─ data_builder.py         # 网络兜底轨迹生成器
+│  │  ├─ web_reader.py           # 网页内容抓取器（垂直搜索基础设施）
+│  │  ├─ data_builder.py         # 网络兜底轨迹生成器（含多跳页面阅读）
 │  │  ├─ format_converter.py     # 训练数据格式转换器
-│  │  ├─ reward_model.py         # 多维度奖励函数
-│  │  ├─ environment.py          # 工具调用路由环境
+│  │  ├─ reward_model.py         # 6 维度奖励函数
+│  │  ├─ environment.py          # 工具调用路由环境（local/web/read_page）
 │  │  ├─ train_grpo.py           # GRPO 训练入口
-│  │  └─ infer_rl.py             # RL 增强推理（边生成边检索）
+│  │  └─ infer_rl.py             # RL 增强推理（边生成边检索 + 深度阅读）
 │  │
 │  └─ 📂 gen_qa/           # QA 与训练数据生成
 │     └─ run.py            # QA 生成 & 问题扩写
@@ -606,7 +607,8 @@ ls -l data/summary_train.json data/summary_test.json data/summary_test_pred.json
 ```bash
 cd /root/autodl-tmp/XIAOMI_SU7_RAG
 
-# 读取 66 条网络兜底问题 → 本地检索 + 网络搜索 → LLM 生成完整轨迹
+# 读取 66 条网络兜底问题 → 本地检索 + 网络搜索 + 自动页面抓取 → LLM 生成完整轨迹
+# 轨迹包含 <read_page> 垂直搜索周期
 python src/rl/data_builder.py                # 全量运行
 python src/rl/data_builder.py --dry-run      # 先跑 5 条验证
 python src/rl/data_builder.py --resume       # 断点续传
@@ -621,6 +623,9 @@ python src/rl/format_converter.py
 14. 注册数据集 + SFT warm-up + GRPO 训练
 
 ```bash
+# ⚠️ 前提：LLaMA-Factory 需升级到 0.9.4+ 才支持 GRPO
+cd LLaMA-Factory-main && git pull origin main && pip install -e ".[torch,metrics]" && cd ..
+
 # 一键全流程：数据注册 → SFT warm-up → GRPO → 导出
 python src/rl/train_grpo.py --stage all
 
@@ -631,9 +636,9 @@ python src/rl/train_grpo.py --stage grpo     # GRPO 强化学习
 python src/rl/train_grpo.py --stage export   # 导出合并模型
 ```
 
-> ⚠️ **配置检查**：`configs/qwen3_lora_rl_sft.yaml` 和 `configs/qwen3_lora_grpo.yaml` 中的 `model_name_or_path` 需指向你的 Qwen3-8B 基座模型绝对路径。
+> ⚠️ **配置检查**：`configs/qwen3_lora_rl_sft.yaml` 和 `configs/qwen3_lora_grpo.yaml` 中的 `model_name_or_path` 需指向你的 Qwen3-8B 基座模型绝对路径。GRPO config 中 cutoff_len=6144、max_new_tokens=1536（为 read_page 内容预留空间）。
 
-15. RL 增强推理（边生成边检索）
+15. RL 增强推理（边生成边检索 + 深度页面阅读）
 
 ```bash
 # 启动 vLLM（使用 RL 训练后的模型）
@@ -643,17 +648,32 @@ python deploy/auto_vllm_server.py --model LLaMA-Factory-main/output/qwen3_lora_r
 python src/rl/infer_rl.py --show-reward --show-trajectory
 ```
 
-**交互示例：**
+**交互示例（含垂直搜索）：**
 ```
-🧑 用户 ➜ 小米SU7最新的OTA版本是什么？
+🧑 用户 ➜ 小米SU7最新的OTA版本更新了什么功能？
 
-🤖 助手 ➜ <search_local>OTA升级 软件更新</search_local>
+🤖 助手 ➜ <search_local>OTA更新 功能</search_local>
 <information>[1]【第45页】小米SU7支持OTA远程升级...
-[提示：本地知识库相关性较低（0.28），如需更准确信息可调用网络搜索]
-<search_web>小米SU7 最新OTA版本 2025</search_web>
-<information>【小米汽车官方公告】2025年5月OTA v2.4.0 更新...</information>
-<answer>根据最新信息，小米SU7当前OTA版本为v2.4.0...
-（以上信息来源于网络，请以小米官方最新公告为准）</answer>
+[提示：本地知识库相关性较低（0.18），如需更准确信息可调用网络搜索]
+<search_web>小米SU7 最新OTA版本 2025 更新内容</search_web>
+<information>【小米SU7 OTA v2.4.0 发布公告】新增城市领航辅助、HUD自定义显示等12项更新
+网址：https://www.xiaomi.com/ev/su7/ota
+【车主社区】OTA v2.4.0 详细体验报告
+网址：https://www.autohome.com.cn/news/202501/su7-ota</information>
+<read_page>https://www.xiaomi.com/ev/su7/ota</read_page>
+<information>[页面来源：www.xiaomi.com]
+小米SU7 OTA v2.4.0 正式发布，本次更新包含12项功能升级：
+1. 城市领航辅助（City NOA）正式上线
+2. HUD抬头显示新增自定义模式
+3. 语音助手升级，支持多轮对话
+4. 座椅记忆功能优化...</information>
+<answer>根据小米官方页面信息，小米SU7最新的OTA v2.4.0更新了以下主要功能：
+1. 城市领航辅助（City NOA）正式上线
+2. HUD抬头显示新增自定义模式
+3. 语音助手升级，支持多轮对话
+4. 座椅记忆功能优化
+本次更新共包含12项功能升级。
+（以上信息来源于www.xiaomi.com，请以小米官方最新公告为准）</answer>
 ```
 
 ### 📊 数据文件说明
@@ -970,11 +990,11 @@ python final_score.py
 </details>
 
 <details>
-<summary><b>🧠 RL 强化学习模块 (Search-R1 范式)</b></summary>
+<summary><b>🧠 RL 强化学习模块 (Search-R1 + WebWalker 垂直搜索)</b></summary>
 
 ### 概述
 
-传统 RAG 采用固定管线（检索→重排→生成），模型被动接收上下文。RL 模块升级为 **Search-R1 范式**：模型自主决定何时检索、检索什么，实现 **边生成边检索** 的智能工具调用。
+传统 RAG 采用固定管线（检索→重排→生成），模型被动接收上下文。RL 模块升级为 **Search-R1 范式**：模型自主决定何时检索、检索什么，实现 **边生成边检索** 的智能工具调用。在此基础上，引入 **WebWalker 垂直搜索**能力：模型可以点击搜索结果中的链接，深入阅读页面内容，像人一样一层层钻进去获取详细信息。
 
 ### 核心机制
 
@@ -982,11 +1002,13 @@ python final_score.py
 传统 RAG（infer.py）：
   query → [固定检索] → [固定重排] → [生成答案]
 
-Search-R1（infer_rl.py）：
+Search-R1 + WebWalker（infer_rl.py）：
   query → model 生成 "<search_local>关键词"
         → 系统拦截，执行本地检索，注入 <information>
         → model 继续生成 "<search_web>关键词"
-        → 系统拦截，执行网络搜索，注入 <information>
+        → 系统拦截，执行网络搜索，注入 <information>（含"网址："字段）
+        → model 生成 "<read_page>URL"            ← 垂直搜索：深度阅读
+        → 系统拦截，抓取页面内容，注入 <information>
         → model 生成 "<answer>最终答案"
 ```
 
@@ -994,17 +1016,31 @@ Search-R1（infer_rl.py）：
 
 | 文件 | 功能 |
 |:---|:---|
-| `src/rl/data_builder.py` | 网络兜底轨迹生成器（读取问题库 → 本地检索 → 网络搜索 → LLM 生成轨迹） |
-| `src/rl/format_converter.py` | 格式转换器（轨迹 → SFT / GRPO / ShareGPT 多格式） |
-| `src/rl/reward_model.py` | 5 维度奖励函数（格式 0.20 + 答案 0.35 + 工具 0.20 + 来源 0.10 + 领域 0.15） |
-| `src/rl/environment.py` | 工具调用路由环境（拦截 `<search_local>`/`<search_web>` → 执行检索 → 注入结果） |
+| `src/rl/web_reader.py` | 网页内容抓取器（HTML→纯文本，超时/大小/类型防护） |
+| `src/rl/data_builder.py` | 网络兜底轨迹生成器（含多跳页面阅读，自动提取URL并抓取） |
+| `src/rl/format_converter.py` | 格式转换器（轨迹 → SFT / GRPO / ShareGPT 多格式，含 read_page 校验） |
+| `src/rl/reward_model.py` | 6 维度奖励函数（格式 0.15 + 答案 0.30 + 工具 0.15 + 来源 0.10 + 领域 0.15 + **探索深度 0.15**） |
+| `src/rl/environment.py` | 工具调用路由环境（拦截 `<search_local>`/`<search_web>`/`<read_page>` → 执行检索 → 注入结果） |
 | `src/rl/train_grpo.py` | GRPO 训练入口（数据准备 → SFT warm-up → GRPO 训练 → 导出） |
-| `src/rl/infer_rl.py` | RL 增强推理（边生成边检索交互式问答） |
+| `src/rl/infer_rl.py` | RL 增强推理（边生成边检索 + 深度页面阅读，含跳数和总调用限制） |
+
+### 奖励函数（6 维度，总分 1.0）
+
+| 维度 | 权重 | 说明 |
+|:---|:---:|:---|
+| 格式完整性 | 0.15 | 标签齐全、正确闭合 |
+| 答案质量 | 0.30 | 回答准确性、信息量、数据引用 |
+| 工具合理性 | 0.15 | 检索关键词精准、调用顺序合理 |
+| 来源标注 | 0.10 | 网络信息正确注明来源 |
+| 领域合规 | 0.15 | 正确拒答非SU7问题 |
+| **探索深度** | **0.15** | **有效利用 read_page 进行垂直搜索（WebWalker 式深度探索）** |
+
+探索深度评分逻辑：有web无read_page得0.03（表面搜索）；有read_page且URL有效+0.05；内容被answer引用+0.04；多次read_page（≤2）+0.03；顺序错误（read_page在web之前）-0.03。
 
 ### 训练流程
 
 ```bash
-# 1. 生成训练轨迹（本地检索 + 网络兜底）
+# 1. 生成训练轨迹（本地检索 + 网络兜底 + 自动页面抓取）
 python src/rl/data_builder.py
 
 # 2. 格式转换（轨迹 → SFT/GRPO 格式）
@@ -1013,10 +1049,12 @@ python src/rl/format_converter.py
 # 3. 一键训练（SFT warm-up + GRPO 强化学习）
 python src/rl/train_grpo.py --stage all
 
-# 4. RL 增强推理（边生成边检索）
+# 4. RL 增强推理（边生成边检索 + 深度阅读）
 python deploy/auto_vllm_server.py --model LLaMA-Factory-main/output/qwen3_lora_rl --port 8000
-python src/rl/infer_rl.py
+python src/rl/infer_rl.py --show-reward --show-trajectory
 ```
+
+> ⚠️ **LLaMA-Factory 版本要求**：GRPO 训练需要 LLaMA-Factory ≥ 0.9.4。当前仓库自带版本（0.9.3.dev0）不支持 GRPO，需执行 `cd LLaMA-Factory-main && git pull origin main && pip install -e ".[torch,metrics]"` 升级。
 
 ### 训练数据
 
