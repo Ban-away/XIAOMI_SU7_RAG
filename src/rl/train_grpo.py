@@ -288,6 +288,10 @@ def run_grpo_training(config_path: str):
         from peft import PeftModel, LoraConfig, TaskType
         from trl import GRPOConfig, GRPOTrainer
         from datasets import Dataset
+
+        # 确保项目根目录在 sys.path 中，以便导入 src.rl.reward_model
+        if BASE_DIR not in sys.path:
+            sys.path.insert(0, BASE_DIR)
         from src.rl.reward_model import reward_fn
     finally:
         # 恢复 vllm（日常推理不受影响）
