@@ -33,8 +33,22 @@ from transformers.trainer_pt_utils import remove_dummy_checkpoint
 from transformers.trainer_utils import PREFIX_CHECKPOINT_DIR
 from transformers.utils import SAFE_WEIGHTS_NAME, WEIGHTS_NAME
 from trl import PPOConfig, PPOTrainer
-from trl.core import PPODecorators, logprobs_from_logits
-from trl.models.utils import unwrap_model_for_generation
+from trl.core import PPODecorators
+
+# trl>=0.18 移除了 logprobs_from_logits，兼容旧版和新版
+try:
+    from trl.core import logprobs_from_logits
+except ImportError:
+    import torch.nn.functional as _F
+
+    def logprobs_from_logits(logits, labels):
+        return _F.log_softmax(logits, dim=-1).gather(dim=-1, index=labels.unsqueeze(-1)).squeeze(-1)
+
+try:
+    from trl.models.utils import unwrap_model_for_generation
+except ImportError:
+    # trl>=0.15 可能移动了此函数
+    unwrap_model_for_generation = None
 from typing_extensions import override
 
 from ...extras import logging

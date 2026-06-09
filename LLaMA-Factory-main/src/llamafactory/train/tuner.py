@@ -28,13 +28,40 @@ from ..extras.packages import is_ray_available
 from ..hparams import get_infer_args, get_ray_args, get_train_args, read_args
 from ..model import load_model, load_tokenizer
 from .callbacks import LogCallback, PissaConvertCallback, ReporterCallback
-from .dpo import run_dpo
-from .kto import run_kto
-from .ppo import run_ppo
-from .pt import run_pt
-from .rm import run_rm
-from .sft import run_sft
 from .trainer_utils import get_ray_trainer, get_swanlab_callback
+
+# ── 懒加载训练模块 ──────────────────────────────────────────
+# 避免在 SFT/Export 时加载 PPO/DPO/KTO 等不需要的模块，
+# 这些模块依赖的 trl 接口在不同版本间有 breaking changes。
+# 例如 trl>=0.18 移除了 trl.core.logprobs_from_logits，
+# 只有真正使用 PPO 时才需要加载它。
+_RUN_FN_CACHE: dict[str, Any] = {}
+
+
+def _get_run_fn(stage: str):
+    """按需导入训练函数，避免触发无关模块的 trl 版本兼容问题。"""
+    if stage not in _RUN_FN_CACHE:
+        if stage == "pt":
+            from .pt import run_pt
+            _RUN_FN_CACHE[stage] = run_pt
+        elif stage == "sft":
+            from .sft import run_sft
+            _RUN_FN_CACHE[stage] = run_sft
+        elif stage == "rm":
+            from .rm import run_rm
+            _RUN_FN_CACHE[stage] = run_rm
+        elif stage == "ppo":
+            from .ppo import run_ppo
+            _RUN_FN_CACHE[stage] = run_ppo
+        elif stage == "dpo":
+            from .dpo import run_dpo
+            _RUN_FN_CACHE[stage] = run_dpo
+        elif stage == "kto":
+            from .kto import run_kto
+            _RUN_FN_CACHE[stage] = run_kto
+        else:
+            raise ValueError(f"Unknown task: {stage}.")
+    return _RUN_FN_CACHE[stage]
 
 
 if is_ray_available():
@@ -66,20 +93,15 @@ def _training_function(config: dict[str, Any]) -> None:
 
     callbacks.append(ReporterCallback(model_args, data_args, finetuning_args, generating_args))  # add to last
 
-    if finetuning_args.stage == "pt":
-        run_pt(model_args, data_args, training_args, finetuning_args, callbacks)
-    elif finetuning_args.stage == "sft":
-        run_sft(model_args, data_args, training_args, finetuning_args, generating_args, callbacks)
-    elif finetuning_args.stage == "rm":
-        run_rm(model_args, data_args, training_args, finetuning_args, callbacks)
-    elif finetuning_args.stage == "ppo":
-        run_ppo(model_args, data_args, training_args, finetuning_args, generating_args, callbacks)
-    elif finetuning_args.stage == "dpo":
-        run_dpo(model_args, data_args, training_args, finetuning_args, callbacks)
-    elif finetuning_args.stage == "kto":
-        run_kto(model_args, data_args, training_args, finetuning_args, callbacks)
-    else:
-        raise ValueError(f"Unknown task: {finetuning_args.stage}.")
+    stage = finetuning_args.stage
+    run_fn = _get_run_fn(stage)
+
+    if stage == "sft":
+        run_fn(model_args, data_args, training_args, finetuning_args, generating_args, callbacks)
+    elif stage == "ppo":
+        run_fn(model_args, data_args, training_args, finetuning_args, generating_args, callbacks)
+    elif stage in ("pt", "rm", "dpo", "kto"):
+        run_fn(model_args, data_args, training_args, finetuning_args, callbacks)
 
     if is_ray_available() and ray.is_initialized():
         return  # if ray is intialized it will destroy the process group on return
