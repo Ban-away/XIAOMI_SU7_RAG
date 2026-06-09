@@ -319,6 +319,7 @@ GRPO_HYPERPARAMS = {
     "gradient_accumulation_steps": 4,
     "learning_rate":            1e-5,      # 原 5e-6 偏低，配合 beta 调低后提高 LR 让策略能移动
     "num_train_epochs":         3.0,       # 原 1.0，172 条样本每 epoch 仅 ~43 步更新，需多轮
+    "max_train_samples":        300,       # GRPO 每步需生成 N 条候选，全量数据太慢，采样子集
     "lr_scheduler_type":        "cosine",
     "warmup_ratio":             0.1,
     "bf16":                     True,
@@ -401,7 +402,13 @@ def run_grpo_training(config_path: str):
         for line in f:
             data.append(json.loads(line))
     dataset = Dataset.from_list(data)
-    print(f"     共 {len(dataset)} 条")
+    print(f"     原始数据: {len(dataset)} 条")
+
+    # GRPO 每步需为每个 prompt 生成 num_generations 条候选，全量数据极慢
+    max_samples = GRPO_HYPERPARAMS["max_train_samples"]
+    if max_samples > 0 and len(dataset) > max_samples:
+        dataset = dataset.shuffle(seed=42).select(range(max_samples))
+        print(f"     采样子集: {len(dataset)} 条（max_train_samples={max_samples}）")
 
     # ── 加载基座模型 ─────────────────────────────────────
     print("  🔄 加载基座模型...")
