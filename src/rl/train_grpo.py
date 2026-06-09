@@ -304,12 +304,10 @@ def run_sft_warmup(config_path: str):
     cmd = [
         sys.executable, "-m", "llamafactory.cli",
         "train", config_path,
-        "--dataset_dir", os.path.join(LLAMA_FACTORY_DIR, "data"),
     ]
 
     print(f"  🚀 启动 SFT 训练...")
     print(f"     配置: {config_path}")
-    print(f"     数据目录: {os.path.join(LLAMA_FACTORY_DIR, 'data')}")
 
     # 不覆盖 PYTHONPATH → 使用 pip 安装的 llamafactory（支持 transformers 5.x）
     # cwd 仍指向 LLaMA-Factory-main，使 output_dir 等相对路径正确解析
