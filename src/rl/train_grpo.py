@@ -426,6 +426,8 @@ def run_grpo_training(config_path: str):
         r=GRPO_HYPERPARAMS["lora_rank"],
         lora_alpha=GRPO_HYPERPARAMS["lora_alpha"],
         task_type=TaskType.CAUSAL_LM,
+        target_modules=["q_proj", "v_proj", "k_proj", "o_proj",
+                         "gate_proj", "up_proj", "down_proj"],
     )
 
     # ── GRPO 训练配置 ────────────────────────────────────
