@@ -328,7 +328,7 @@ def run_grpo_training(config_path: str):
     print("  🔄 加载基座模型...")
     model = AutoModelForCausalLM.from_pretrained(
         model_base_path,
-        torch_dtype=torch.bfloat16,
+        dtype=torch.bfloat16,
         device_map="auto",
         trust_remote_code=True,
     )
@@ -350,6 +350,12 @@ def run_grpo_training(config_path: str):
     )
 
     # ── GRPO 训练配置 ────────────────────────────────────
+    # 清理旧输出目录（GRPOConfig 没有 overwrite_output_dir 参数）
+    import shutil
+    if os.path.exists(grpo_output_dir):
+        shutil.rmtree(grpo_output_dir)
+    os.makedirs(grpo_output_dir, exist_ok=True)
+
     grpo_config = GRPOConfig(
         output_dir=grpo_output_dir,
         num_generations=GRPO_HYPERPARAMS["num_generations"],
@@ -364,9 +370,9 @@ def run_grpo_training(config_path: str):
         beta=GRPO_HYPERPARAMS["beta"],
         temperature=GRPO_HYPERPARAMS["temperature"],
         top_p=GRPO_HYPERPARAMS["top_p"],
+        use_vllm=False,               # 使用 HF generate，不走 vllm
         logging_steps=5,
         save_steps=50,
-        overwrite_output_dir=True,
         report_to="none",
     )
 
