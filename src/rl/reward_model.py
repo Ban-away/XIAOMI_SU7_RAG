@@ -6,12 +6,12 @@ RL 奖励函数 - 多维度轨迹质量评分
   为 GRPO 训练提供奖励信号，评估模型生成的工具调用轨迹质量。
 
   奖励维度（总分 1.0）：
-    1. 格式完整性  (0.15) - 标签是否齐全、正确闭合
-    2. 答案质量    (0.30) - 回答是否准确、信息量是否充足
+    1. 格式完整性  (0.05) - 标签是否齐全、正确闭合（SFT 已教格式，GRPO 弱化此维度）
+    2. 答案质量    (0.40) - 回答准确性、信息量、基于检索信息的 groundedness
     3. 工具合理性  (0.15) - 检索关键词是否精准、调用顺序是否合理
     4. 来源标注    (0.10) - 网络信息是否正确注明来源
     5. 领域合规    (0.15) - 是否正确拒答非 SU7 问题
-    6. 探索深度    (0.15) - 是否有效利用 read_page 进行垂直搜索
+    6. 探索深度    (0.15) - 本地充足即停 / 网络搜索有效利用 read_page
 
   支持两种使用模式：
     - 规则模式（默认）：基于正则 + 启发式规则打分，无需 GPU
@@ -64,33 +64,47 @@ def score_format(trajectory: str) -> float:
     """
     检查轨迹是否包含完整的标签结构。
 
-    完整轨迹应包含：
-      <search_local> → <information> → <search_web> → <information> → <answer>
+    完整轨迹应包含（至少一种搜索方式）：
+      方式一：<search_local> → <information> → <answer>          （本地检索）
+      方式二：<search_web>   → <information> → <answer>          （网络搜索）
+      方式三：<search_local> → <search_web> → <information> → <answer>（混合）
       可选：<read_page> → <information>（垂直搜索）
 
-    每缺失一个关键标签扣 0.04，最低 0 分。
+    评分标准（满分 0.05）：
+      - 至少一种搜索方式 + information + answer = 0.03
+      - 两种搜索方式均有 → +0.01
+      - 所有已出现标签正确闭合 → +0.01
+      - 标签不匹配 → -0.01/个
     """
+    has_local = bool(_RE_SEARCH_LOCAL.search(trajectory))
+    has_web   = bool(_RE_SEARCH_WEB.search(trajectory))
+    has_info  = bool(_RE_INFORMATION.search(trajectory))
+    has_answer = bool(_RE_ANSWER.search(trajectory))
+
+    # 至少需要一种搜索方式
+    if not (has_local or has_web):
+        return 0.0
+
     score = 0.0
-    checks = {
-        "search_local": bool(_RE_SEARCH_LOCAL.search(trajectory)),
-        "information":  bool(_RE_INFORMATION.search(trajectory)),
-        "search_web":   bool(_RE_SEARCH_WEB.search(trajectory)),
-        "answer":       bool(_RE_ANSWER.search(trajectory)),
-    }
+    # 核心结构：搜索 + 信息 + 答案
+    if has_local or has_web: score += 0.01
+    if has_info:             score += 0.01
+    if has_answer:           score += 0.01
+    # 两种搜索方式都用 → 更完整
+    if has_local and has_web: score += 0.01
 
-    # 每个标签存在得 0.04
-    score += sum(0.04 for exists in checks.values() if exists)
-
-    # 标签闭合检查：开闭标签数量是否匹配
+    # 标签闭合检查
+    closure_ok = True
     for tag in ["search_local", "search_web", "read_page", "information", "answer"]:
         opens  = trajectory.count(f"<{tag}>")
         closes = trajectory.count(f"</{tag}>")
-        if opens > 0 and opens == closes:
-            score += 0.0  # 已在存在性中计分
-        elif opens > 0 and opens != closes:
-            score -= 0.02  # 标签不匹配扣分
+        if opens > 0 and opens != closes:
+            closure_ok = False
+            score -= 0.01  # 标签不匹配扣分
+    if closure_ok and (has_local or has_web):
+        score += 0.01  # 全部正确闭合加分
 
-    return max(0.0, min(0.15, score))
+    return max(0.0, min(0.05, score))
 
 
 # ────────────────────────────────────────────────────────────
@@ -99,14 +113,16 @@ def score_format(trajectory: str) -> float:
 
 def score_answer_quality(trajectory: str, question: str = "") -> float:
     """
-    评估 <answer> 内容的质量。
+    评估 <answer> 内容的质量（满分 0.40）。
 
     评分标准：
-      - 非空得基础分 0.08
-      - 答案长度 > 30 字得 0.04
-      - 包含具体数据/规格得 0.04
-      - 语言自然流畅（非纯复制）得 0.04
-      - 答案与问题主题相关得 0.10
+      - 非空基础分：0.10
+      - 长度充实：>30 字 +0.04，>100 字 +0.04（合计 0.08）
+      - 包含具体数据/规格：+0.05
+      - 包含专业术语：+0.04
+      - 语言自然流畅：+0.03
+      - 与问题主题相关（3字片段匹配）：+0.06
+      - 答案基于检索信息（groundedness）：+0.04
     """
     answer_match = _RE_ANSWER.search(trajectory)
     if not answer_match:
@@ -116,17 +132,17 @@ def score_answer_quality(trajectory: str, question: str = "") -> float:
     if not answer:
         return 0.0
 
-    score = 0.08  # 非空基础分
+    score = 0.10  # 非空基础分
 
     # 长度奖励
     if len(answer) > 30:
         score += 0.04
-    if len(answer) > 80:
-        score += 0.02
+    if len(answer) > 100:
+        score += 0.04
 
     # 包含具体数据（数字、单位、规格）
     if re.search(r"\d+[\.\d]*\s*(km|kW|N·m|V|Ah|mm|英寸|%|万元|秒|公里|马力)", answer):
-        score += 0.04
+        score += 0.05
 
     # 包含专业术语
     tech_terms = [
@@ -135,24 +151,33 @@ def score_answer_quality(trajectory: str, question: str = "") -> float:
         "制动", "转向", "扭矩", "功率", "续航",
     ]
     if any(t in answer for t in tech_terms):
-        score += 0.03
+        score += 0.04
 
     # 语言自然度（非纯复制粘贴的标志）
     natural_markers = ["此外", "另外", "需要注意的是", "具体来说", "同时", "因此"]
     if any(m in answer for m in natural_markers):
-        score += 0.02
+        score += 0.03
 
-    # 与问题的主题相关性
+    # 与问题的主题相关性：问题用 2 字片段，检查是否在答案中出现
     if question:
-        # 提取问题中的核心关键词
         q_keywords = set(re.findall(r"[一-鿿]{2,}", question))
-        a_keywords = set(re.findall(r"[一-鿿]{2,}", answer))
-        overlap = q_keywords & a_keywords
-        if overlap:
-            ratio = len(overlap) / max(len(q_keywords), 1)
-            score += min(0.10, ratio * 0.15)
+        if q_keywords:
+            hits = sum(1 for kw in q_keywords if kw in answer)
+            ratio = hits / len(q_keywords)
+            score += min(0.06, ratio * 0.12)
 
-    return max(0.0, min(0.30, score))
+    # 答案基于检索信息（groundedness）：答案片段在信息块中出现的比例
+    info_matches = _RE_INFORMATION.findall(trajectory)
+    if info_matches and answer:
+        info_text = " ".join(m.strip() for m in info_matches if m.strip())
+        if info_text:
+            ans_phrases = re.findall(r"[一-鿿]{3,}", answer)
+            if ans_phrases:
+                grounded_count = sum(1 for p in ans_phrases if p in info_text)
+                grounded_ratio = grounded_count / max(len(ans_phrases), 1)
+                score += min(0.04, grounded_ratio * 0.08)
+
+    return max(0.0, min(0.40, score))
 
 
 # ────────────────────────────────────────────────────────────
@@ -319,28 +344,50 @@ def _is_su7_question(question: str) -> bool:
 def score_exploration_depth(trajectory: str) -> float:
     """
     评估是否有效利用 read_page 进行垂直搜索（WebWalker 式深度探索）。
+    同时公平对待 local-only 轨迹：本地检索已充分时给予合理分数。
 
     评分标准：
-      - 有 web 搜索但无 read_page：0.03（仅表面搜索）
-      - 有 read_page 且 URL 有效（http/https 开头）：+0.05
-      - read_page 内容被 answer 引用：+0.04
-      - 多次 read_page（≤2，符合限制）：+0.03
-      - read_page 出现在 search_web 之前：-0.03（顺序错误）
+      【Local-only 轨迹】（无 web 搜索）
+        - 本地信息充分 + 答案充实：0.10（本地探索已足够）
+        - 本地信息充分但答案简短：0.05
+        - 本地信息不充分（空结果/低相关性）：0.02
+      【Web 轨迹】（有 web 搜索）
+        - 有 web 但无 read_page：0.03（仅表面搜索）
+        - 有 read_page 且 URL 有效：+0.05
+        - read_page 内容被 answer 引用：+0.04
+        - 多次 read_page（≤2）：+0.03
+        - read_page 在 search_web 之前：-0.03（顺序错误）
     """
     score = 0.0
 
+    has_local = bool(_RE_SEARCH_LOCAL.search(trajectory))
     has_web = bool(_RE_SEARCH_WEB.search(trajectory))
     read_matches = _RE_READ_PAGE.findall(trajectory)
     read_count = len(read_matches)
+    answer_match = _RE_ANSWER.search(trajectory)
 
-    # 基础分：有 web 搜索给了探索机会
-    if has_web and read_count == 0:
-        # 有 web 搜索但没有深入阅读——仅表面搜索
-        score = 0.03
+    # ── Local-only 轨迹：本地检索已足够时给予合理分数 ──────────
+    if not has_web:
+        if has_local:
+            info_matches = _RE_INFORMATION.findall(trajectory)
+            # 过滤掉空结果提示（"未检索到"/"相关性较低"）
+            substantive = [
+                m.strip() for m in info_matches
+                if m.strip() and "未检索到" not in m and "相关性较低" not in m
+            ]
+            if substantive and answer_match:
+                answer = answer_match.group(1).strip()
+                score = 0.10 if len(answer) > 20 else 0.05
+            else:
+                score = 0.02  # 本地结果不充分
         return max(0.0, min(0.15, score))
 
+    # ── Web 轨迹：原有逻辑 ──────────────────────────────────
+
+    # 有 web 搜索但没有深入阅读——仅表面搜索
     if read_count == 0:
-        return 0.0
+        score = 0.03
+        return max(0.0, min(0.15, score))
 
     # read_page URL 有效性
     valid_urls = 0
@@ -447,8 +494,8 @@ def compute_reward(
         print(f"\n{'='*50}")
         print(f"  问题: {question[:50]}...")
         print(f"{'='*50}")
-        print(f"  格式完整性:  {fmt:.3f} / 0.15")
-        print(f"  答案质量:    {ans:.3f} / 0.30")
+        print(f"  格式完整性:  {fmt:.3f} / 0.05")
+        print(f"  答案质量:    {ans:.3f} / 0.40")
         print(f"  工具合理性:  {tool:.3f} / 0.15")
         print(f"  来源标注:    {src:.3f} / 0.10")
         print(f"  领域合规:    {domain:.3f} / 0.15")

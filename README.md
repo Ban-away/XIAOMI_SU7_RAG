@@ -79,6 +79,13 @@ PDF 文本 + 图片抽取
 </td>
 </tr>
 <tr>
+<td><b>🧠 RL 训练</b></td>
+<td>
+TRL GRPOTrainer + PEFT LoRA
+<code>trl</code> + <code>peft</code> + 自定义 6 维奖励函数
+</td>
+</tr>
+<tr>
 <td><b>⚡ 性能</b></td>
 <td>
 TTFT 均值：52 ms<br/>
@@ -176,9 +183,10 @@ query → [🖥️ BGE 召回] → [🖥️ MiniCPM 精排] → [🖥️ Qwen3-8
               ↑本地                    ↑远程API
 
 阶段六：RL 强化学习（Search-R1 + WebWalker 垂直搜索，进阶）
-问题库 → [🖥️ 本地+网络检索] → [☁️ 豆包API 生成轨迹] → SFT warm-up → GRPO 强化学习
+问题库 → [🖥️ 本地+网络检索] → [☁️ 豆包API 生成轨迹] → SFT warm-up → GRPO 强化学习（TRL + PEFT）
                                     ↑边生成边检索                    ↑6维自定义奖励函数
 模型自主决定何时检索、检索什么，还可对搜索结果页面深度阅读（垂直探索），而非固定管线检索→生成
+训练数据 = 网络兜底轨迹（~72条）+ 本地可答轨迹（~100条），兼顾联网与本地场景
 ```
 ---
 
@@ -243,10 +251,11 @@ XIAOMI_SU7_RAG/
 │  │  ├─ __init__.py              # 模块说明
 │  │  ├─ web_reader.py           # 网页内容抓取器（垂直搜索基础设施）
 │  │  ├─ data_builder.py         # 网络兜底轨迹生成器（含多跳页面阅读）
-│  │  ├─ format_converter.py     # 训练数据格式转换器
-│  │  ├─ reward_model.py         # 6 维度奖励函数
+│  │  ├─ build_local_trajectories.py  # 本地可答轨迹生成器（BM25 召回）
+│  │  ├─ format_converter.py     # 训练数据格式转换器（含自动修复）
+│  │  ├─ reward_model.py         # 6 维度奖励函数（兼容 TRL 接口）
 │  │  ├─ environment.py          # 工具调用路由环境（local/web/read_page）
-│  │  ├─ train_grpo.py           # GRPO 训练入口
+│  │  ├─ train_grpo.py           # GRPO 训练入口（TRL + PEFT，非 LLaMA-Factory）
 │  │  ├─ batch_eval.py           # RL 模型批量评测（与 baseline 对比）
 │  │  └─ infer_rl.py             # RL 增强推理（边生成边检索 + 深度阅读）
 │  │
@@ -281,9 +290,16 @@ XIAOMI_SU7_RAG/
 │  │
 │  ├─ 📂 rl_data/                            # RL 强化学习数据
 │  │  ├─ web_fallback_questions.json         # 网络兜底问题库（66条/10类）
-│  │  ├─ web_fallback_trajectories.json      # 生成的原始轨迹
-│  │  ├─ web_fallback_trajectories_sft.json  # SFT 格式
-│  │  ├─ web_fallback_trajectories_grpo.jsonl # GRPO 格式
+│  │  ├─ web_fallback_trajectories.json      # 网络兜底原始轨迹
+│  │  ├─ web_fallback_trajectories_sft.json  # 网络兜底 SFT 格式
+│  │  ├─ web_fallback_trajectories_grpo.jsonl # 网络兜底 GRPO 格式
+│  │  ├─ local_trajectories.json             # 本地可答轨迹数据（~100条）
+│  │  ├─ local_trajectories_sft.json         # 本地可答 SFT 格式
+│  │  ├─ local_trajectories_grpo.jsonl       # 本地可答 GRPO 格式
+│  │  ├─ combined_trajectories_sft.json      # 合并 SFT 格式（网络+本地）
+│  ├─ combined_sft_train.json             # 合并 SFT 训练集（80% 拆分）
+│  ├─ combined_sft_eval.json              # 合并 SFT 评估集（20% 拆分）
+│  │  ├─ combined_trajectories_grpo.jsonl    # 合并 GRPO 格式（网络+本地，训练用）
 │  │  ├─ rl_eval_results.json               # RL 模型评测结果
 │  │  └─ rl_eval_ckpt.jsonl                 # 评测断点续传检查点
 │  │
@@ -318,12 +334,12 @@ XIAOMI_SU7_RAG/
 ├─ 📂 RAG-Retrieval/                             # 检索实验框架 (子项目)
 │  └─ ... (检索模块训练与评估)
 │
-└─ 📂 deploy/                                    # 部署脚本
-   ├─ auto_vllm_server.py       # 自动识别单/多卡启动脚本
-   ├─ download_models.py        # 一键下载项目公开模型（core/all）
-   └─ baseline_gpt4o.py         # 基线对比测试
-
-├─ 📂 configs/                                   # RL 训练配置
+├─ 📂 deploy/                                    # 部署脚本
+│  ├─ auto_vllm_server.py       # 自动识别单/多卡启动脚本
+│  ├─ download_models.py        # 一键下载项目公开模型（core/all）
+│  └─ baseline_gpt4o.py         # 基线对比测试
+│
+└─ 📂 configs/                                   # RL 训练配置
    ├─ qwen3_lora_rl_sft.yaml    # SFT warm-up 配置
    └─ qwen3_lora_grpo.yaml     # GRPO 强化学习配置
 ```
@@ -660,25 +676,51 @@ python src/rl/data_builder.py --resume       # 断点续传
 python src/rl/format_converter.py
 ```
 
-14. 注册数据集 + SFT warm-up + GRPO 训练
+14. 生成本地可答轨迹 + 合并训练数据
 
 ```bash
-# ⚠️ 前提：LLaMA-Factory 需升级到 0.9.4+ 才支持 GRPO
-cd LLaMA-Factory-main && git pull origin main && pip install -e ".[torch,metrics]" && cd ..
+# 从 test_qa_pair_verify.json 采样 ~100 条本地可答问题
+# 走 BM25 检索生成只有 <search_local> 的轨迹
+# 自动与网络兜底轨迹合并为 combined_trajectories_*.jsonl
+python src/rl/build_local_trajectories.py --sample 100
+
+# 可选参数：
+python src/rl/build_local_trajectories.py --dry-run      # 先跑 5 条验证
+python src/rl/build_local_trajectories.py --sample 200    # 调整采样数量
+```
+
+15. 注册数据集 + SFT warm-up + GRPO 训练
+
+```bash
+# SFT warm-up 使用 LLaMA-Factory（步骤 5 相同的框架）
+# GRPO 训练使用 TRL GRPOTrainer + PEFT LoRA（不依赖 LLaMA-Factory GRPO）
 
 # 一键全流程：数据注册 → SFT warm-up → GRPO → 导出
 python src/rl/train_grpo.py --stage all
 
 # 或分步执行：
-python src/rl/train_grpo.py --stage data     # 只注册数据集
-python src/rl/train_grpo.py --stage sft      # SFT warm-up（学会标签格式）
-python src/rl/train_grpo.py --stage grpo     # GRPO 强化学习
-python src/rl/train_grpo.py --stage export   # 导出合并模型
+python src/rl/train_grpo.py --stage data     # 数据准备 + 注册
+python src/rl/train_grpo.py --stage sft      # SFT warm-up（LLaMA-Factory，~172条合并数据，学会标签格式）
+python src/rl/train_grpo.py --stage grpo     # GRPO 强化学习（TRL + PEFT）
+python src/rl/train_grpo.py --stage export   # 导出合并模型（LLaMA-Factory）
 ```
 
-> ⚠️ **配置检查**：`configs/qwen3_lora_rl_sft.yaml` 和 `configs/qwen3_lora_grpo.yaml` 中的 `model_name_or_path` 需指向你的 Qwen3-8B 基座模型绝对路径。GRPO config 中 cutoff_len=6144、max_new_tokens=1536（为 read_page 内容预留空间）。
+> **SFT warm-up 技术细节**：
+> - 使用 LLaMA-Factory，采用合并数据集（~172 条，含网络兜底 + 本地可答轨迹）
+> - 按 `data_source` 分层 80/20 拆分训练集和评估集，确保两类轨迹均有代表
+> - 目的：让模型学会 `<search_local>`/`<search_web>`/`<read_page>`/`<answer>` 标签格式
+> - 配置文件：`configs/qwen3_lora_rl_sft.yaml`，LoRA rank=8，3 epoch，lr=1e-5
+>
+> **GRPO 训练技术细节**：
+> - 使用 `trl` 库的 `GRPOTrainer`（需 `trl >= 0.14`）+ `peft` 的 `LoRA`
+> - 训练数据为合并数据集：~72 条网络兜底 + ~100 条本地可答 = **~172 条**
+> - 加载 Qwen3-8B 基座 → 合并 SFT 适配器 → 应用新 LoRA → GRPO 训练
+> - 6 维自定义奖励函数通过 `reward_funcs` 参数注入
+> - 训练配置（`GRPO_HYPERPARAMS` 字典）定义在 `src/rl/train_grpo.py` 中
+> - GRPO 训练使用 HuggingFace `generate()`，不需要 vLLM
+> - 关键超参数：`beta=0.01`（KL 惩罚），`lr=1e-5`，3 epoch，`num_generations=4`
 
-15. RL 增强推理（边生成边检索 + 深度页面阅读）
+16. RL 增强推理（边生成边检索 + 深度页面阅读）
 
 ```bash
 # 启动 vLLM（使用 RL 训练后的模型）
@@ -716,7 +758,7 @@ python src/rl/infer_rl.py --show-reward --show-trajectory
 （以上信息来源于www.xiaomi.com，请以小米官方最新公告为准）</answer>
 ```
 
-16. RL 模型评测（与 baseline 对比）
+17. RL 模型评测（与 baseline 对比）
 
 ```bash
 # RL 模型用同一套评测指标与传统 RAG 对比效果
@@ -778,6 +820,11 @@ python src/rl/batch_eval.py --resume
 | `data/rl_data/web_fallback_trajectories.json` | RL 原始轨迹数据 | - | Step 12 (`data_builder.py`) |
 | `data/rl_data/web_fallback_trajectories_sft.json` | RL SFT 格式训练数据 | - | Step 13 (`format_converter.py`) |
 | `data/rl_data/web_fallback_trajectories_grpo.jsonl` | RL GRPO 格式训练数据 | - | Step 13 (`format_converter.py`) |
+| `data/rl_data/local_trajectories.json` | 本地可答原始轨迹 | ~100 | Step 14 (`build_local_trajectories.py`) |
+| `data/rl_data/local_trajectories_grpo.jsonl` | 本地可答 GRPO 格式 | ~100 | Step 14 (`build_local_trajectories.py`) |
+| `data/rl_data/local_trajectories_sft.json` | 本地可答 SFT 格式 | ~100 | Step 14 (`build_local_trajectories.py`) |
+| `data/rl_data/combined_trajectories_grpo.jsonl` | 合并 GRPO 格式（网络+本地，训练用） | ~172 | Step 14 (`build_local_trajectories.py`) |
+| `data/rl_data/combined_trajectories_sft.json` | 合并 SFT 格式（网络+本地） | ~172 | Step 14 (`build_local_trajectories.py`) |
 
 #### LLaMA-Factory 训练数据 (`LLaMA-Factory-main/data/`)
 
@@ -1037,10 +1084,11 @@ python src/rl/batch_eval.py --vllm-url http://localhost:8000/v1
 
 | 限制 | 说明 | 解决方案 |
 |:---:|:---|:---|
-| 📦 LLaMA-Factory 版本 | 仓库自带版本（0.9.3.dev0）不支持 GRPO 训练 | 升级到 0.9.4+：`cd LLaMA-Factory-main && git pull && pip install -e ".[torch,metrics]"` |
+| 📦 TRL 版本 | GRPO 训练需要 `trl >= 0.14`，项目自带 `trl==0.9.6` | `pip install "trl>=0.14" --upgrade` |
+| 📦 transformers 兼容性 | 升级 TRL 后可能拉高 transformers 版本，与旧版 vllm/FlagEmbedding 冲突 | GRPO 训练脚本已自动屏蔽 vllm 导入；重排模型仅在推理/评测时使用 |
 | 📁 目录创建 | 部分脚本不自动创建输出目录 | 提前 `mkdir -p data/{processed_docs,saved_index,qa_pairs,summary_data,rerank_data,rl_data,saved_images,mongodb/{data,log}}` |
 | 🔑 网络搜索 API | RL 网络兜底依赖 SerpAPI（免费额度有限） | 未设置时自动降级为豆包 LLM 模拟搜索；也可配置 `BING_SEARCH_KEY` 作为备选后端 |
-| 🖥️ GPU 要求 | vLLM 推理 + 重排模型需要 GPU | 建议单卡 ≥ 16GB 显存；INT4 量化后约需 ~6GB |
+| 🖥️ GPU 要求 | vLLM 推理 + 重排模型 + GRPO 训练需要 GPU | 推理建议单卡 ≥ 16GB；GRPO 训练 `num_generations=4` 约需 35-45GB（可降至 2 减半显存） |
 
 ---
 
@@ -1105,47 +1153,60 @@ Search-R1 + WebWalker（infer_rl.py）：
 |:---|:---|
 | `src/rl/web_reader.py` | 网页内容抓取器（HTML→纯文本，超时/大小/类型防护） |
 | `src/rl/data_builder.py` | 网络兜底轨迹生成器（含多跳页面阅读，自动提取URL并抓取） |
-| `src/rl/format_converter.py` | 格式转换器（轨迹 → SFT / GRPO / ShareGPT 多格式，含 read_page 校验） |
-| `src/rl/reward_model.py` | 6 维度奖励函数（格式 0.15 + 答案 0.30 + 工具 0.15 + 来源 0.10 + 领域 0.15 + **探索深度 0.15**） |
+| `src/rl/build_local_trajectories.py` | 本地可答轨迹生成器（BM25 召回，教模型"本地够用就停"） |
+| `src/rl/format_converter.py` | 格式转换器（轨迹 → SFT / GRPO / ShareGPT 多格式，含自动修复截断标签） |
+| `src/rl/reward_model.py` | 6 维度奖励函数（格式 0.05 + 答案 0.40 + 工具 0.15 + 来源 0.10 + 领域 0.15 + **探索深度 0.15**），兼容 TRL 接口 |
 | `src/rl/environment.py` | 工具调用路由环境（拦截 `<search_local>`/`<search_web>`/`<read_page>` → 执行检索 → 注入结果） |
-| `src/rl/train_grpo.py` | GRPO 训练入口（数据准备 → SFT warm-up → GRPO 训练 → 导出） |
+| `src/rl/train_grpo.py` | GRPO 训练入口（数据准备 → SFT warm-up → **TRL GRPOTrainer + PEFT LoRA** → 导出） |
 | `src/rl/infer_rl.py` | RL 增强推理（边生成边检索 + 深度页面阅读，含跳数和总调用限制） |
 
 ### 奖励函数（6 维度，总分 1.0）
 
 | 维度 | 权重 | 说明 |
 |:---|:---:|:---|
-| 格式完整性 | 0.15 | 标签齐全、正确闭合 |
-| 答案质量 | 0.30 | 回答准确性、信息量、数据引用 |
+| 格式完整性 | 0.05 | 标签齐全、正确闭合（SFT 已教格式，GRPO 弱化此维度） |
+| 答案质量 | 0.40 | 回答准确性、信息量、基于检索信息的 groundedness |
 | 工具合理性 | 0.15 | 检索关键词精准、调用顺序合理 |
 | 来源标注 | 0.10 | 网络信息正确注明来源 |
 | 领域合规 | 0.15 | 正确拒答非SU7问题 |
-| **探索深度** | **0.15** | **有效利用 read_page 进行垂直搜索（WebWalker 式深度探索）** |
+| **探索深度** | **0.15** | **本地充足即停 / 网络搜索有效利用 read_page** |
 
-探索深度评分逻辑：有web无read_page得0.03（表面搜索）；有read_page且URL有效+0.05；内容被answer引用+0.04；多次read_page（≤2）+0.03；顺序错误（read_page在web之前）-0.03。
+探索深度评分逻辑：
+- **Local-only**：本地信息充分 + 答案充实 → 0.10；本地信息不充分 → 0.02
+- **Web 轨迹**：有web无read_page得0.03（表面搜索）；有read_page且URL有效+0.05；内容被answer引用+0.04；多次read_page（≤2）+0.03；顺序错误-0.03
 
 ### 训练流程
 
 ```bash
-# 1. 生成训练轨迹（本地检索 + 网络兜底 + 自动页面抓取）
+# 1. 生成网络兜底轨迹（本地检索 + 网络搜索 + 自动页面抓取）
 python src/rl/data_builder.py
 
-# 2. 格式转换（轨迹 → SFT/GRPO 格式）
+# 2. 生成本地可答轨迹（BM25 召回，教模型不联网）
+python src/rl/build_local_trajectories.py --sample 100
+
+# 3. 格式转换（轨迹 → SFT/GRPO 格式，自动修复 + 合并）
 python src/rl/format_converter.py
 
-# 3. 一键训练（SFT warm-up + GRPO 强化学习）
+# 4. 一键训练（SFT warm-up + GRPO 强化学习）
+#    SFT warm-up 使用 LLaMA-Factory
+#    GRPO 使用 TRL GRPOTrainer + PEFT LoRA
 python src/rl/train_grpo.py --stage all
 
-# 4. RL 增强推理（边生成边检索 + 深度阅读）
+# 5. RL 增强推理（边生成边检索 + 深度阅读）
 python deploy/auto_vllm_server.py --model LLaMA-Factory-main/output/qwen3_lora_rl --port 8000
 python src/rl/infer_rl.py --show-reward --show-trajectory
 ```
 
-> ⚠️ **LLaMA-Factory 版本要求**：GRPO 训练需要 LLaMA-Factory ≥ 0.9.4。当前仓库自带版本（0.9.3.dev0）不支持 GRPO，需执行 `cd LLaMA-Factory-main && git pull origin main && pip install -e ".[torch,metrics]"` 升级。
+> **依赖要求**：GRPO 训练需要 `trl >= 0.14` + `peft`。SFT warm-up 和导出合并仍使用 LLaMA-Factory。SFT warm-up 使用合并数据集（~172 条，按 data_source 分层 80/20 拆分训练/评估集）；GRPO 同样使用合并数据集，兼顾"何时联网"和"何时不联网"两种场景。
 
 ### 训练数据
 
-**问题库**（`data/rl_data/web_fallback_questions.json`）：66 条需要网络兜底的问题，覆盖 10 个分类。
+**训练数据由两类轨迹合并而成：**
+
+| 数据类型 | 数量 | 轨迹特点 | 训练目标 |
+|:---|:---:|:---|:---|
+| 网络兜底轨迹 | ~72 条 | `<search_local>` + `<search_web>` + `<read_page>` | 学会何时联网 + 深度阅读 |
+| 本地可答轨迹 | ~100 条 | 只有 `<search_local>` + `<answer>` | 学会本地够用时不要联网搜索 |
 
 | 分类 | 数量 | 示例问题 |
 |:---|:---:|:---|

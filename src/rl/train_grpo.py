@@ -47,6 +47,7 @@ DATA_DIR          = os.path.join(BASE_DIR, "data/rl_data")
 CONFIG_DIR        = os.path.join(BASE_DIR, "configs")
 
 # ── 模型路径 ────────────────────────────────────────────────
+SFT_ADAPTER_DIR   = os.path.join(LLAMA_FACTORY_DIR, "saves/qwen3-8b/lora/rl_sft")
 GRPO_OUTPUT_DIR   = os.path.join(LLAMA_FACTORY_DIR, "saves/qwen3-8b/lora/grpo")
 RL_EXPORT_DIR     = os.path.join(LLAMA_FACTORY_DIR, "output/qwen3_lora_rl")
 
@@ -92,20 +93,25 @@ def prepare_data():
     if os.path.exists(raw_path):
         print(f"  🔄 发现原始轨迹数据，开始格式转换...")
         _convert_trajectories(raw_path)
-        return True
 
     # ── Level 3: 什么都没有，自动生成轨迹 ──────────────────
-    print("  🔄 未找到轨迹数据，自动运行 data_builder.py 生成...")
-    if not _run_data_builder():
-        return False
+    else:
+        print("  🔄 未找到轨迹数据，自动运行 data_builder.py 生成...")
+        if not _run_data_builder():
+            return False
+        if os.path.exists(raw_path):
+            _convert_trajectories(raw_path)
+        else:
+            print("  ❌ 轨迹生成后仍未找到数据文件")
+            return False
 
-    # 生成完成后再转换
-    if os.path.exists(raw_path):
-        _convert_trajectories(raw_path)
-        return True
+    # ── Level 4: 生成本地轨迹 + 合并为 combined 数据 ────────
+    if not os.path.exists(combined_grpo) or not os.path.exists(combined_sft):
+        print(f"  🔄 合并数据集不存在，运行 build_local_trajectories.py...")
+        if not _run_build_local_trajectories():
+            print("  ⚠️ 本地轨迹生成失败，将仅使用网络兜底数据")
 
-    print("  ❌ 轨迹生成后仍未找到数据文件")
-    return False
+    return True
 
 
 def _run_data_builder() -> bool:
@@ -138,6 +144,27 @@ def _convert_trajectories(raw_path: str):
     save(results, output_dir=DATA_DIR)
 
 
+def _run_build_local_trajectories() -> bool:
+    """调用 build_local_trajectories.py 生成本地轨迹 + 合并数据"""
+    test_qa = os.path.join(BASE_DIR, "data/qa_pairs/test_qa_pair_verify.json")
+    if not os.path.exists(test_qa):
+        print(f"  ⚠️ 测试集不存在: {test_qa}，跳过本地轨迹生成")
+        return False
+
+    cmd = [sys.executable, "src/rl/build_local_trajectories.py", "--sample", "100"]
+    print(f"  🚀 执行: {' '.join(cmd)}")
+    print()
+
+    result = subprocess.run(cmd, cwd=BASE_DIR)
+
+    if result.returncode != 0:
+        print(f"\n  ❌ build_local_trajectories.py 执行失败 (exit code: {result.returncode})")
+        return False
+
+    print(f"\n  ✅ 本地轨迹生成 + 合并完成")
+    return True
+
+
 def register_dataset():
     """将训练数据注册到 LLaMA-Factory 的 dataset_info.json"""
     print("\n📋 注册数据集到 LLaMA-Factory...")
@@ -167,7 +194,7 @@ def register_dataset():
         print(f"  ✅ 注册 web_fallback_grpo: {rel_path}")
         updated = True
 
-    # 注册 SFT warm-up 数据集
+    # 注册 SFT warm-up 数据集（保留 web_fallback_sft 作为后备）
     sft_data_file = os.path.join(DATA_DIR, "web_fallback_trajectories_sft.json")
     if os.path.exists(sft_data_file):
         rel_path = os.path.relpath(sft_data_file, os.path.join(LLAMA_FACTORY_DIR, "data"))
@@ -182,6 +209,70 @@ def register_dataset():
             },
         }
         print(f"  ✅ 注册 web_fallback_sft: {rel_path}")
+        updated = True
+
+    # 注册合并 SFT 数据集（训练集 + 评估集拆分）
+    combined_sft_file = os.path.join(DATA_DIR, "combined_trajectories_sft.json")
+    if os.path.exists(combined_sft_file):
+        train_file = os.path.join(DATA_DIR, "combined_sft_train.json")
+        eval_file = os.path.join(DATA_DIR, "combined_sft_eval.json")
+
+        # 如果拆分文件已存在，直接复用（不重复拆分）
+        if os.path.exists(train_file) and os.path.exists(eval_file):
+            with open(train_file, encoding="utf-8") as f:
+                train_data = json.load(f)
+            with open(eval_file, encoding="utf-8") as f:
+                eval_data = json.load(f)
+            print(f"  ✅ 复用已有拆分: train={len(train_data)} eval={len(eval_data)}")
+        else:
+            # 读取合并数据
+            with open(combined_sft_file, encoding="utf-8") as f:
+                all_data = json.load(f)
+
+            # 固定随机种子，按 data_source 分层拆分 80/20
+            import random
+            random.seed(42)
+            web_data = [d for d in all_data if d.get("data_source") == "web_fallback"]
+            local_data = [d for d in all_data if d.get("data_source") != "web_fallback"]
+            random.shuffle(web_data)
+            random.shuffle(local_data)
+
+            web_split = int(len(web_data) * 0.8)
+            local_split = int(len(local_data) * 0.8)
+            train_data = web_data[:web_split] + local_data[:local_split]
+            eval_data = web_data[web_split:] + local_data[local_split:]
+            random.shuffle(train_data)
+            random.shuffle(eval_data)
+
+            # 保存拆分文件
+            with open(train_file, "w", encoding="utf-8") as f:
+                json.dump(train_data, f, ensure_ascii=False, indent=2)
+            with open(eval_file, "w", encoding="utf-8") as f:
+                json.dump(eval_data, f, ensure_ascii=False, indent=2)
+
+            print(f"  ✅ 拆分合并数据集: train={len(train_data)} eval={len(eval_data)}")
+
+        # 注册到 dataset_info.json
+        train_rel = os.path.relpath(train_file, os.path.join(LLAMA_FACTORY_DIR, "data"))
+        eval_rel = os.path.relpath(eval_file, os.path.join(LLAMA_FACTORY_DIR, "data"))
+        sft_columns = {
+            "prompt": "instruction",
+            "query": "input",
+            "response": "output",
+            "system": "system",
+        }
+        dataset_info["combined_sft_train"] = {
+            "file_name": train_rel,
+            "formatting": "alpaca",
+            "columns": sft_columns,
+        }
+        dataset_info["combined_sft_eval"] = {
+            "file_name": eval_rel,
+            "formatting": "alpaca",
+            "columns": sft_columns,
+        }
+        print(f"  ✅ 注册 combined_sft_train: {train_rel}")
+        print(f"  ✅ 注册 combined_sft_eval:  {eval_rel}")
         updated = True
 
     if updated:
@@ -244,12 +335,12 @@ GRPO_HYPERPARAMS = {
     "max_completion_length":    1536,      # 最大生成长度（为 read_page 预留空间）
     "per_device_train_batch_size": 1,
     "gradient_accumulation_steps": 4,
-    "learning_rate":            5e-6,
-    "num_train_epochs":         1.0,
+    "learning_rate":            1e-5,      # 原 5e-6 偏低，配合 beta 调低后提高 LR 让策略能移动
+    "num_train_epochs":         3.0,       # 原 1.0，172 条样本每 epoch 仅 ~43 步更新，需多轮
     "lr_scheduler_type":        "cosine",
     "warmup_ratio":             0.1,
     "bf16":                     True,
-    "beta":                     0.04,     # KL 散度惩罚系数
+    "beta":                     0.01,      # 原 0.04 导致 KL 过低 + clip_ratio=0，策略被锁死
     "temperature":              0.7,
     "top_p":                    0.9,
     "lora_rank":                8,
@@ -306,8 +397,8 @@ def run_grpo_training(config_path: str):
 
     # ── 路径配置 ──────────────────────────────────────────
     model_base_path  = os.path.join(BASE_DIR, "models/Qwen3-8B/")
-    sft_adapter_path = os.path.join(LLAMA_FACTORY_DIR, "saves/qwen3-8b/lora/rl_sft")
-    grpo_output_dir  = os.path.join(LLAMA_FACTORY_DIR, "saves/qwen3-8b/lora/grpo")
+    sft_adapter_path = SFT_ADAPTER_DIR
+    grpo_output_dir  = GRPO_OUTPUT_DIR
     grpo_data_path   = os.path.join(DATA_DIR, "combined_trajectories_grpo.jsonl")
 
     # ── 前置条件检查 ──────────────────────────────────────
@@ -414,21 +505,39 @@ def run_grpo_training(config_path: str):
 # ────────────────────────────────────────────────────────────
 
 def export_model():
-    """导出 LoRA 合并后的模型"""
+    """
+    导出 LoRA 合并后的模型。
+
+    重要：GRPO 训练时基座 = Qwen3-8B + SFT adapter (merge_and_unload)，
+    GRPO LoRA 是相对于这个合并模型的增量。导出时必须先合并 SFT 再合并 GRPO，
+    否则会丢失 SFT warm-up 的全部学习成果。
+    """
     print("\n" + "=" * 60)
     print("📤 Stage 4: 导出模型")
     print("=" * 60)
+
+    model_base_path = os.path.join(BASE_DIR, "models/Qwen3-8B/")
 
     if not os.path.exists(GRPO_OUTPUT_DIR):
         print(f"  ❌ GRPO 模型目录不存在: {GRPO_OUTPUT_DIR}")
         print(f"     请先完成 GRPO 训练")
         return False
 
+    if not os.path.exists(SFT_ADAPTER_DIR):
+        print(f"  ❌ SFT 适配器目录不存在: {SFT_ADAPTER_DIR}")
+        print(f"     请先完成 SFT warm-up 训练")
+        return False
+
+    # 链式合并：base → +SFT LoRA → +GRPO LoRA → 导出
+    adapter_paths = f"{SFT_ADAPTER_DIR},{GRPO_OUTPUT_DIR}"
+
     print(f"  🔄 导出 LoRA 合并模型...")
+    print(f"     基座: {model_base_path}")
+    print(f"     适配器链: SFT({SFT_ADAPTER_DIR}) → GRPO({GRPO_OUTPUT_DIR})")
     cmd = [
         sys.executable, "-m", "llamafactory.cli", "export",
-        "--model_name_or_path", os.path.join(BASE_DIR, "models/Qwen3-8B/"),
-        "--adapter_name_or_path", GRPO_OUTPUT_DIR,
+        "--model_name_or_path", model_base_path,
+        "--adapter_name_or_path", adapter_paths,
         "--template", "qwen3",
         "--finetuning_type", "lora",
         "--export_dir", RL_EXPORT_DIR,
