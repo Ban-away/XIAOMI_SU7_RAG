@@ -304,16 +304,17 @@ def run_sft_warmup(config_path: str):
     cmd = [
         sys.executable, "-m", "llamafactory.cli",
         "train", config_path,
+        "--dataset_dir", os.path.join(LLAMA_FACTORY_DIR, "data"),
     ]
 
     print(f"  🚀 启动 SFT 训练...")
     print(f"     配置: {config_path}")
+    print(f"     数据目录: {os.path.join(LLAMA_FACTORY_DIR, 'data')}")
 
-    env = os.environ.copy()
-    env["PYTHONPATH"] = LLAMA_FACTORY_DIR
-
+    # 不覆盖 PYTHONPATH → 使用 pip 安装的 llamafactory（支持 transformers 5.x）
+    # cwd 仍指向 LLaMA-Factory-main，使 output_dir 等相对路径正确解析
     result = subprocess.run(
-        cmd, cwd=LLAMA_FACTORY_DIR, env=env,
+        cmd, cwd=LLAMA_FACTORY_DIR,
         capture_output=False,
     )
 
@@ -546,10 +547,8 @@ def export_model():
         "--export_legacy_format", "false",
     ]
 
-    env = os.environ.copy()
-    env["PYTHONPATH"] = LLAMA_FACTORY_DIR
-
-    result = subprocess.run(cmd, cwd=LLAMA_FACTORY_DIR, env=env, capture_output=False)
+    # 不覆盖 PYTHONPATH → 使用 pip 安装的 llamafactory（支持 transformers 5.x）
+    result = subprocess.run(cmd, cwd=LLAMA_FACTORY_DIR, capture_output=False)
 
     if result.returncode != 0:
         print(f"  ❌ 导出失败")
