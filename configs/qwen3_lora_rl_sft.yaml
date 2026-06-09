@@ -9,7 +9,7 @@ quantization_bit: 4
 quantization_method: bnb
 flash_attn: fa2
 trust_remote_code: true
-resize_vocab: true
+# resize_vocab: true  # 量化模型不支持 resize embedding；Qwen3 词表 151K 已足够
 
 ### method
 stage: sft
