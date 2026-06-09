@@ -263,6 +263,23 @@ def merge_files(paths: list[str], dedup: bool = True) -> list[dict]:
 # 核心转换流水线
 # ────────────────────────────────────────────────────────────
 
+def repair_trajectory(trajectory: str) -> tuple[str, list[str]]:
+    """
+    修复轨迹中常见的格式问题（如 LLM 输出被 max_tokens 截断导致闭标签缺失）。
+
+    Returns:
+        (repaired_trajectory, list_of_fixes)
+    """
+    fixes = []
+
+    # 修复 <answer> 开标签存在但闭标签缺失（最常见的截断情况）
+    if "<answer>" in trajectory and "</answer>" not in trajectory:
+        trajectory += "</answer>"
+        fixes.append("补齐 </answer> 闭标签")
+
+    return trajectory, fixes
+
+
 def convert(
     data:         list[dict],
     target_format: str  = "all",
@@ -285,10 +302,20 @@ def convert(
     else:
         formats = [target_format]
 
-    # 预处理：校验 + 过滤
+    # 预处理：自动修复 + 校验 + 过滤
+    repair_count = 0
     valid_items = []
     for item in data:
         trajectory = item.get("trajectory", "")
+
+        # 自动修复已知格式问题
+        trajectory, fixes = repair_trajectory(trajectory)
+        if fixes:
+            item["trajectory"] = trajectory
+            q = item.get("question", "")[:30]
+            print(f"  [FIX] {q}... → {fixes}")
+            repair_count += 1
+
         report = validate_trajectory(trajectory)
 
         if not report["valid"]:
@@ -301,6 +328,8 @@ def convert(
 
         valid_items.append(item)
 
+    if repair_count:
+        print(f"[INFO] 自动修复：{repair_count} 条")
     print(f"[INFO] 有效轨迹：{len(valid_items)}/{len(data)} 条")
 
     # 逐格式转换

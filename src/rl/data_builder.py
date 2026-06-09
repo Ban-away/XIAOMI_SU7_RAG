@@ -18,15 +18,17 @@ RL 训练数据构建脚本 - 网络兜底轨迹生成器
 """
 
 import os
+
+# ── 在所有 tqdm 相关 import 之前禁用，防止下游库弹出子进度条 ──
+os.environ["TQDM_DISABLE"] = "1"
+
 import re
 import json
 import time
-import random
 import hashlib
 import argparse
 import threading
 import concurrent.futures
-from tqdm import tqdm
 from dotenv import load_dotenv
 from openai import OpenAI
 
@@ -420,6 +422,9 @@ class TrajectoryBuilder:
             )
         if "<answer>" not in raw:
             raw += "\n<answer>根据目前可获取的信息，暂时无法给出准确回答，建议访问小米汽车官网获取最新信息。（以上信息来源于网络，请以小米官方最新公告为准）</answer>"
+        elif "<answer>" in raw and "</answer>" not in raw:
+            # max_tokens 截断导致 answer 开标签存在但闭标签缺失，补齐闭标签
+            raw += "</answer>"
         return raw
 
 
@@ -593,16 +598,21 @@ def main():
                     print(f"[ERROR] 处理失败（{item['id']}）: {e}")
                     return None
 
+    total = len(questions)
     with concurrent.futures.ThreadPoolExecutor(max_workers=args.workers) as executor:
         futures = {executor.submit(_process, item): item for item in questions}
-        for future in tqdm(
-            concurrent.futures.as_completed(futures),
-            total=len(futures),
-            desc="生成轨迹"
-        ):
+        done_count = 0
+        for future in concurrent.futures.as_completed(futures):
             result = future.result()
             if result:
                 results.append(result)
+            done_count += 1
+            pct = done_count / total * 100
+            bar_len = 40
+            filled = int(bar_len * done_count / total)
+            bar = "█" * filled + "░" * (bar_len - filled)
+            print(f"\r生成轨迹：{pct:5.1f}%|{bar}| {done_count}/{total}", end="", flush=True)
+    print()  # 进度条换行
 
     # ── 保存输出 ───────────────────────────────────────
     # 1. 完整数据（含调试信息）
