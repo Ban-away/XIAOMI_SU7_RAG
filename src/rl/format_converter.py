@@ -142,6 +142,18 @@ def extract_answer(trajectory: str) -> str:
     return match.group(1).strip() if match else ""
 
 
+def to_sft_target(trajectory: str) -> str:
+    """
+    构造 SFT warm-up 的监督目标。
+
+    SFT 只学习工具调用决策和最终答案；<information> 是环境/工具返回，
+    不应要求模型在 assistant 输出中背诵检索结果。
+    """
+    target = _RE_INFORMATION.sub("", trajectory)
+    target = re.sub(r"\n{3,}", "\n\n", target)
+    return target.strip()
+
+
 # ────────────────────────────────────────────────────────────
 # 格式转换函数
 # ────────────────────────────────────────────────────────────
@@ -153,14 +165,14 @@ def to_sft_format(question: str, trajectory: str, system: str = SYSTEM_PROMPT, *
     字段说明：
       instruction: 用户问题
       input:       留空（问题已包含在 instruction 中）
-      output:      完整轨迹（作为训练目标）
+      output:      去掉 <information> 的轻量轨迹（作为训练目标）
       system:      系统提示词
     """
     answer_text = extract_answer(trajectory)
     return {
         "instruction": question,
         "input":       "",
-        "output":      trajectory,
+        "output":      to_sft_target(trajectory),
         "answer":      answer_text,
         "system":      system,
         "data_source": "web_fallback",

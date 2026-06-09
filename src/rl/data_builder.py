@@ -432,10 +432,22 @@ class TrajectoryBuilder:
 # 格式转换：轨迹 → LLaMA-Factory SFT 格式
 # ────────────────────────────────────────────────────────────
 
+def to_sft_target(trajectory: str) -> str:
+    """
+    SFT warm-up 只学习工具调用和最终答案。
+
+    <information> 是工具/环境返回，不应由 assistant 预测；完整轨迹仍保留
+    在 GRPO completion 中用于奖励训练。
+    """
+    target = re.sub(r"<information>.*?</information>", "", trajectory, flags=re.DOTALL)
+    target = re.sub(r"\n{3,}", "\n\n", target)
+    return target.strip()
+
+
 def to_sft_format(question: str, trajectory: str) -> dict:
     """
     转换为 LLaMA-Factory instruction 格式，兼容 GRPO warm-up SFT 训练。
-    同时提取 answer 内容作为 output 字段供评估使用。
+    同时提取 answer 内容作为奖励/评估字段。
     """
     answer_match = re.search(r"<answer>(.*?)</answer>", trajectory, re.DOTALL)
     answer_text  = answer_match.group(1).strip() if answer_match else ""
@@ -443,7 +455,7 @@ def to_sft_format(question: str, trajectory: str) -> dict:
     return {
         "instruction": question,
         "input":       "",
-        "output":      trajectory,           # 完整轨迹作为训练目标
+        "output":      to_sft_target(trajectory),
         "answer":      answer_text,          # 纯答案文本，用于奖励计算
         "system":      SYSTEM_PROMPT,
         "data_source": "web_fallback",

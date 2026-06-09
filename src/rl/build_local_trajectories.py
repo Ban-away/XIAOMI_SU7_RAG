@@ -115,6 +115,16 @@ def _format_docs(docs: list) -> str:
     return "\n".join(parts)
 
 
+def to_sft_target(trajectory: str) -> str:
+    """
+    SFT warm-up 只学习工具调用和答案，工具返回的 <information>
+    保留给 GRPO/environment，不作为 assistant 监督目标。
+    """
+    target = re.sub(r"<information>.*?</information>", "", trajectory, flags=re.DOTALL)
+    target = re.sub(r"\n{3,}", "\n\n", target)
+    return target.strip()
+
+
 # ────────────────────────────────────────────────────────────
 # 格式转换
 # ────────────────────────────────────────────────────────────
@@ -125,7 +135,7 @@ def to_sft_format(question: str, trajectory: str) -> dict:
     return {
         "instruction": question,
         "input":       "",
-        "output":      trajectory,
+        "output":      to_sft_target(trajectory),
         "answer":      answer_text,
         "system":      SYSTEM_PROMPT,
         "data_source": "local_only",
