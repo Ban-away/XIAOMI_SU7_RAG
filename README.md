@@ -297,8 +297,8 @@ XIAOMI_SU7_RAG/
 │  │  ├─ local_trajectories_sft.json         # 本地可答 SFT 格式
 │  │  ├─ local_trajectories_grpo.jsonl       # 本地可答 GRPO 格式
 │  │  ├─ combined_trajectories_sft.json      # 合并 SFT 格式（网络+本地）
-│  ├─ combined_sft_train.json             # 合并 SFT 训练集（80% 拆分）
-│  ├─ combined_sft_eval.json              # 合并 SFT 评估集（20% 拆分）
+│  │  ├─ combined_sft_train.json             # 合并 SFT 训练集（80% 拆分）
+│  │  ├─ combined_sft_eval.json              # 合并 SFT 评估集（20% 拆分）
 │  │  ├─ combined_trajectories_grpo.jsonl    # 合并 GRPO 格式（网络+本地，训练用）
 │  │  ├─ rl_eval_results.json               # RL 模型评测结果
 │  │  └─ rl_eval_ckpt.jsonl                 # 评测断点续传检查点
@@ -699,10 +699,10 @@ python src/rl/build_local_trajectories.py --sample 200    # 调整采样数量
 python src/rl/train_grpo.py --stage all
 
 # 或分步执行：
-python src/rl/train_grpo.py --stage data     # 数据准备 + 注册
+python src/rl/train_grpo.py --stage data     # 数据准备 + 本地轨迹生成 + 注册
 python src/rl/train_grpo.py --stage sft      # SFT warm-up（LLaMA-Factory，~172条合并数据，学会标签格式）
 python src/rl/train_grpo.py --stage grpo     # GRPO 强化学习（TRL + PEFT）
-python src/rl/train_grpo.py --stage export   # 导出合并模型（LLaMA-Factory）
+python src/rl/train_grpo.py --stage export   # 导出合并模型（链式：base→SFT→GRPO，保留全部学习成果）
 ```
 
 > **SFT warm-up 技术细节**：
@@ -792,7 +792,7 @@ python src/rl/batch_eval.py --resume
 
   📌 RL 特有指标：
   平均奖励: 0.xxxx / 1.00
-    格式完整性: 0.xxxx / 0.15  答案质量: 0.xxxx / 0.30
+    格式完整性: 0.xxxx / 0.05  答案质量: 0.xxxx / 0.40
     工具合理性: 0.xxxx / 0.15  来源标注: 0.xxxx / 0.10
     领域合规:   0.xxxx / 0.15  探索深度: 0.xxxx / 0.15
 
