@@ -301,6 +301,9 @@ def run_sft_warmup(config_path: str):
         print(f"  [ERROR] 配置文件不存在: {config_path}")
         return False
 
+    # 确保数据集已注册到 dataset_info.json（支持单独运行 --stage sft）
+    register_dataset()
+
     cmd = [
         sys.executable, "-m", "llamafactory.cli",
         "train", config_path,
