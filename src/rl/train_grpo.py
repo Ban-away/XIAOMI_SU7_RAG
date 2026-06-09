@@ -407,7 +407,7 @@ def run_grpo_training(config_path: str):
     print("  🔄 加载基座模型...")
     model = AutoModelForCausalLM.from_pretrained(
         model_base_path,
-        dtype=torch.bfloat16,
+        torch_dtype=torch.bfloat16,
         device_map="auto",
         trust_remote_code=True,
     )
