@@ -461,23 +461,23 @@ def compute_reward(
 
 
 # ────────────────────────────────────────────────────────────
-# LLaMA-Factory 自定义奖励函数入口
+# 自定义奖励函数入口（兼容 TRL GRPOTrainer）
 # ────────────────────────────────────────────────────────────
 
 def reward_fn(completions: list[str], **kwargs) -> list[float]:
     """
-    LLaMA-Factory GRPO 自定义奖励函数接口。
+    GRPO 自定义奖励函数，兼容 TRL GRPOTrainer 的 reward_funcs 接口。
 
-    在 LLaMA-Factory 中通过 custom_reward_config 注册：
-      custom_reward_config:
-        reward_type: function
-        reward_function: src.rl.reward_model.reward_fn
+    用法：
+      # TRL GRPOTrainer
+      trainer = GRPOTrainer(reward_funcs=reward_fn, ...)
 
     Args:
         completions: 模型生成的轨迹文本列表
+        **kwargs:    TRL 传入 prompts（格式化后的提示文本）
 
     Returns:
-        每条轨迹对应的奖励分数列表
+        每条轨迹对应的奖励分数列表 [0.0, 1.0]
     """
     prompts = kwargs.get("prompts", [""] * len(completions))
     rewards = []

@@ -229,43 +229,149 @@ def run_sft_warmup(config_path: str):
 
 
 # ────────────────────────────────────────────────────────────
-# Stage 3: GRPO 训练
+# Stage 3: GRPO 训练（TRL GRPOTrainer + PEFT LoRA）
 # ────────────────────────────────────────────────────────────
+
+# ── GRPO 训练超参数（原 configs/qwen3_lora_grpo.yaml）────────
+GRPO_HYPERPARAMS = {
+    "num_generations":           4,        # 每个 prompt 生成候选数
+    "max_completion_length":    1536,      # 最大生成长度（为 read_page 预留空间）
+    "per_device_train_batch_size": 1,
+    "gradient_accumulation_steps": 4,
+    "learning_rate":            5e-6,
+    "num_train_epochs":         1.0,
+    "lr_scheduler_type":        "cosine",
+    "warmup_ratio":             0.1,
+    "bf16":                     True,
+    "beta":                     0.04,     # KL 散度惩罚系数
+    "temperature":              0.7,
+    "top_p":                    0.9,
+    "lora_rank":                8,
+    "lora_alpha":               16,
+}
+
 
 def run_grpo_training(config_path: str):
     """
-    使用 GRPO 算法进行强化学习训练。
+    使用 TRL GRPOTrainer + PEFT LoRA 进行强化学习训练。
+
+    流程：
+      1. 加载 Qwen3-8B 基座模型
+      2. 合并 SFT warm-up 适配器（merge_and_unload）
+      3. 应用新的 LoRA 配置用于 GRPO 训练
+      4. 使用自定义 6 维奖励函数进行 GRPO 训练
+      5. 保存 GRPO LoRA 适配器
+
+    依赖：trl >= 0.14, peft, transformers, datasets
     """
     print("\n" + "=" * 60)
-    print("🤖 Stage 3: GRPO 强化学习训练")
+    print("🤖 Stage 3: GRPO 强化学习训练 (TRL + PEFT)")
     print("=" * 60)
 
-    if not os.path.exists(config_path):
-        print(f"  [ERROR] 配置文件不存在: {config_path}")
-        return False
+    # ── 延迟导入（避免非训练阶段加载重型库）──────────────────
+    import torch
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+    from peft import PeftModel, LoraConfig, TaskType
+    from trl import GRPOConfig, GRPOTrainer
+    from datasets import Dataset
+    from src.rl.reward_model import reward_fn
 
-    cmd = [
-        sys.executable, "-m", "llamafactory.cli",
-        "train", config_path,
+    # ── 路径配置 ──────────────────────────────────────────
+    model_base_path  = os.path.join(BASE_DIR, "models/Qwen3-8B/")
+    sft_adapter_path = os.path.join(LLAMA_FACTORY_DIR, "saves/qwen3-8b/lora/rl_sft")
+    grpo_output_dir  = os.path.join(LLAMA_FACTORY_DIR, "saves/qwen3-8b/lora/grpo")
+    grpo_data_path   = os.path.join(DATA_DIR, "web_fallback_trajectories_grpo.jsonl")
+
+    # ── 前置条件检查 ──────────────────────────────────────
+    prerequisites = [
+        (model_base_path,  "基座模型"),
+        (sft_adapter_path, "SFT warm-up 适配器"),
+        (grpo_data_path,   "GRPO 训练数据"),
     ]
+    for path, name in prerequisites:
+        if not os.path.exists(path):
+            print(f"  ❌ {name}不存在: {path}")
+            return False
 
-    print(f"  🚀 启动 GRPO 训练...")
-    print(f"     配置: {config_path}")
+    # ── 加载 GRPO 训练数据 ───────────────────────────────
+    print("  📊 加载 GRPO 训练数据...")
+    data = []
+    with open(grpo_data_path, encoding="utf-8") as f:
+        for line in f:
+            data.append(json.loads(line))
+    dataset = Dataset.from_list(data)
+    print(f"     共 {len(dataset)} 条")
 
-    env = os.environ.copy()
-    sep = os.pathsep
-    env["PYTHONPATH"] = f"{BASE_DIR}{sep}{LLAMA_FACTORY_DIR}"
+    # ── 加载基座模型 ─────────────────────────────────────
+    print("  🔄 加载基座模型...")
+    model = AutoModelForCausalLM.from_pretrained(
+        model_base_path,
+        torch_dtype=torch.bfloat16,
+        device_map="auto",
+        trust_remote_code=True,
+    )
+    tokenizer = AutoTokenizer.from_pretrained(model_base_path, trust_remote_code=True)
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
 
-    result = subprocess.run(
-        cmd, cwd=LLAMA_FACTORY_DIR, env=env,
-        capture_output=False,
+    # ── 合并 SFT 适配器到基座 ────────────────────────────
+    print("  🔄 合并 SFT warm-up 适配器到基座...")
+    model = PeftModel.from_pretrained(model, sft_adapter_path)
+    model = model.merge_and_unload()
+    print("     ✅ 合并完成")
+
+    # ── LoRA 配置（GRPO 训练用新适配器）──────────────────
+    lora_config = LoraConfig(
+        r=GRPO_HYPERPARAMS["lora_rank"],
+        lora_alpha=GRPO_HYPERPARAMS["lora_alpha"],
+        task_type=TaskType.CAUSAL_LM,
     )
 
-    if result.returncode != 0:
-        print(f"  ❌ GRPO 训练失败 (exit code: {result.returncode})")
-        return False
+    # ── GRPO 训练配置 ────────────────────────────────────
+    grpo_config = GRPOConfig(
+        output_dir=grpo_output_dir,
+        num_generations=GRPO_HYPERPARAMS["num_generations"],
+        max_completion_length=GRPO_HYPERPARAMS["max_completion_length"],
+        per_device_train_batch_size=GRPO_HYPERPARAMS["per_device_train_batch_size"],
+        gradient_accumulation_steps=GRPO_HYPERPARAMS["gradient_accumulation_steps"],
+        learning_rate=GRPO_HYPERPARAMS["learning_rate"],
+        num_train_epochs=GRPO_HYPERPARAMS["num_train_epochs"],
+        lr_scheduler_type=GRPO_HYPERPARAMS["lr_scheduler_type"],
+        warmup_ratio=GRPO_HYPERPARAMS["warmup_ratio"],
+        bf16=GRPO_HYPERPARAMS["bf16"],
+        beta=GRPO_HYPERPARAMS["beta"],
+        temperature=GRPO_HYPERPARAMS["temperature"],
+        top_p=GRPO_HYPERPARAMS["top_p"],
+        logging_steps=5,
+        save_steps=50,
+        overwrite_output_dir=True,
+        report_to="none",
+    )
 
-    print(f"  ✅ GRPO 训练完成")
+    print(f"  🚀 启动 GRPO 训练...")
+    print(f"     基座: {model_base_path}")
+    print(f"     SFT:  {sft_adapter_path}")
+    print(f"     数据: {len(dataset)} 条")
+    print(f"     候选: num_generations={GRPO_HYPERPARAMS['num_generations']}")
+    print(f"     输出: {grpo_output_dir}")
+
+    # ── 创建 Trainer 并训练 ─────────────────────────────
+    trainer = GRPOTrainer(
+        model=model,
+        args=grpo_config,
+        train_dataset=dataset,
+        reward_funcs=reward_fn,
+        peft_config=lora_config,
+        processing_class=tokenizer,
+    )
+
+    trainer.train()
+
+    # ── 保存模型 ─────────────────────────────────────────
+    trainer.save_model(grpo_output_dir)
+    tokenizer.save_pretrained(grpo_output_dir)
+
+    print(f"  ✅ GRPO 训练完成，适配器保存至: {grpo_output_dir}")
     return True
 
 
