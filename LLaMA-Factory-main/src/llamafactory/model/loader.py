@@ -20,8 +20,6 @@ from transformers import (
     AutoConfig,
     AutoModelForCausalLM,
     AutoModelForSeq2SeqLM,
-    AutoModelForTextToWaveform,
-    AutoModelForVision2Seq,
     AutoProcessor,
     AutoTokenizer,
 )
@@ -38,9 +36,23 @@ from .model_utils.unsloth import load_unsloth_pretrained_model
 from .model_utils.valuehead import load_valuehead_params
 from .patcher import patch_config, patch_model, patch_processor, patch_tokenizer, patch_valuehead_model
 
-
-if is_transformers_version_greater_than("4.46.0"):
+# ── 兼容 transformers 5.x 重命名 ────────────────────────────
+# transformers 5.x 移除了 AutoModelForVision2Seq / AutoModelForTextToWaveform，
+# 统一用 AutoModelForImageTextToText 替代。SFT 纯文本训练不依赖这些类。
+try:
     from transformers import AutoModelForImageTextToText
+except ImportError:
+    AutoModelForImageTextToText = None
+
+try:
+    from transformers import AutoModelForVision2Seq
+except ImportError:
+    AutoModelForVision2Seq = None
+
+try:
+    from transformers import AutoModelForTextToWaveform
+except ImportError:
+    AutoModelForTextToWaveform = None
 
 
 if TYPE_CHECKING:
@@ -147,16 +159,13 @@ def load_model(
         if model_args.mixture_of_depths == "load":
             model = load_mod_pretrained_model(**init_kwargs)
         else:
-            if type(config) in AutoModelForVision2Seq._model_mapping.keys():  # image-text
+            if AutoModelForVision2Seq is not None and type(config) in AutoModelForVision2Seq._model_mapping.keys():  # image-text
                 load_class = AutoModelForVision2Seq
-            elif (
-                is_transformers_version_greater_than("4.46.0")
-                and type(config) in AutoModelForImageTextToText._model_mapping.keys()
-            ):  # image-text
+            elif AutoModelForImageTextToText is not None and type(config) in AutoModelForImageTextToText._model_mapping.keys():  # image-text
                 load_class = AutoModelForImageTextToText
             elif type(config) in AutoModelForSeq2SeqLM._model_mapping.keys():  # audio-text
                 load_class = AutoModelForSeq2SeqLM
-            elif type(config) in AutoModelForTextToWaveform._model_mapping.keys():  # audio hack for qwen2_5_omni
+            elif AutoModelForTextToWaveform is not None and type(config) in AutoModelForTextToWaveform._model_mapping.keys():  # audio hack for qwen2_5_omni
                 load_class = AutoModelForTextToWaveform
             else:
                 load_class = AutoModelForCausalLM
