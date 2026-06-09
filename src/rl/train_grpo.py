@@ -314,7 +314,7 @@ def run_sft_warmup(config_path: str):
 # ── GRPO 训练超参数（原 configs/qwen3_lora_grpo.yaml）────────
 GRPO_HYPERPARAMS = {
     "num_generations":           4,        # 每个 prompt 生成候选数
-    "max_completion_length":    1536,      # 最大生成长度（为 read_page 预留空间）
+    "max_completion_length":     768,      # 本地轨迹无 <information>，768 足够
     "per_device_train_batch_size": 1,
     "gradient_accumulation_steps": 4,
     "learning_rate":            1e-5,      # 原 5e-6 偏低，配合 beta 调低后提高 LR 让策略能移动
