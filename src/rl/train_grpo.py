@@ -42,6 +42,8 @@ from pathlib import Path
 
 # ── 项目路径 ────────────────────────────────────────────────
 BASE_DIR          = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
 LLAMA_FACTORY_DIR = os.path.join(BASE_DIR, "LLaMA-Factory-main")
 DATA_DIR          = os.path.join(BASE_DIR, "data/rl_data")
 CONFIG_DIR        = os.path.join(BASE_DIR, "configs")
