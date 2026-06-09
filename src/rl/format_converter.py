@@ -158,7 +158,13 @@ def to_sft_target(trajectory: str) -> str:
 # 格式转换函数
 # ────────────────────────────────────────────────────────────
 
-def to_sft_format(question: str, trajectory: str, system: str = SYSTEM_PROMPT, **kwargs) -> dict:
+def to_sft_format(
+    question:    str,
+    trajectory:  str,
+    system:      str  = SYSTEM_PROMPT,
+    data_source: str  = "web_fallback",
+    **kwargs,
+) -> dict:
     """
     转换为 LLaMA-Factory SFT 格式。
 
@@ -167,6 +173,7 @@ def to_sft_format(question: str, trajectory: str, system: str = SYSTEM_PROMPT, *
       input:       留空（问题已包含在 instruction 中）
       output:      去掉 <information> 的轻量轨迹（作为训练目标）
       system:      系统提示词
+      data_source: 数据来源标识（"web_fallback" / "local_only"）
     """
     answer_text = extract_answer(trajectory)
     return {
@@ -175,7 +182,7 @@ def to_sft_format(question: str, trajectory: str, system: str = SYSTEM_PROMPT, *
         "output":      to_sft_target(trajectory),
         "answer":      answer_text,
         "system":      system,
-        "data_source": "web_fallback",
+        "data_source": data_source,
     }
 
 
@@ -184,6 +191,8 @@ def to_grpo_format(
     trajectory:  str,
     category:    str  = "",
     system:      str  = SYSTEM_PROMPT,
+    data_source: str  = "web_fallback",
+    reward_type: str  = "web_answer_quality",
 ) -> dict:
     """
     转换为 GRPO 训练格式。
@@ -201,8 +210,8 @@ def to_grpo_format(
         "completion":  trajectory,
         "answer":      answer_text,
         "category":    category,
-        "data_source": "web_fallback",
-        "reward_type": "web_answer_quality",
+        "data_source": data_source,
+        "reward_type": reward_type,
     }
 
 

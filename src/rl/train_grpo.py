@@ -146,13 +146,8 @@ def _convert_trajectories(raw_path: str):
 
 def _run_build_local_trajectories() -> bool:
     """调用 build_local_trajectories.py 生成本地轨迹 + 合并数据"""
-    test_qa = os.path.join(BASE_DIR, "data/qa_pairs/test_qa_pair_verify.json")
-    if not os.path.exists(test_qa):
-        print(f"  ⚠️ 测试集不存在: {test_qa}，跳过本地轨迹生成")
-        return False
-
-    cmd = [sys.executable, "src/rl/build_local_trajectories.py", "--sample", "100"]
-    print(f"  🚀 执行: {' '.join(cmd)}")
+    cmd = [sys.executable, "src/rl/build_local_trajectories.py"]
+    print(f"  🚀 执行: {' '.join(cmd)}（默认加载全部 QA 数据）")
     print()
 
     result = subprocess.run(cmd, cwd=BASE_DIR)
@@ -192,23 +187,6 @@ def register_dataset():
             },
         }
         print(f"  ✅ 注册 web_fallback_grpo: {rel_path}")
-        updated = True
-
-    # 注册 SFT warm-up 数据集（保留 web_fallback_sft 作为后备）
-    sft_data_file = os.path.join(DATA_DIR, "web_fallback_trajectories_sft.json")
-    if os.path.exists(sft_data_file):
-        rel_path = os.path.relpath(sft_data_file, os.path.join(LLAMA_FACTORY_DIR, "data"))
-        dataset_info["web_fallback_sft"] = {
-            "file_name": rel_path,
-            "formatting": "alpaca",
-            "columns": {
-                "prompt": "instruction",
-                "query": "input",
-                "response": "output",
-                "system": "system",
-            },
-        }
-        print(f"  ✅ 注册 web_fallback_sft: {rel_path}")
         updated = True
 
     # 注册合并 SFT 数据集（训练集 + 评估集拆分）

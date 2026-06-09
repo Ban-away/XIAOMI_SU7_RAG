@@ -44,6 +44,7 @@ from src.reranker.minicpm_reranker import MiniCPMReRanker
 from src.constant import bge_reranker_minicpm_path
 from src.utils import merge_docs
 from src.rl.web_reader import WebPageReader
+from src.rl.format_converter import SYSTEM_PROMPT, to_sft_target, to_sft_format, to_grpo_format
 
 # ── 路径配置 ────────────────────────────────────────────────
 BASE_DIR       = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -56,25 +57,6 @@ LOCAL_TOPK          = 3      # 本地检索返回条数
 RELEVANCE_THRESHOLD = 0.35   # 低于此分数判定为"本地信息不足"
 MAX_WORKERS         = 8      # 并发线程数
 RETRY_TIMES         = 3      # 单条失败重试次数
-
-# ── 系统提示词（工具协议声明）──────────────────────────────
-SYSTEM_PROMPT = """你是小米SU7车型的专业问答助手，服务范围严格限定在小米SU7相关问题。
-
-回答问题时可以调用以下工具：
-- 本地知识库检索（优先）：<search_local>检索关键词</search_local>
-- 网络搜索（本地信息不足时）：<search_web>检索关键词</search_web>
-- 页面深度阅读（搜索结果不够详细时）：<read_page>URL地址</read_page>
-
-工具返回格式：<information>检索结果内容</information>
-
-最终答案格式：<answer>答案内容</answer>
-
-注意：
-1. 优先调用本地知识库，本地无结果或信息严重不足时再调用网络搜索
-2. 网络搜索结果中包含"网址："字段，可选择最有价值的页面用 <read_page> 深入阅读，最多读取2个页面
-3. 与小米SU7无关的问题（闲聊、百科、娱乐等），直接输出 <answer>很抱歉，我只能回答小米SU7相关问题。</answer>
-4. 网络搜索结果来源于互联网，答案中需注明"根据网络信息"
-5. 涉及页码引用时格式为【页码】"""
 
 # ── 轨迹生成提示词 ─────────────────────────────────────────
 TRAJECTORY_GEN_PROMPT = """你是一个数据标注专家，需要为以下问题生成一条高质量的工具调用轨迹。
@@ -426,61 +408,6 @@ class TrajectoryBuilder:
             # max_tokens 截断导致 answer 开标签存在但闭标签缺失，补齐闭标签
             raw += "</answer>"
         return raw
-
-
-# ────────────────────────────────────────────────────────────
-# 格式转换：轨迹 → LLaMA-Factory SFT 格式
-# ────────────────────────────────────────────────────────────
-
-def to_sft_target(trajectory: str) -> str:
-    """
-    SFT warm-up 只学习工具调用和最终答案。
-
-    <information> 是工具/环境返回，不应由 assistant 预测；完整轨迹仍保留
-    在 GRPO completion 中用于奖励训练。
-    """
-    target = re.sub(r"<information>.*?</information>", "", trajectory, flags=re.DOTALL)
-    target = re.sub(r"\n{3,}", "\n\n", target)
-    return target.strip()
-
-
-def to_sft_format(question: str, trajectory: str) -> dict:
-    """
-    转换为 LLaMA-Factory instruction 格式，兼容 GRPO warm-up SFT 训练。
-    同时提取 answer 内容作为奖励/评估字段。
-    """
-    answer_match = re.search(r"<answer>(.*?)</answer>", trajectory, re.DOTALL)
-    answer_text  = answer_match.group(1).strip() if answer_match else ""
-
-    return {
-        "instruction": question,
-        "input":       "",
-        "output":      to_sft_target(trajectory),
-        "answer":      answer_text,          # 纯答案文本，用于奖励计算
-        "system":      SYSTEM_PROMPT,
-        "data_source": "web_fallback",
-    }
-
-
-def to_grpo_format(question: str, trajectory: str, category: str) -> dict:
-    """
-    转换为 GRPO 训练格式。
-    prompt = system + user，completion = assistant 轨迹
-    """
-    answer_match = re.search(r"<answer>(.*?)</answer>", trajectory, re.DOTALL)
-    answer_text  = answer_match.group(1).strip() if answer_match else ""
-
-    return {
-        "prompt": [
-            {"role": "system",    "content": SYSTEM_PROMPT},
-            {"role": "user",      "content": question},
-        ],
-        "completion":  trajectory,
-        "answer":      answer_text,
-        "category":    category,
-        "data_source": "web_fallback",
-        "reward_type": "web_answer_quality",  # 奖励函数路由标识
-    }
 
 
 # ────────────────────────────────────────────────────────────

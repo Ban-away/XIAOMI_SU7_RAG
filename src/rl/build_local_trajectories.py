@@ -3,13 +3,15 @@
 生成本地可答轨迹数据
 
 功能：
-  从 test_qa_pair_verify.json 采样问题，走本地检索管线（BM25+Milvus+重排），
+  从 QA 对文件采样问题，走本地检索管线（BM25），
   生成只有 <search_local> 的轨迹（不含 <search_web>/<read_page>），
   教 RL 模型"本地够用时不要联网"。
 
+支持多个 QA 数据源，默认加载全部可用数据。
+
 运行：
   python src/rl/build_local_trajectories.py
-  python src/rl/build_local_trajectories.py --sample 100    # 采样数量
+  python src/rl/build_local_trajectories.py --sample 200    # 限制采样数量
   python src/rl/build_local_trajectories.py --dry-run       # 只跑 5 条验证
 """
 
@@ -29,36 +31,21 @@ sys.path.insert(0, BASE_DIR)
 os.environ["TQDM_DISABLE"] = "1"
 
 from src.retriever.bm25_retriever import BM25
-# Milvus 和 reranker 暂不导入（新版 transformers 与 FlagEmbedding 不兼容）
-# 本地轨迹生成只需 BM25 粗召回，目的是教模型"本地够用就停"
-# from src.retriever.milvus_retriever import MilvusRetriever
-# from src.reranker.minicpm_reranker import MiniCPMReRanker
-# from src.utils import merge_docs
+from src.rl.format_converter import (
+    SYSTEM_PROMPT,
+    to_sft_target,
+    to_sft_format,
+    to_grpo_format,
+)
 
 # ── 路径配置 ────────────────────────────────────────────────
-QUESTIONS_PATH = os.path.join(BASE_DIR, "data/qa_pairs/test_qa_pair_verify.json")
+QA_FILES = [
+    os.path.join(BASE_DIR, "data/qa_pairs/test_qa_pair_verify.json"),
+    os.path.join(BASE_DIR, "data/qa_pairs/train_qa_pair.json"),
+]
 OUTPUT_PATH    = os.path.join(BASE_DIR, "data/rl_data/local_trajectories.json")
 GRPO_OUTPUT    = os.path.join(BASE_DIR, "data/rl_data/local_trajectories_grpo.jsonl")
 SFT_OUTPUT     = os.path.join(BASE_DIR, "data/rl_data/local_trajectories_sft.json")
-
-# ── 系统提示词（与 data_builder.py 一致）────────────────────
-SYSTEM_PROMPT = """你是小米SU7车型的专业问答助手，服务范围严格限定在小米SU7相关问题。
-
-回答问题时可以调用以下工具：
-- 本地知识库检索（优先）：<search_local>检索关键词</search_local>
-- 网络搜索（本地信息不足时）：<search_web>检索关键词</search_web>
-- 页面深度阅读（搜索结果不够详细时）：<read_page>URL地址</read_page>
-
-工具返回格式：<information>检索结果内容</information>
-
-最终答案格式：<answer>答案内容</answer>
-
-注意：
-1. 优先调用本地知识库，本地无结果或信息严重不足时再调用网络搜索
-2. 网络搜索结果中包含"网址："字段，可选择最有价值的页面用 <read_page> 深入阅读，最多读取2个页面
-3. 与小米SU7无关的问题（闲聊、百科、娱乐等），直接输出 <answer>很抱歉，我只能回答小米SU7相关问题。</answer>
-4. 网络搜索结果来源于互联网，答案中需注明"根据网络信息"
-5. 涉及页码引用时格式为【页码】"""
 
 LOCAL_TOPK = 3   # 本地检索条数
 
@@ -92,10 +79,8 @@ def build_local_trajectory(question: str, docs: list, gold_answer: str) -> str:
       <answer>答案</answer>
     不含 <search_web> 和 <read_page>。
     """
-    # 提取搜索关键词：取问句中的核心词
     keywords = re.sub(r"[？?！!。，,的了是在有和与或]", "", question)[:20]
-
-    info_text = LocalSearchTool.format_docs(None, docs) if False else _format_docs(docs)
+    info_text = _format_docs(docs)
 
     return (
         f"<search_local>{keywords}</search_local>\n"
@@ -115,46 +100,33 @@ def _format_docs(docs: list) -> str:
     return "\n".join(parts)
 
 
-def to_sft_target(trajectory: str) -> str:
-    """
-    SFT warm-up 只学习工具调用和答案，工具返回的 <information>
-    保留给 GRPO/environment，不作为 assistant 监督目标。
-    """
-    target = re.sub(r"<information>.*?</information>", "", trajectory, flags=re.DOTALL)
-    target = re.sub(r"\n{3,}", "\n\n", target)
-    return target.strip()
-
-
 # ────────────────────────────────────────────────────────────
-# 格式转换
+# 数据加载：合并多个 QA 源文件并去重
 # ────────────────────────────────────────────────────────────
 
-def to_sft_format(question: str, trajectory: str) -> dict:
-    answer_match = re.search(r"<answer>(.*?)</answer>", trajectory, re.DOTALL)
-    answer_text  = answer_match.group(1).strip() if answer_match else ""
-    return {
-        "instruction": question,
-        "input":       "",
-        "output":      to_sft_target(trajectory),
-        "answer":      answer_text,
-        "system":      SYSTEM_PROMPT,
-        "data_source": "local_only",
-    }
+def load_all_questions() -> list[dict]:
+    """加载所有可用的 QA 对文件，按 question 去重"""
+    all_data: list[dict] = []
+    for path in QA_FILES:
+        if not os.path.exists(path):
+            print(f"[WARN] 数据文件不存在，跳过: {path}")
+            continue
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        if not isinstance(data, list):
+            data = [data]
+        print(f"[INFO] 加载 {len(data)} 条: {os.path.basename(path)}")
+        all_data.extend(data)
 
-
-def to_grpo_format(question: str, trajectory: str) -> dict:
-    answer_match = re.search(r"<answer>(.*?)</answer>", trajectory, re.DOTALL)
-    answer_text  = answer_match.group(1).strip() if answer_match else ""
-    return {
-        "prompt": [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user",   "content": question},
-        ],
-        "completion":  trajectory,
-        "answer":      answer_text,
-        "data_source": "local_only",
-        "reward_type": "local_answer_quality",
-    }
+    # 按 question 去重（保留后加载的覆盖先加载的）
+    seen: dict[str, dict] = {}
+    for item in all_data:
+        q = item.get("question", "").strip()
+        if q:
+            seen[q] = item
+    unique = list(seen.values())
+    print(f"[INFO] 去重后共 {len(unique)} 条唯一问题")
+    return unique
 
 
 # ────────────────────────────────────────────────────────────
@@ -163,7 +135,7 @@ def to_grpo_format(question: str, trajectory: str) -> dict:
 
 def main():
     parser = argparse.ArgumentParser(description="生成本地可答轨迹数据")
-    parser.add_argument("--sample", type=int, default=100, help="采样问题数量")
+    parser.add_argument("--sample", type=int, default=0, help="采样问题数量（0=全部）")
     parser.add_argument("--dry-run", action="store_true", help="只处理前 5 条")
     args = parser.parse_args()
 
@@ -172,19 +144,19 @@ def main():
     print("📦 生成本地可答轨迹数据")
     print("=" * 60)
 
-    with open(QUESTIONS_PATH, encoding="utf-8") as f:
-        all_questions = json.load(f)
+    all_questions = load_all_questions()
 
-    print(f"[INFO] 加载 {len(all_questions)} 条测试问题")
-
-    # 随机采样
-    import random
-    random.seed(42)
-    sampled = random.sample(all_questions, min(args.sample, len(all_questions)))
+    # 采样或全量
     if args.dry_run:
-        sampled = sampled[:5]
+        sampled = all_questions[:5]
+    elif args.sample > 0:
+        import random
+        random.seed(42)
+        sampled = random.sample(all_questions, min(args.sample, len(all_questions)))
+    else:
+        sampled = all_questions
 
-    print(f"[INFO] 采样 {len(sampled)} 条")
+    print(f"[INFO] 实际处理 {len(sampled)} 条")
 
     # ── 初始化检索 ────────────────────────────────────────
     local_tool = LocalSearchTool()
@@ -193,7 +165,9 @@ def main():
     results = []
     for item in tqdm(sampled, desc="生成轨迹", ncols=80):
         question = item["question"].strip()
-        gold     = item["answer"].strip()
+        gold     = item.get("answer", "").strip()
+        if not gold:
+            continue
 
         # 本地检索
         docs = local_tool.search(question)
@@ -201,9 +175,9 @@ def main():
         # 生成轨迹
         trajectory = build_local_trajectory(question, docs, gold)
 
-        unique_id = hashlib.md5(question.encode("utf-8")).hexdigest()
+        unique_id = item.get("unique_id", hashlib.md5(question.encode("utf-8")).hexdigest())
         results.append({
-            "id":          item.get("unique_id", unique_id),
+            "id":          unique_id,
             "unique_id":   unique_id,
             "category":    "local_manual",
             "category_zh": "手册本地问答",
@@ -211,8 +185,12 @@ def main():
             "trajectory":  trajectory,
             "local_docs_count": len(docs),
             "web_search_used": False,
-            "sft_format":  to_sft_format(question, trajectory),
-            "grpo_format": to_grpo_format(question, trajectory),
+            "sft_format":  to_sft_format(question, trajectory, data_source="local_only"),
+            "grpo_format": to_grpo_format(
+                question, trajectory,
+                data_source="local_only",
+                reward_type="local_answer_quality",
+            ),
         })
 
     # ── 保存输出 ──────────────────────────────────────────
@@ -243,10 +221,10 @@ def main():
 
 def merge_combined_data():
     """合并网络兜底 + 本地可答轨迹为统一训练集"""
-    web_grpo_path  = os.path.join(BASE_DIR, "data/rl_data/web_fallback_trajectories_grpo.jsonl")
+    web_grpo_path   = os.path.join(BASE_DIR, "data/rl_data/web_fallback_trajectories_grpo.jsonl")
     local_grpo_path = GRPO_OUTPUT
-    web_sft_path   = os.path.join(BASE_DIR, "data/rl_data/web_fallback_trajectories_sft.json")
-    local_sft_path = SFT_OUTPUT
+    web_sft_path    = os.path.join(BASE_DIR, "data/rl_data/web_fallback_trajectories_sft.json")
+    local_sft_path  = SFT_OUTPUT
 
     combined_grpo = os.path.join(BASE_DIR, "data/rl_data/combined_trajectories_grpo.jsonl")
     combined_sft  = os.path.join(BASE_DIR, "data/rl_data/combined_trajectories_sft.json")
