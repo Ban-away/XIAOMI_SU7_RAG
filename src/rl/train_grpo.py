@@ -312,22 +312,27 @@ def run_sft_warmup(config_path: str):
 # ────────────────────────────────────────────────────────────
 
 # ── GRPO 训练超参数（原 configs/qwen3_lora_grpo.yaml）────────
+# 优化策略：
+# 1. num_generations=6：增加候选数，提高策略对比学习效果
+# 2. per_device_train_batch_size=2 + gradient_accumulation_steps=2：有效batch=4，提升GPU利用率
+# 3. beta=0.1：适度增加KL惩罚，平衡探索与稳定
+# 4. lora_rank=16：增加LoRA秩，提升表达能力
 GRPO_HYPERPARAMS = {
-    "num_generations":           4,        # 每个 prompt 生成候选数
+    "num_generations":           6,        # 每个 prompt 生成候选数（改为6）
     "max_completion_length":     768,      # 本地轨迹无 <information>，768 足够
-    "per_device_train_batch_size": 1,
-    "gradient_accumulation_steps": 4,
-    "learning_rate":            1e-5,      # 原 5e-6 偏低，配合 beta 调低后提高 LR 让策略能移动
-    "num_train_epochs":         3.0,       # 原 1.0，172 条样本每 epoch 仅 ~43 步更新，需多轮
+    "per_device_train_batch_size": 2,      # 增大单卡batch（需显存充足）
+    "gradient_accumulation_steps": 2,      # 减少累积步数（有效batch=4）
+    "learning_rate":            2e-5,      # 适度提高学习率
+    "num_train_epochs":         5.0,       # 增加训练轮数，充分学习
     "max_train_samples":        300,       # GRPO 每步需生成 N 条候选，全量数据太慢，采样子集
     "lr_scheduler_type":        "cosine",
     "warmup_ratio":             0.1,
     "bf16":                     True,
-    "beta":                     0.01,      # 原 0.04 导致 KL 过低 + clip_ratio=0，策略被锁死
+    "beta":                     0.1,       # 适度增加KL惩罚，防止策略偏离
     "temperature":              0.7,
     "top_p":                    0.9,
-    "lora_rank":                8,
-    "lora_alpha":               16,
+    "lora_rank":                16,        # 增加LoRA秩，提升表达能力
+    "lora_alpha":               32,        # 配合rank调整
 }
 
 
@@ -351,17 +356,8 @@ def run_grpo_training(config_path: str):
     # ── 延迟导入（避免非训练阶段加载重型库）──────────────────
     import sys
 
-    # GRPO 训练使用 HuggingFace generate()，不需要 vllm。
-    # 但 TRL 在 import 时会无条件尝试加载 vllm，旧版 vllm 与新版
-    # transformers 的 aimv2 配置冲突会崩。这里临时屏蔽，让 TRL
-    # 的 is_vllm_available() 返回 False，回退到 HF generate 后端。
-    _vllm_backup = {}
-    for key in list(sys.modules.keys()):
-        if key.startswith("vllm"):
-            _vllm_backup[key] = sys.modules.pop(key)
-    # 插入一个会触发 ImportError 的占位，使 is_vllm_available() 返回 False
-    sys.modules["vllm"] = None
-
+    # 启用 vLLM 加速（提升生成速度 3-10 倍）
+    # 注意：需要安装兼容 transformers 5.x 的 vllm 版本
     try:
         import torch
         from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -373,10 +369,9 @@ def run_grpo_training(config_path: str):
         if BASE_DIR not in sys.path:
             sys.path.insert(0, BASE_DIR)
         from src.rl.reward_model import reward_fn
-    finally:
-        # 恢复 vllm（日常推理不受影响）
-        del sys.modules["vllm"]
-        sys.modules.update(_vllm_backup)
+    except ImportError as e:
+        print(f"  [ERROR] 导入失败: {e}")
+        return False
 
     # ── 路径配置 ──────────────────────────────────────────
     model_base_path  = os.path.join(BASE_DIR, "models/Qwen3-8B/")
@@ -470,7 +465,12 @@ def run_grpo_training(config_path: str):
         beta=GRPO_HYPERPARAMS["beta"],
         temperature=GRPO_HYPERPARAMS["temperature"],
         top_p=GRPO_HYPERPARAMS["top_p"],
-        use_vllm=False,               # 使用 HF generate，不走 vllm
+        use_vllm=True,                # 启用 vLLM 加速（提升生成速度 3-10x）
+        vllm_model_kwargs={
+            "enable_prefix_caching": True,  # 启用前缀缓存，加速重复prompt
+            "max_seq_len_to_capture": 8192, # 适配 Qwen3-8B 的最大序列长度
+            "disable_log_stats": True,      # 禁用统计日志，减少开销
+        },
         logging_steps=5,
         save_steps=50,
         report_to="none",
