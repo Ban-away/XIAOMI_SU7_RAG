@@ -19,7 +19,6 @@ import sys
 import json
 import hashlib
 import argparse
-import threading
 from tqdm import tqdm
 
 # ── 项目路径 ────────────────────────────────────────────────
@@ -30,10 +29,11 @@ sys.path.insert(0, BASE_DIR)
 os.environ["TQDM_DISABLE"] = "1"
 
 from src.retriever.bm25_retriever import BM25
-from src.retriever.milvus_retriever import MilvusRetriever
-from src.reranker.minicpm_reranker import MiniCPMReRanker
-from src.constant import bge_reranker_minicpm_path
-from src.utils import merge_docs
+# Milvus 和 reranker 暂不导入（新版 transformers 与 FlagEmbedding 不兼容）
+# 本地轨迹生成只需 BM25 粗召回，目的是教模型"本地够用就停"
+# from src.retriever.milvus_retriever import MilvusRetriever
+# from src.reranker.minicpm_reranker import MiniCPMReRanker
+# from src.utils import merge_docs
 
 # ── 路径配置 ────────────────────────────────────────────────
 QUESTIONS_PATH = os.path.join(BASE_DIR, "data/qa_pairs/test_qa_pair_verify.json")
@@ -68,40 +68,16 @@ LOCAL_TOPK = 3   # 本地检索条数
 # ────────────────────────────────────────────────────────────
 
 class LocalSearchTool:
-    """封装现有本地检索栈（Milvus + BM25 + MiniCPM精排）"""
+    """BM25 粗召回（用于生成训练数据，不需要精排）"""
 
     def __init__(self):
-        print("[INFO] 加载本地检索组件...")
-        self.bm25     = BM25(docs=None, retrieve=True)
-        self.milvus   = MilvusRetriever(docs=None, retrieve=True)
-        self.reranker = MiniCPMReRanker(
-            model_path=bge_reranker_minicpm_path,
-            cutoff_layers=28
-        )
-        self._lock = threading.Lock()
-        self.milvus.retrieve_topk("测试", topk=1)
-        print("[INFO] 本地检索组件加载完成")
+        print("[INFO] 加载 BM25 检索组件...")
+        self.bm25 = BM25(docs=None, retrieve=True)
+        self.bm25.retrieve_topk("测试", topk=1)
+        print("[INFO] BM25 加载完成")
 
     def search(self, query: str, topk: int = LOCAL_TOPK) -> list:
-        with self._lock:
-            bm25_docs = self.bm25.retrieve_topk(query, topk=topk)
-        milvus_docs = self.milvus.retrieve_topk(query, topk=topk * 2)
-        merged = merge_docs(bm25_docs, milvus_docs)
-        if not merged:
-            return []
-        with self._lock:
-            ranked = self.reranker.rank(query, merged[:10], topk=topk)
-        return ranked
-
-    def format_docs(self, docs: list) -> str:
-        if not docs:
-            return "本地知识库中未检索到相关内容。"
-        parts = []
-        for i, doc in enumerate(docs, 1):
-            page = doc.metadata.get("page", "")
-            suffix = f"（第{page}页）" if page else ""
-            parts.append(f"[{i}]{suffix} {doc.page_content[:300]}")
-        return "\n".join(parts)
+        return self.bm25.retrieve_topk(query, topk=topk)
 
 
 # ────────────────────────────────────────────────────────────
