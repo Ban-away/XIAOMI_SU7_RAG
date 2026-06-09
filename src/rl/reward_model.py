@@ -464,7 +464,28 @@ def compute_reward(
 # 自定义奖励函数入口（兼容 TRL GRPOTrainer）
 # ────────────────────────────────────────────────────────────
 
-def reward_fn(completions: list[str], **kwargs) -> list[float]:
+def _extract_text(content) -> str:
+    """
+    从 TRL 传入的 completion/prompt 中提取纯文本。
+
+    TRL GRPOTrainer 可能传入以下格式：
+      - str:                         "文本内容"
+      - list[dict] (messages):       [{"role": "assistant", "content": "文本"}]
+      - list[str]:                   ["文本内容"]
+    """
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        # messages 格式 [{"role": "assistant", "content": "..."}]
+        for msg in content:
+            if isinstance(msg, dict) and msg.get("content"):
+                return msg["content"]
+        # 纯字符串列表
+        return " ".join(str(c) for c in content)
+    return str(content)
+
+
+def reward_fn(completions: list, **kwargs) -> list[float]:
     """
     GRPO 自定义奖励函数，兼容 TRL GRPOTrainer 的 reward_funcs 接口。
 
@@ -473,8 +494,8 @@ def reward_fn(completions: list[str], **kwargs) -> list[float]:
       trainer = GRPOTrainer(reward_funcs=reward_fn, ...)
 
     Args:
-        completions: 模型生成的轨迹文本列表
-        **kwargs:    TRL 传入 prompts（格式化后的提示文本）
+        completions: 模型生成的轨迹（str / list[dict] / list[str]）
+        **kwargs:    TRL 传入 prompts
 
     Returns:
         每条轨迹对应的奖励分数列表 [0.0, 1.0]
@@ -483,9 +504,9 @@ def reward_fn(completions: list[str], **kwargs) -> list[float]:
     rewards = []
 
     for prompt_text, completion in zip(prompts, completions):
-        # 从 prompt 中提取用户问题
-        question = _extract_question_from_prompt(prompt_text)
-        result = compute_reward(question, completion)
+        question   = _extract_question_from_prompt(_extract_text(prompt_text))
+        trajectory = _extract_text(completion)
+        result = compute_reward(question, trajectory)
         rewards.append(result["reward"])
 
     return rewards

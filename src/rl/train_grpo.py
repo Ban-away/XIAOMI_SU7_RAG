@@ -57,10 +57,12 @@ RL_EXPORT_DIR     = os.path.join(LLAMA_FACTORY_DIR, "output/qwen3_lora_rl")
 
 def prepare_data():
     """
-    准备 GRPO 训练数据，三级优先级：
-      1. 已有 _sft.json + _grpo.jsonl → 直接使用
-      2. 已有原始轨迹 trajectories.json → 格式转换
-      3. 都没有 → 自动调用 data_builder.py 生成轨迹 → 格式转换
+    准备 GRPO 训练数据（合并网络兜底 + 本地可答轨迹）。
+
+    优先级：
+      1. 已有合并数据 combined_*.jsonl → 直接使用
+      2. 已有各子集数据 → 自动合并
+      3. 缺少子集 → 自动生成
     """
     print("\n" + "=" * 60)
     print("📦 Stage 1: 数据准备")
@@ -68,8 +70,12 @@ def prepare_data():
 
     os.makedirs(DATA_DIR, exist_ok=True)
 
-    grpo_data_path = os.path.join(DATA_DIR, "web_fallback_trajectories_grpo.jsonl")
-    sft_data_path  = os.path.join(DATA_DIR, "web_fallback_trajectories_sft.json")
+    # ── 统一使用合并后的数据集 ────────────────────────────
+    combined_grpo = os.path.join(DATA_DIR, "combined_trajectories_grpo.jsonl")
+    combined_sft  = os.path.join(DATA_DIR, "combined_trajectories_sft.json")
+
+    grpo_data_path = combined_grpo
+    sft_data_path  = combined_sft
     raw_path       = os.path.join(DATA_DIR, "web_fallback_trajectories.json")
 
     # ── Level 1: 已有转换好的数据 ──────────────────────────
@@ -302,7 +308,7 @@ def run_grpo_training(config_path: str):
     model_base_path  = os.path.join(BASE_DIR, "models/Qwen3-8B/")
     sft_adapter_path = os.path.join(LLAMA_FACTORY_DIR, "saves/qwen3-8b/lora/rl_sft")
     grpo_output_dir  = os.path.join(LLAMA_FACTORY_DIR, "saves/qwen3-8b/lora/grpo")
-    grpo_data_path   = os.path.join(DATA_DIR, "web_fallback_trajectories_grpo.jsonl")
+    grpo_data_path   = os.path.join(DATA_DIR, "combined_trajectories_grpo.jsonl")
 
     # ── 前置条件检查 ──────────────────────────────────────
     prerequisites = [
