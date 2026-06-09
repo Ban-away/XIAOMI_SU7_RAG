@@ -1,9 +1,13 @@
 ### SFT Warm-up 配置（RL 训练前的格式对齐）
 ### 用途：让模型学会 <search_local>/<search_web>/<answer> 标签格式
+### 使用 QLoRA 4-bit 量化以适应单卡 A100 40GB
 ### 训练命令：llamafactory-cli train configs/qwen3_lora_rl_sft.yaml
 
 ### model
 model_name_or_path: /root/autodl-tmp/XIAOMI_SU7_RAG/models/Qwen3-8B/
+quantization_bit: 4
+quantization_method: bnb
+flash_attn: fa2
 trust_remote_code: true
 resize_vocab: true
 
@@ -45,7 +49,6 @@ num_train_epochs: 5.0
 lr_scheduler_type: cosine
 warmup_ratio: 0.1
 bf16: true
-ddp_timeout: 180000000
-gradient_checkpointing: true
 optim: adamw_torch_fused
+ddp_timeout: 180000000
 resume_from_checkpoint: null
