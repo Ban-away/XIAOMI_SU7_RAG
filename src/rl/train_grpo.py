@@ -415,6 +415,18 @@ def run_grpo_training(config_path: str):
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
+    # ── 将 prompt 从消息列表转为字符串（GRPOTrainer 要求）──
+    def _format_prompt(example):
+        prompt = example["prompt"]
+        if isinstance(prompt, list):
+            example["prompt"] = tokenizer.apply_chat_template(
+                prompt, tokenize=False, add_generation_prompt=True,
+            )
+        return example
+
+    dataset = dataset.map(_format_prompt, desc="格式化 prompt")
+    print(f"     ✅ prompt 已转换为字符串格式")
+
     # ── 合并 SFT 适配器到基座 ────────────────────────────
     print("  🔄 合并 SFT warm-up 适配器到基座...")
     model = PeftModel.from_pretrained(model, sft_adapter_path)
