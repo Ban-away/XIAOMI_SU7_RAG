@@ -269,12 +269,30 @@ def run_grpo_training(config_path: str):
     print("=" * 60)
 
     # ── 延迟导入（避免非训练阶段加载重型库）──────────────────
-    import torch
-    from transformers import AutoModelForCausalLM, AutoTokenizer
-    from peft import PeftModel, LoraConfig, TaskType
-    from trl import GRPOConfig, GRPOTrainer
-    from datasets import Dataset
-    from src.rl.reward_model import reward_fn
+    import sys
+
+    # GRPO 训练使用 HuggingFace generate()，不需要 vllm。
+    # 但 TRL 在 import 时会无条件尝试加载 vllm，旧版 vllm 与新版
+    # transformers 的 aimv2 配置冲突会崩。这里临时屏蔽，让 TRL
+    # 的 is_vllm_available() 返回 False，回退到 HF generate 后端。
+    _vllm_backup = {}
+    for key in list(sys.modules.keys()):
+        if key.startswith("vllm"):
+            _vllm_backup[key] = sys.modules.pop(key)
+    # 插入一个会触发 ImportError 的占位，使 is_vllm_available() 返回 False
+    sys.modules["vllm"] = None
+
+    try:
+        import torch
+        from transformers import AutoModelForCausalLM, AutoTokenizer
+        from peft import PeftModel, LoraConfig, TaskType
+        from trl import GRPOConfig, GRPOTrainer
+        from datasets import Dataset
+        from src.rl.reward_model import reward_fn
+    finally:
+        # 恢复 vllm（日常推理不受影响）
+        del sys.modules["vllm"]
+        sys.modules.update(_vllm_backup)
 
     # ── 路径配置 ──────────────────────────────────────────
     model_base_path  = os.path.join(BASE_DIR, "models/Qwen3-8B/")
