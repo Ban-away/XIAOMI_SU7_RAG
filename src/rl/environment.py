@@ -60,10 +60,18 @@ class LocalSearchBackend:
     def __init__(self):
         self.bm25     = BM25(docs=None, retrieve=True)
         self.milvus   = MilvusRetriever(docs=None, retrieve=True)
-        self.reranker = MiniCPMReRanker(
-            model_path=bge_reranker_minicpm_path,
-            cutoff_layers=28
-        )
+        # 重排器原生 transformers 打分在 transformers 5.x 下有 layerwise 输出形状 bug
+        # （all_logits 维度与 yes_loc 索引不匹配）。默认禁用，直接用 BM25+Milvus 融合排序；
+        # 修复重排器后设 RERANKER_DISABLED=0 即可重新启用。
+        self._reranker_disabled = os.getenv("RERANKER_DISABLED", "1") == "1"
+        if not self._reranker_disabled:
+            self.reranker = MiniCPMReRanker(
+                model_path=bge_reranker_minicpm_path,
+                cutoff_layers=28
+            )
+        else:
+            self.reranker = None
+            print("[WARN] 重排器已禁用（RERANKER_DISABLED=1），本地检索直接用 BM25+Milvus 融合结果")
         self._bm25_lock   = threading.Lock()
         self._rerank_lock = threading.Lock()
         self.milvus.retrieve_topk("测试", topk=1)
@@ -81,8 +89,11 @@ class LocalSearchBackend:
         if not merged:
             return "本地知识库中未检索到相关内容。", 0.0
 
-        with self._rerank_lock:
-            ranked = self.reranker.rank(query, merged[:10], topk=LOCAL_TOPK)
+        if self._reranker_disabled or self.reranker is None:
+            ranked = merged[:LOCAL_TOPK]
+        else:
+            with self._rerank_lock:
+                ranked = self.reranker.rank(query, merged[:10], topk=LOCAL_TOPK)
 
         if not ranked:
             return "本地知识库中未检索到相关内容。", 0.0
