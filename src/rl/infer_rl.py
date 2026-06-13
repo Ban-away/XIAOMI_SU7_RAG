@@ -387,7 +387,7 @@ def main():
             break
 
         # 执行过程不再内联流式打印，仅输出最终摘要；完整过程用 --show-trajectory 查看
-        print()  # 与用户输入空行分隔
+        print("\n🤖 助手 ➜")  # 助手标识，与"🧑 用户 ➜"对应
         start_time = time.time()
         result = run_rl_inference(
             question   = question,
@@ -399,7 +399,7 @@ def main():
         elapsed = time.time() - start_time
 
         # ── 输出结果 ────────────────────────────────────────
-        print(f"  📝 答案: {result['answer'][:200]}{'...' if len(result['answer']) > 200 else ''}")
+        print(f"  📝 答案: {result['answer']}")
         print(f"  ⏱️  耗时: {elapsed:.1f}s | 轮数: {result['rounds']} | "
               f"检索: local×{result['search_calls']['local']} web×{result['search_calls']['web']} "
               f"read_page×{result['search_calls']['read_page']}")

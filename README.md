@@ -720,19 +720,20 @@ python src/rl/train_grpo.py --stage export   # 导出合并模型（链式：bas
 > - 6 维自定义奖励函数通过 `reward_funcs` 参数注入
 > - 训练配置（`GRPO_HYPERPARAMS` 字典）定义在 `src/rl/train_grpo.py` 中
 > - GRPO 训练使用 HuggingFace `generate()`，不需要 vLLM
-> - 关键超参数：`beta=0.01`（KL 惩罚），`lr=1e-5`，3 epoch，`num_generations=4`，`max_completion_length=768`
+> - 关键超参数：`beta=0.1`（KL 惩罚），`lr=2e-5`，`lora_rank=16`，`num_generations=6`，`max_completion_length=768`（有效 batch 须被 `num_generations` 整除）
 
 16. RL 增强推理（边生成边检索 + 深度页面阅读）
 
 ```bash
-# 启动 vLLM（使用 RL 训练后的模型）
-python deploy/auto_vllm_server.py --model LLaMA-Factory-main/output/qwen3_lora_rl --port 8000
+# 启动 vLLM（使用 RL 训练后的模型）；--served-model-name 设短名，省得 --model 写长路径
+python deploy/auto_vllm_server.py --model LLaMA-Factory-main/output/qwen3_lora_rl --port 8000 \
+  -- --served-model-name su7_rl
 
-# 另一个终端：启动交互式问答
-python src/rl/infer_rl.py --show-reward --show-trajectory
+# 另一个终端：启动交互式问答（--model 必须等于 vLLM 服务的名字，否则 404）
+python src/rl/infer_rl.py --model su7_rl --show-reward --show-trajectory
 ```
 
-**交互示例（含垂直搜索）：**
+**交互示例（`--show-trajectory` 的完整轨迹视图；交互默认只打印摘要 📝/⏱️/📊）：**
 ```
 🧑 用户 ➜ 小米SU7最新的OTA版本更新了什么功能？
 
@@ -760,6 +761,8 @@ python src/rl/infer_rl.py --show-reward --show-trajectory
 （以上信息来源于www.xiaomi.com，请以小米官方最新公告为准）</answer>
 ```
 
+> 交互时**默认只打印摘要**（📝 答案 / ⏱️ 耗时 / 📊 奖励），完整执行过程需加 `--show-trajectory`（如上）。网络搜索自动加 `小米SU7` 前缀**限定小米汽车范围**；本地信息足够时由模型自主判断、不触发 web。
+
 17. RL 模型评测（与 baseline 对比）
 
 ```bash
@@ -767,16 +770,16 @@ python src/rl/infer_rl.py --show-reward --show-trajectory
 # 前提：vLLM 已启动（RL 模型），检索环境就绪
 
 # 完整评测（676条手册问答，含 RAGAs）
-python src/rl/batch_eval.py --vllm-url http://localhost:8000/v1
+python src/rl/batch_eval.py --model su7_rl --vllm-url http://localhost:8000/v1
 
 # 快速验证
-python src/rl/batch_eval.py --dry-run
+python src/rl/batch_eval.py --model su7_rl --dry-run
 
 # 跳过 RAGAs（省 API 费用，只算语义+关键词分）
-python src/rl/batch_eval.py --skip-ragas
+python src/rl/batch_eval.py --model su7_rl --skip-ragas
 
 # 断点续传
-python src/rl/batch_eval.py --resume
+python src/rl/batch_eval.py --model su7_rl --resume
 ```
 
 **评测原理：** 对 `test_qa_pair_verify.json`（676条）逐条运行 RL 推理，从轨迹中提取 `<answer>` 作为预测答案、`<information>` 拼接为检索上下文，复用 `final_score.py` 相同的评分逻辑（text2vec 语义相似度 + 关键词加权 + RAGAs），与 baseline 指标并列对比。额外输出 RL 6 维奖励平均分和工具调用统计。
@@ -1049,7 +1052,7 @@ python final_score.py
 **RL 模型评测（与 baseline 同指标对比）：**
 
 ```bash
-python src/rl/batch_eval.py --vllm-url http://localhost:8000/v1
+python src/rl/batch_eval.py --model su7_rl --vllm-url http://localhost:8000/v1
 ```
 
 **评分机制（两种评测共用）：**
@@ -1167,14 +1170,14 @@ Search-R1 + WebWalker（infer_rl.py）：
 | 维度 | 权重 | 说明 |
 |:---|:---:|:---|
 | 格式完整性 | 0.05 | 标签齐全、正确闭合（SFT 已教格式，GRPO 弱化此维度） |
-| 答案质量 | 0.40 | 回答准确性、信息量、基于检索信息的 groundedness |
+| 答案质量 | 0.40 | 回答准确性、信息量；细节奖励挂钩 groundedness + 幻觉惩罚（防编造） |
 | 工具合理性 | 0.15 | 检索关键词精准、调用顺序合理 |
 | 来源标注 | 0.10 | 网络信息正确注明来源 |
 | 领域合规 | 0.15 | 正确拒答非SU7问题 |
 | **探索深度** | **0.15** | **本地充足即停 / 网络搜索有效利用 read_page** |
 
 探索深度评分逻辑：
-- **Local-only**：本地信息充分 + 答案充实 → 0.10；本地信息不充分 → 0.02
+- **Local-only**：本地信息充分 + 答案充实 → 0.07（压低上限以鼓励 web 探索）；本地信息不充分 → 0.02
 - **Web 轨迹**：有web无read_page得0.03（表面搜索）；有read_page且URL有效+0.05；内容被answer引用+0.04；多次read_page（≤2）+0.03；顺序错误-0.03
 
 ### 训练流程
@@ -1195,8 +1198,9 @@ python src/rl/format_converter.py
 python src/rl/train_grpo.py --stage all
 
 # 5. RL 增强推理（边生成边检索 + 深度阅读）
-python deploy/auto_vllm_server.py --model LLaMA-Factory-main/output/qwen3_lora_rl --port 8000
-python src/rl/infer_rl.py --show-reward --show-trajectory
+python deploy/auto_vllm_server.py --model LLaMA-Factory-main/output/qwen3_lora_rl --port 8000 \
+  -- --served-model-name su7_rl
+python src/rl/infer_rl.py --model su7_rl --show-reward --show-trajectory
 ```
 
 > **依赖要求**：GRPO 训练需要 `trl >= 0.14` + `peft` + `bitsandbytes`。SFT warm-up 和导出合并仍使用 LLaMA-Factory。SFT warm-up 使用合并数据集（全量 QA 对，按 data_source 分层 80/20 拆分训练/评估集），采用 QLoRA 4-bit 量化降低显存需求；GRPO 从合并数据集中随机采样 300 条子集训练，兼顾"何时联网"和"何时不联网"两种场景。
