@@ -44,7 +44,7 @@ MODEL_PRESETS: Dict[str, List[ModelSpec]] = {
         ModelSpec("bge-large-zh-v1.5", "BAAI/bge-large-zh-v1.5", "models/BAAI/bge-large-zh-v1.5"),
         ModelSpec("splade-v2", "naver/splade-cocondenser-ensembledistil", "models/naver/splade-cocondenser-ensembledistil"),
         # 精排（在线推理 + 离线评估均使用）
-        ModelSpec("bge-reranker-v2-minicpm-layerwise", "BAAI/bge-reranker-v2-minicpm-layerwise", "models/bge-reranker-v2-minicpm-layerwise"),
+        ModelSpec("bge-reranker-v2-minicpm-layerwise", "BAAI/bge-reranker-v2-minicpm-layerwise", "models/BAAI/bge-reranker-v2-minicpm-layerwise"),
         # 生成模型基座（微调用）
         ModelSpec("Qwen3-8B", "Qwen/Qwen3-8B", "models/Qwen3-8B"),
         # 评测相似度
@@ -65,7 +65,7 @@ MODEL_PRESETS: Dict[str, List[ModelSpec]] = {
         # 生成模型基座
         ModelSpec("Qwen3-8B", "Qwen/Qwen3-8B", "models/Qwen3-8B"),
         # 精排（主力）
-        ModelSpec("bge-reranker-v2-minicpm-layerwise", "BAAI/bge-reranker-v2-minicpm-layerwise", "models/bge-reranker-v2-minicpm-layerwise"),
+        ModelSpec("bge-reranker-v2-minicpm-layerwise", "BAAI/bge-reranker-v2-minicpm-layerwise", "models/BAAI/bge-reranker-v2-minicpm-layerwise"),
         # 精排（备选）
         ModelSpec("bge-reranker-v2-m3", "BAAI/bge-reranker-v2-m3", "models/BAAI/bge-reranker-v2-m3"),
         ModelSpec("Qwen3-Reranker-0.6B", "Qwen/Qwen3-Reranker-0.6B", "models/Qwen3-Reranker-0.6B"),

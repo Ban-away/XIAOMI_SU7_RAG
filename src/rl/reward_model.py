@@ -115,14 +115,18 @@ def score_answer_quality(trajectory: str, question: str = "") -> float:
     """
     评估 <answer> 内容的质量（满分 0.40）。
 
+    核心原则：细节奖励（长度/数字/术语）挂钩 groundedness，并对"有具体声称却
+    零检索支撑"的幻觉施加惩罚——防止模型"编得详细流畅就拿高分"（reward hacking）。
+
     评分标准：
       - 非空基础分：0.10
-      - 长度充实：>30 字 +0.04，>100 字 +0.04（合计 0.08）
-      - 包含具体数据/规格：+0.05
-      - 包含专业术语：+0.04
+      - 长度充实（>30 / >100 字）：各 +0.04，按 grounded_ratio 缩放（需 >50% 短语被支撑才全额）
+      - 包含具体数据/规格：+0.05，按 grounded_ratio 缩放
+      - 包含专业术语：+0.04，按 grounded_ratio 缩放
       - 语言自然流畅：+0.03
-      - 与问题主题相关（3字片段匹配）：+0.06
-      - 答案基于检索信息（groundedness）：+0.04
+      - 与问题主题相关：+0.06
+      - groundedness（答案短语在 <information> 中出现比例）：+min(0.08, ratio*0.12)
+      - 幻觉惩罚：有数字/术语但 grounded_ratio==0 → -0.08
     """
     answer_match = _RE_ANSWER.search(trajectory)
     if not answer_match:
@@ -132,28 +136,45 @@ def score_answer_quality(trajectory: str, question: str = "") -> float:
     if not answer:
         return 0.0
 
-    score = 0.10  # 非空基础分
+    # ── 先算 groundedness（答案是否基于检索信息）──
+    grounded_ratio = 0.0
+    info_matches = _RE_INFORMATION.findall(trajectory)
+    info_text = " ".join(m.strip() for m in info_matches if m.strip())
+    if info_text:
+        ans_phrases = re.findall(r"[一-鿿]{3,}", answer)
+        if ans_phrases:
+            grounded_count = sum(1 for p in ans_phrases if p in info_text)
+            grounded_ratio = grounded_count / len(ans_phrases)
 
-    # 长度奖励
-    if len(answer) > 30:
-        score += 0.04
-    if len(answer) > 100:
-        score += 0.04
-
-    # 包含具体数据（数字、单位、规格）
-    if re.search(r"\d+[\.\d]*\s*(km|kW|N·m|V|Ah|mm|英寸|%|万元|秒|公里|马力)", answer):
-        score += 0.05
-
-    # 包含专业术语
+    # ── 具体声称检测 ──
+    has_number = bool(
+        re.search(r"\d+[\.\d]*\s*(km|kW|N·m|V|Ah|mm|英寸|%|万元|秒|公里|马力)", answer)
+    )
     tech_terms = [
         "激光雷达", "毫米波", "摄像头", "算力", "传感器",
         "电池", "电机", "逆变器", "减速器", "悬架",
         "制动", "转向", "扭矩", "功率", "续航",
     ]
-    if any(t in answer for t in tech_terms):
-        score += 0.04
+    has_tech = any(t in answer for t in tech_terms)
 
-    # 语言自然度（非纯复制粘贴的标志）
+    score = 0.10  # 非空基础分
+
+    # ── 幻觉惩罚：有具体声称却无任何检索支撑 ──
+    if (has_number or has_tech) and grounded_ratio == 0.0:
+        score -= 0.08
+
+    # ── 细节奖励：按 grounded_ratio 缩放（需 >50% 短语被支撑才全额发放）──
+    g = min(1.0, grounded_ratio * 2.0)
+    if len(answer) > 30:
+        score += 0.04 * g
+    if len(answer) > 100:
+        score += 0.04 * g
+    if has_number:
+        score += 0.05 * g
+    if has_tech:
+        score += 0.04 * g
+
+    # 语言自然度（风格特征，低权重，不挂钩 grounding）
     natural_markers = ["此外", "另外", "需要注意的是", "具体来说", "同时", "因此"]
     if any(m in answer for m in natural_markers):
         score += 0.03
@@ -166,16 +187,8 @@ def score_answer_quality(trajectory: str, question: str = "") -> float:
             ratio = hits / len(q_keywords)
             score += min(0.06, ratio * 0.12)
 
-    # 答案基于检索信息（groundedness）：答案片段在信息块中出现的比例
-    info_matches = _RE_INFORMATION.findall(trajectory)
-    if info_matches and answer:
-        info_text = " ".join(m.strip() for m in info_matches if m.strip())
-        if info_text:
-            ans_phrases = re.findall(r"[一-鿿]{3,}", answer)
-            if ans_phrases:
-                grounded_count = sum(1 for p in ans_phrases if p in info_text)
-                grounded_ratio = grounded_count / max(len(ans_phrases), 1)
-                score += min(0.04, grounded_ratio * 0.08)
+    # groundedness 强化奖励
+    score += min(0.08, grounded_ratio * 0.12)
 
     return max(0.0, min(0.40, score))
 
@@ -348,8 +361,8 @@ def score_exploration_depth(trajectory: str) -> float:
 
     评分标准：
       【Local-only 轨迹】（无 web 搜索）
-        - 本地信息充分 + 答案充实：0.10（本地探索已足够）
-        - 本地信息充分但答案简短：0.05
+        - 本地信息充分 + 答案充实：0.07（本地探索已足够；压低上限以鼓励 web 探索）
+        - 本地信息充分但答案简短：0.04
         - 本地信息不充分（空结果/低相关性）：0.02
       【Web 轨迹】（有 web 搜索）
         - 有 web 但无 read_page：0.03（仅表面搜索）
@@ -377,7 +390,9 @@ def score_exploration_depth(trajectory: str) -> float:
             ]
             if substantive and answer_match:
                 answer = answer_match.group(1).strip()
-                score = 0.10 if len(answer) > 20 else 0.05
+                # 本地探索上限压低（0.10→0.07），使 web+read_page（最高 0.15）相对更有吸引力，
+                # 抑制"只搜本地就交差"的偷懒捷径
+                score = 0.07 if len(answer) > 20 else 0.04
             else:
                 score = 0.02  # 本地结果不充分
         return max(0.0, min(0.15, score))

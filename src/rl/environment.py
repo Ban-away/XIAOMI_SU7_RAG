@@ -24,8 +24,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 
 from src.retriever.bm25_retriever import BM25
 from src.retriever.milvus_retriever import MilvusRetriever
-from src.reranker.minicpm_reranker import MiniCPMReRanker
-from src.constant import bge_reranker_minicpm_path
+from src.reranker.bge_m3_reranker import BGEM3ReRanker
+from src.constant import bge_reranker_model_path
 from src.utils import merge_docs
 from src.rl.web_reader import WebPageReader
 
@@ -60,15 +60,11 @@ class LocalSearchBackend:
     def __init__(self):
         self.bm25     = BM25(docs=None, retrieve=True)
         self.milvus   = MilvusRetriever(docs=None, retrieve=True)
-        # 重排器原生 transformers 打分在 transformers 5.x 下有 layerwise 输出形状 bug
-        # （all_logits 维度与 yes_loc 索引不匹配）。默认禁用，直接用 BM25+Milvus 融合排序；
-        # 修复重排器后设 RERANKER_DISABLED=0 即可重新启用。
-        self._reranker_disabled = os.getenv("RERANKER_DISABLED", "1") == "1"
+        # 重排器：使用 bge-reranker-v2-m3（标准交叉编码器，transformers 5.x 稳定）。
+        # 原 minicpm-layerwise 在 5.x 下打分崩溃，已弃用。设 RERANKER_DISABLED=1 可禁用。
+        self._reranker_disabled = os.getenv("RERANKER_DISABLED", "0") == "1"
         if not self._reranker_disabled:
-            self.reranker = MiniCPMReRanker(
-                model_path=bge_reranker_minicpm_path,
-                cutoff_layers=28
-            )
+            self.reranker = BGEM3ReRanker(model_path=bge_reranker_model_path)
         else:
             self.reranker = None
             print("[WARN] 重排器已禁用（RERANKER_DISABLED=1），本地检索直接用 BM25+Milvus 融合结果")
@@ -107,7 +103,7 @@ class LocalSearchBackend:
         result_str = "\n".join(parts)
 
         # 相关性分数：使用重排模型实际输出的分数
-        # MiniCPM reranker 的 score 字段是 relevance logit，做 sigmoid 归一化
+        # 重排模型（bge-reranker-v2-m3）的 relevance_score 是相关性 logit，做 sigmoid 归一化
         import math
         top_score = 0.0
         if ranked and hasattr(ranked[0], "metadata"):

@@ -89,9 +89,12 @@ class BGEM3ReRanker(object):
         # 确保 scores 是一维数组
         if scores.ndim > 1:
             scores = scores.flatten()
-        # 依据分数降序排序并截断 topk
+        # 依据分数降序排序并截断 topk；写入 relevance_score 供下游（如 RL environment）做相关性归一化
         response = [
-            doc
+            Document(
+                page_content=doc.page_content,
+                metadata={**doc.metadata, "relevance_score": float(score)},
+            )
             for score, doc in sorted(
                 zip(scores, candidate_docs), reverse=True, key=lambda x: x[0]
             )

@@ -157,7 +157,7 @@ class MiniCPMReRanker(object):
 
 
 if __name__ == "__main__":
-    model_path = "./models/bge-reranker-v2-minicpm-layerwise/"
+    model_path = "./models/BAAI/bge-reranker-v2-minicpm-layerwise/"
     reranker = MiniCPMReRanker(model_path, cutoff_layers=28)
     query = "小米SU7如何开启离车后自动上锁"
     docs = [

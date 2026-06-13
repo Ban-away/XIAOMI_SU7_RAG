@@ -81,7 +81,7 @@ qwen3_reranker_model_path = base_dir + "models/Qwen3-Reranker-0.6B"
 qwen3_4b_reranker_model_path = base_dir + "models/Qwen3-Reranker-4B"
 bge_reranker_model_path = base_dir + "models/BAAI/bge-reranker-v2-m3"
 bge_reranker_tuned_model_path = base_dir + "RAG-Retrieval/rag_retrieval/train/reranker/output/bert/runs/checkpoints/checkpoint_0/"
-bge_reranker_minicpm_path = base_dir + "models/bge-reranker-v2-minicpm-layerwise"
+bge_reranker_minicpm_path = base_dir + "models/BAAI/bge-reranker-v2-minicpm-layerwise"
 jina_reranker_v2_model_path = base_dir + "models/jinaai/jina-reranker-v2-base-multilingual"
 
 # 评估向量模型
