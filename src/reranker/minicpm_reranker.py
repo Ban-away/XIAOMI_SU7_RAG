@@ -134,9 +134,6 @@ class MiniCPMReRanker(object):
                 if all_logits.device != self.device:
                     all_logits = all_logits.to(self.device)
 
-                # 诊断：layerwise 自定义 forward 的输出形状
-                print(f"[DEBUG MiniCPM] outputs.logits shape={tuple(all_logits.shape)}")
-
                 if all_logits.dim() == 2:
                     # layerwise forward 返回 (batch, seq)：每个位置已是得分（过 score 头），
                     # 取最后 token 位置作为 (query, doc) 的相关性得分
