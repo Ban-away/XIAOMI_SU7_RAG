@@ -13,6 +13,9 @@ class MiniCPMReRanker(object):
     def __init__(self, model_path, max_length=2048, cutoff_layers=None):
         print(f"[INFO] 加载重排模型: {os.path.basename(model_path)}")
 
+        # 必须先设置 device：_init_with_transformers() 内部（self.model.to(self.device)）会用到它
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+
         try:
             from FlagEmbedding import FlagAutoReranker
             self.reranker = FlagAutoReranker.from_finetuned(
@@ -24,11 +27,11 @@ class MiniCPMReRanker(object):
             )
             self.use_flag_embedding = True
         except ImportError:
-            print("[WARN] FlagEmbedding 库未安装，使用原生 transformers 方式")
+            # FlagEmbedding 可能未安装，或与当前 transformers 版本不兼容（如 5.x 移除了 GEMMA2_START_DOCSTRING）
+            print("[WARN] FlagEmbedding 不可用（未安装或与 transformers 版本不兼容），改用原生 transformers 方式")
             self._init_with_transformers(model_path, max_length, cutoff_layers)
             self.use_flag_embedding = False
 
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
         print(f"[INFO] MiniCPM 重排模型加载完成，cutoff_layers={cutoff_layers or 28}, device={self.device}")
 
     def _init_with_transformers(self, model_path, max_length, cutoff_layers):
