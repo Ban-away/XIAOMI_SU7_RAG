@@ -134,12 +134,15 @@ class MiniCPMReRanker(object):
                 if all_logits.device != self.device:
                     all_logits = all_logits.to(self.device)
 
-                # 诊断：layerwise 在 transformers 5.x 下输出结构可能异常，打印真实形状以便定位
-                print(f"[DEBUG MiniCPM] outputs.logits shape={tuple(all_logits.shape)}, yes_loc={self.yes_loc}")
+                # 诊断：layerwise 自定义 forward 的输出形状
+                print(f"[DEBUG MiniCPM] outputs.logits shape={tuple(all_logits.shape)}")
 
                 if all_logits.dim() == 2:
-                    scores = all_logits[:, self.yes_loc].view(-1).float()
+                    # layerwise forward 返回 (batch, seq)：每个位置已是得分（过 score 头），
+                    # 取最后 token 位置作为 (query, doc) 的相关性得分
+                    scores = all_logits[:, -1].view(-1).float()
                 elif all_logits.dim() == 3:
+                    # (batch, seq, vocab)：取最后 token 位置、Yes token 的 logit
                     scores = all_logits[:, -1, self.yes_loc].view(-1).float()
                 else:
                     raise RuntimeError(f"logits 维度错误: {all_logits.dim()}")

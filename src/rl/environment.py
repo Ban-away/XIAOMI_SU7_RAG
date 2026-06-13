@@ -24,8 +24,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 
 from src.retriever.bm25_retriever import BM25
 from src.retriever.milvus_retriever import MilvusRetriever
-from src.reranker.bge_m3_reranker import BGEM3ReRanker
-from src.constant import bge_reranker_model_path
+from src.reranker.minicpm_reranker import MiniCPMReRanker
+from src.constant import bge_reranker_minicpm_path
 from src.utils import merge_docs
 from src.rl.web_reader import WebPageReader
 
@@ -60,12 +60,14 @@ class LocalSearchBackend:
     def __init__(self):
         self.bm25     = BM25(docs=None, retrieve=True)
         self.milvus   = MilvusRetriever(docs=None, retrieve=True)
-        # 重排器：bge-reranker-v2-m3（标准交叉编码器，transformers 5.x 稳定）。
-        # minicpm-layerwise 在 5.x 下打分崩溃（已验证：返回 (batch, seq) 非 logits），弃用。
+        # 重排器：bge-reranker-v2-minicpm-layerwise（路径 models/BAAI/...）。
+        # layerwise 打分已修复（transformers 4.52 下 outputs.logits 为 (batch, seq)，取 [:, -1]）。
         # search() 内保留 try/except 容错降级。设 RERANKER_DISABLED=1 可禁用。
         self._reranker_disabled = os.getenv("RERANKER_DISABLED", "0") == "1"
         if not self._reranker_disabled:
-            self.reranker = BGEM3ReRanker(model_path=bge_reranker_model_path)
+            self.reranker = MiniCPMReRanker(
+                model_path=bge_reranker_minicpm_path, cutoff_layers=28
+            )
         else:
             self.reranker = None
             print("[WARN] 重排器已禁用（RERANKER_DISABLED=1），本地检索直接用 BM25+Milvus 融合结果")
@@ -140,6 +142,8 @@ class WebSearchBackend:
             self.backend = "doubao"
 
     def search(self, query: str) -> str:
+        # 限定网络搜索只针对小米汽车（query 未含小米车型词时加前缀）
+        query = self._scope_to_xiaomi(query)
         try:
             if self.backend == "bing":
                 return self._bing(query)
@@ -150,6 +154,16 @@ class WebSearchBackend:
         except Exception as e:
             return f"网络搜索暂时不可用：{e}"
 
+    # 限定网络搜索只针对小米汽车：query 未含小米车型词时加 "小米SU7" 前缀
+    _XIAOMI_TERMS = ("小米汽车", "小米SU7", "小米 SU7", "小米YU7", "小米 YU7",
+                     "SU7", "YU7", "SU7 Ultra", "Xiaomi", "澎湃")
+
+    def _scope_to_xiaomi(self, query: str) -> str:
+        q = query.strip()
+        if any(t in q for t in self._XIAOMI_TERMS):
+            return q
+        return f"小米SU7 {q}"
+
     def _bing(self, query: str) -> str:
         import requests
         headers = {"Ocp-Apim-Subscription-Key": os.environ["BING_SEARCH_KEY"]}
@@ -159,6 +173,7 @@ class WebSearchBackend:
             headers=headers, params=params, timeout=10
         )
         resp.raise_for_status()
+        resp.encoding = "utf-8"  # Bing 返回 UTF-8 JSON；强制避免被默认 ISO-8859-1 解成乱码
         results = resp.json().get("webPages", {}).get("value", [])
         if not results:
             return "网络搜索未找到相关结果。"
@@ -175,6 +190,7 @@ class WebSearchBackend:
         }
         resp    = requests.get("https://serpapi.com/search", params=params, timeout=15)
         resp.raise_for_status()
+        resp.encoding = "utf-8"  # 同上，避免中文乱码
         results = resp.json().get("organic_results", [])
         if not results:
             return "网络搜索未找到相关结果。"
