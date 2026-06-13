@@ -134,6 +134,9 @@ class MiniCPMReRanker(object):
                 if all_logits.device != self.device:
                     all_logits = all_logits.to(self.device)
 
+                # 诊断：layerwise 在 transformers 5.x 下输出结构可能异常，打印真实形状以便定位
+                print(f"[DEBUG MiniCPM] outputs.logits shape={tuple(all_logits.shape)}, yes_loc={self.yes_loc}")
+
                 if all_logits.dim() == 2:
                     scores = all_logits[:, self.yes_loc].view(-1).float()
                 elif all_logits.dim() == 3:

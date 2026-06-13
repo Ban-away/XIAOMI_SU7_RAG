@@ -152,8 +152,7 @@ def run_rl_inference(
             generated = completion.choices[0].message.content or ""
             finish_reason = completion.choices[0].finish_reason
         except Exception as e:
-            if verbose:
-                print(f"\n[ERROR] 生成失败: {e}")
+            print(f"\n[ERROR] 生成失败: {e}")
             break
 
         trajectory += generated
@@ -387,15 +386,15 @@ def main():
             print("👋 再见！")
             break
 
-        print(f"\n🤖 助手 ➜ ", end="", flush=True)
-
+        # 执行过程不再内联流式打印，仅输出最终摘要；完整过程用 --show-trajectory 查看
+        print()  # 与用户输入空行分隔
         start_time = time.time()
         result = run_rl_inference(
             question   = question,
             llm_client = llm_client,
             env        = env,
             model_name = model_name,
-            verbose=True,
+            verbose=False,
         )
         elapsed = time.time() - start_time
 

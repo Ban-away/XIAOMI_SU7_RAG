@@ -24,8 +24,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 
 from src.retriever.bm25_retriever import BM25
 from src.retriever.milvus_retriever import MilvusRetriever
-from src.reranker.bge_m3_reranker import BGEM3ReRanker
-from src.constant import bge_reranker_model_path
+from src.reranker.minicpm_reranker import MiniCPMReRanker
+from src.constant import bge_reranker_minicpm_path
 from src.utils import merge_docs
 from src.rl.web_reader import WebPageReader
 
@@ -60,11 +60,14 @@ class LocalSearchBackend:
     def __init__(self):
         self.bm25     = BM25(docs=None, retrieve=True)
         self.milvus   = MilvusRetriever(docs=None, retrieve=True)
-        # 重排器：使用 bge-reranker-v2-m3（标准交叉编码器，transformers 5.x 稳定）。
-        # 原 minicpm-layerwise 在 5.x 下打分崩溃，已弃用。设 RERANKER_DISABLED=1 可禁用。
+        # 重排器：bge-reranker-v2-minicpm-layerwise（路径 models/BAAI/...）。
+        # 注意：该 layerwise 模型在 transformers 5.x 下打分可能崩溃；search() 内已加 try/except 容错降级。
+        # 设 RERANKER_DISABLED=1 可禁用。
         self._reranker_disabled = os.getenv("RERANKER_DISABLED", "0") == "1"
         if not self._reranker_disabled:
-            self.reranker = BGEM3ReRanker(model_path=bge_reranker_model_path)
+            self.reranker = MiniCPMReRanker(
+                model_path=bge_reranker_minicpm_path, cutoff_layers=28
+            )
         else:
             self.reranker = None
             print("[WARN] 重排器已禁用（RERANKER_DISABLED=1），本地检索直接用 BM25+Milvus 融合结果")
@@ -89,7 +92,13 @@ class LocalSearchBackend:
             ranked = merged[:LOCAL_TOPK]
         else:
             with self._rerank_lock:
-                ranked = self.reranker.rank(query, merged[:10], topk=LOCAL_TOPK)
+                try:
+                    ranked = self.reranker.rank(query, merged[:10], topk=LOCAL_TOPK)
+                except Exception as e:
+                    # 重排打分失败（如 layerwise 在 transformers 5.x 下的形状 bug）时，
+                    # 降级用 BM25+Milvus 融合排序，不让单点故障拖垮整条检索
+                    print(f"[WARN] 重排失败（{type(e).__name__}: {e}），降级用 BM25+Milvus 融合排序")
+                    ranked = merged[:LOCAL_TOPK]
 
         if not ranked:
             return "本地知识库中未检索到相关内容。", 0.0
@@ -102,8 +111,8 @@ class LocalSearchBackend:
             parts.append(f"[{i}]{suffix} {doc.page_content[:400]}")
         result_str = "\n".join(parts)
 
-        # 相关性分数：使用重排模型实际输出的分数
-        # 重排模型（bge-reranker-v2-m3）的 relevance_score 是相关性 logit，做 sigmoid 归一化
+        # 相关性分数：重排器绝对分不可靠（不同模型/术语差异会误打低分，如"玻璃水"↔"风挡洗涤液"），
+        # 只要本地召回到实质性内容，就以"有内容"的保守分兜底，避免误触发网络搜索。
         import math
         top_score = 0.0
         if ranked and hasattr(ranked[0], "metadata"):
@@ -114,9 +123,10 @@ class LocalSearchBackend:
                     top_score = 1 / (1 + math.exp(-float(raw)))
                 except (ValueError, OverflowError):
                     top_score = 0.5
-        if top_score == 0.0:
-            # 兜底：有结果时给一个基于结果数量的保守分数
-            top_score = min(0.3 + len(ranked) * 0.05, 0.6)
+        # 有实质性结果时，分数不低于"内容保守分"，防止低分误触发 web 兜底
+        content_floor = min(0.3 + len(ranked) * 0.05, 0.6)
+        if top_score < content_floor:
+            top_score = content_floor
         return result_str, top_score
 
 
