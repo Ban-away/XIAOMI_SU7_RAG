@@ -134,25 +134,37 @@ class WebSearchBackend:
     """网络搜索后端，自动检测可用的 API"""
 
     def __init__(self):
+        # 搜索后端链：按优先级 + 已配置 key 构建；逐个尝试，某个失败（如额度耗尽）顺延到下一个
+        chain = []
+        if os.getenv("SERPAPI_KEY"):
+            chain.append("serpapi")
+        if os.getenv("SERPER_API_KEY"):
+            chain.append("serper")
         if os.getenv("BING_SEARCH_KEY"):
-            self.backend = "bing"
-        elif os.getenv("SERPAPI_KEY"):
-            self.backend = "serpapi"
-        else:
-            self.backend = "doubao"
+            chain.append("bing")
+        if not chain:
+            chain.append("doubao")  # 无任何搜索 key 时用豆包 LLM 模拟
+        self._backends = chain
+        self.backend = chain[0]  # 兼容旧引用（主后端名）
 
     def search(self, query: str) -> str:
         # 限定网络搜索只针对小米汽车（query 未含小米车型词时加前缀）
         query = self._scope_to_xiaomi(query)
-        try:
-            if self.backend == "bing":
-                return self._bing(query)
-            elif self.backend == "serpapi":
-                return self._serpapi(query)
-            else:
-                return self._doubao(query)
-        except Exception as e:
-            return f"网络搜索暂时不可用：{e}"
+        last_err = None
+        for be in self._backends:
+            try:
+                if be == "serpapi":
+                    return self._serpapi(query)
+                elif be == "serper":
+                    return self._serper(query)
+                elif be == "bing":
+                    return self._bing(query)
+                else:
+                    return self._doubao(query)
+            except Exception as e:
+                last_err = e
+                print(f"[WARN] 搜索后端 {be} 失败（{e}），顺延到下一个")
+        return f"网络搜索暂时不可用（所有后端均失败）：{last_err}"
 
     # 限定网络搜索只针对小米汽车：query 未含小米车型词时加 "小米SU7" 前缀
     _XIAOMI_TERMS = ("小米汽车", "小米SU7", "小米 SU7", "小米YU7", "小米 YU7",
@@ -198,6 +210,28 @@ class WebSearchBackend:
         for r in results[:4]:
             parts.append(
                 f"【{r.get('title','')}】\n{r.get('snippet','')}\n网址：{r.get('link','')}"
+            )
+        return "\n\n".join(parts)
+
+    def _serper(self, query: str) -> str:
+        # Serper (google.serper.dev) —— SerpAPI 额度耗尽时的兜底后端
+        import requests
+        resp = requests.post(
+            "https://google.serper.dev/search",
+            headers={"X-API-KEY": os.environ["SERPER_API_KEY"],
+                     "Content-Type": "application/json"},
+            json={"q": query, "hl": "zh-cn", "gl": "cn", "num": 5},
+            timeout=15,
+        )
+        resp.raise_for_status()
+        resp.encoding = "utf-8"  # 避免中文乱码
+        results = resp.json().get("organic", [])
+        if not results:
+            return "网络搜索未找到相关结果。"
+        parts = []
+        for r in results[:4]:
+            parts.append(
+                f"【{r.get('title', '')}】\n{r.get('snippet', '')}\n网址：{r.get('link', '')}"
             )
         return "\n\n".join(parts)
 

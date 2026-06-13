@@ -464,6 +464,9 @@ export VLLM_BASE_URL="http://localhost:8000/v1"
 
 # 语义切分服务配置 (默认 http://localhost:6000/v1/semantic-chunks)
 export SEMANTIC_CHUNK_URL="http://localhost:6000/v1/semantic-chunks"
+
+# HuggingFace 国内镜像（国内网络必设，避免模型下载/检查超时；shell 命令建议再写进 ~/.bashrc）
+export HF_ENDPOINT="https://hf-mirror.com"
 ```
 
 > 完整变量说明参见 `.env.example`。
@@ -735,6 +738,7 @@ python deploy/auto_vllm_server.py --model LLaMA-Factory-main/output/qwen3_lora_r
   -- --served-model-name su7_rl
 
 # 另一个终端：启动交互式问答（--model 必须等于 vLLM 服务的名字，否则 404）
+export HF_ENDPOINT=https://hf-mirror.com
 python src/rl/infer_rl.py --model su7_rl --show-reward --show-trajectory
 ```
 
