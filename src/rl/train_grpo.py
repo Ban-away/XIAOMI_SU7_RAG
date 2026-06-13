@@ -356,8 +356,8 @@ def run_grpo_training(config_path: str):
     # ── 延迟导入（避免非训练阶段加载重型库）──────────────────
     import sys
 
-    # 启用 vLLM 加速（提升生成速度 3-10 倍）
-    # 注意：需要安装兼容 transformers 5.x 的 vllm 版本
+    # 生成后端：当前使用 HF model.generate()（见下方 GRPOConfig.use_vllm=False）
+    # 注意：启用 vLLM 需安装兼容 transformers 5.x 的 vllm 版本，并改用 server 模式
     try:
         import torch
         from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -465,12 +465,9 @@ def run_grpo_training(config_path: str):
         beta=GRPO_HYPERPARAMS["beta"],
         temperature=GRPO_HYPERPARAMS["temperature"],
         top_p=GRPO_HYPERPARAMS["top_p"],
-        use_vllm=True,                # 启用 vLLM 加速（提升生成速度 3-10x）
-        vllm_model_kwargs={
-            "enable_prefix_caching": True,  # 启用前缀缓存，加速重复prompt
-            "max_seq_len_to_capture": 8192, # 适配 Qwen3-8B 的最大序列长度
-            "disable_log_stats": True,      # 禁用统计日志，减少开销
-        },
+        use_vllm=False,               # 暂用 HF model.generate()；TRL 0.18 的 vLLM(colocate) 与 PEFT 存在挂起风险
+        # 如需启用 vLLM 加速：改为 use_vllm=True 并以 `trl vllm-serve` 启动 server 模式，
+        # TRL 0.18 已移除 vllm_model_kwargs（不再转发任意 kwargs 到 vLLM 引擎）。
         logging_steps=5,
         save_steps=50,
         report_to="none",
