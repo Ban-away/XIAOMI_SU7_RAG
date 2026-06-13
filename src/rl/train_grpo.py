@@ -312,19 +312,24 @@ def run_sft_warmup(config_path: str):
 # ────────────────────────────────────────────────────────────
 
 # ── GRPO 训练超参数（原 configs/qwen3_lora_grpo.yaml）────────
-# 优化策略：
-# 1. num_generations=6：增加候选数，提高策略对比学习效果
-# 2. per_device_train_batch_size=2 + gradient_accumulation_steps=2：有效batch=4，提升GPU利用率
-# 3. beta=0.1：适度增加KL惩罚，平衡探索与稳定
-# 4. lora_rank=16：增加LoRA秩，提升表达能力
+# 配置说明（当前为「验证模式」——先用小规模快速验证奖励信号与流程跑通，再放大）：
+# 1. num_generations=4：受 batch 整除约束。TRL 要求 有效batch = world×per_device×grad_accum
+#    能被 num_generations 整除；当前有效batch=1×2×2=4，仅可被 4 或 2 整除。
+#    原值 6 需有效batch≥6（即 per_device≥3 → 单卡显存 OOM 风险），故取 4（仍是合格 GRPO 对比组）。
+# 2. per_device_train_batch_size=2 + gradient_accumulation_steps=2：有效batch=4（保持不变，显存安全）。
+# 3. beta=0.1：适度增加KL惩罚，平衡探索与稳定。
+# 4. lora_rank=16：增加LoRA秩，提升表达能力。
+# ── 正式训练恢复放大值：num_generations=6 / max_completion_length=768 /
+#    num_train_epochs=5.0 / max_train_samples=300（并相应增大 per_device 或 grad_accum，
+#    使有效batch 被 6 整除，如 per_device=3,grad_accum=2 → 有效batch=6）──
 GRPO_HYPERPARAMS = {
-    "num_generations":           6,        # 每个 prompt 生成候选数（改为6）
-    "max_completion_length":     768,      # 本地轨迹无 <information>，768 足够
-    "per_device_train_batch_size": 2,      # 增大单卡batch（需显存充足）
-    "gradient_accumulation_steps": 2,      # 减少累积步数（有效batch=4）
+    "num_generations":           4,        # 【验证模式】受batch整除约束取4；正式训练恢复6
+    "max_completion_length":     512,      # 【验证模式】512；正式训练恢复768
+    "per_device_train_batch_size": 2,      # 单卡batch（显存安全，保持不变）
+    "gradient_accumulation_steps": 2,      # 有效batch=1×2×2=4（保持不变，被num_generations整除）
     "learning_rate":            2e-5,      # 适度提高学习率
-    "num_train_epochs":         5.0,       # 增加训练轮数，充分学习
-    "max_train_samples":        300,       # GRPO 每步需生成 N 条候选，全量数据太慢，采样子集
+    "num_train_epochs":         1.0,       # 【验证模式】1轮跑通流程；正式训练恢复5.0
+    "max_train_samples":        80,        # 【验证模式】80条快速迭代；正式训练恢复300
     "lr_scheduler_type":        "cosine",
     "warmup_ratio":             0.1,
     "bf16":                     True,

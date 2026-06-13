@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -sL \"https://raw.githubusercontent.com/huggingface/trl/v0.18.0/trl/trainer/grpo_trainer.py\" -o /tmp/grpo_trainer.py)",
+      "Read(//tmp/**)",
+      "Bash(curl -sL -m 15 \"https://raw.githubusercontent.com/huggingface/trl/v0.18.0/trl/trainer/grpo_config.py\")"
+    ]
+  }
+}
