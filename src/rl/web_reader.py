@@ -112,12 +112,21 @@ class WebPageReader:
         if content_length > self.max_size:
             return f"页面内容过大（{content_length // 1024}KB），已跳过"
 
-        # 检测编码
-        encoding = resp.encoding or "utf-8"
-        try:
-            html = resp.content.decode(encoding, errors="replace")
-        except Exception:
-            html = resp.content.decode("utf-8", errors="replace")
+        # 编码检测：requests 对未声明 charset 的 text/html 默认 ISO-8859-1，会导致中文乱码。
+        # 优先用 chardet 检测的 apparent_encoding，再按常见中文编码兜底（gb18030 覆盖 GBK）。
+        content = resp.content
+        encoding = resp.encoding
+        if not encoding or encoding.lower() in ("iso-8859-1", "latin-1"):
+            encoding = resp.apparent_encoding or "utf-8"
+        html = None
+        for enc in (encoding, "utf-8", "gb18030", "gbk"):
+            try:
+                html = content.decode(enc, errors="strict")
+                break
+            except (UnicodeDecodeError, LookupError):
+                continue
+        if html is None:
+            html = content.decode("utf-8", errors="replace")
 
         # HTML → 纯文本
         text = self._html_to_text(html)

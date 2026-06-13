@@ -24,8 +24,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 
 from src.retriever.bm25_retriever import BM25
 from src.retriever.milvus_retriever import MilvusRetriever
-from src.reranker.minicpm_reranker import MiniCPMReRanker
-from src.constant import bge_reranker_minicpm_path
+from src.reranker.bge_m3_reranker import BGEM3ReRanker
+from src.constant import bge_reranker_model_path
 from src.utils import merge_docs
 from src.rl.web_reader import WebPageReader
 
@@ -60,14 +60,12 @@ class LocalSearchBackend:
     def __init__(self):
         self.bm25     = BM25(docs=None, retrieve=True)
         self.milvus   = MilvusRetriever(docs=None, retrieve=True)
-        # 重排器：bge-reranker-v2-minicpm-layerwise（路径 models/BAAI/...）。
-        # 注意：该 layerwise 模型在 transformers 5.x 下打分可能崩溃；search() 内已加 try/except 容错降级。
-        # 设 RERANKER_DISABLED=1 可禁用。
+        # 重排器：bge-reranker-v2-m3（标准交叉编码器，transformers 5.x 稳定）。
+        # minicpm-layerwise 在 5.x 下打分崩溃（已验证：返回 (batch, seq) 非 logits），弃用。
+        # search() 内保留 try/except 容错降级。设 RERANKER_DISABLED=1 可禁用。
         self._reranker_disabled = os.getenv("RERANKER_DISABLED", "0") == "1"
         if not self._reranker_disabled:
-            self.reranker = MiniCPMReRanker(
-                model_path=bge_reranker_minicpm_path, cutoff_layers=28
-            )
+            self.reranker = BGEM3ReRanker(model_path=bge_reranker_model_path)
         else:
             self.reranker = None
             print("[WARN] 重排器已禁用（RERANKER_DISABLED=1），本地检索直接用 BM25+Milvus 融合结果")
