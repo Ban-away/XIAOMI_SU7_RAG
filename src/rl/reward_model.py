@@ -357,108 +357,91 @@ def _is_su7_question(question: str) -> bool:
 # 维度 6：探索深度 (0.0 ~ 0.15)
 # ────────────────────────────────────────────────────────────
 
+def _split_info_by_source(trajectory: str):
+    """把 <information> 块按其前最近的搜索标签归类，返回 (local_text, web_text)。"""
+    local_parts, web_parts = [], []
+    tokens = re.split(r"(<search_local>|<search_web>|<read_page>|<information>|</information>)", trajectory)
+    source, in_info, buf = "local", False, []
+    for tok in tokens:
+        if tok == "<search_local>":
+            source = "local"
+        elif tok in ("<search_web>", "<read_page>"):
+            source = "web"
+        elif tok == "<information>":
+            in_info, buf = True, []
+        elif tok == "</information>":
+            in_info = False
+            text = "".join(buf).strip()
+            if text:
+                (local_parts if source == "local" else web_parts).append(text)
+            buf = []
+        elif in_info:
+            buf.append(tok)
+    return " ".join(local_parts), " ".join(web_parts)
+
+
+def _grounded_ratio(answer: str, info_text: str) -> float:
+    """答案中 3 字以上中文片段在 info_text 中出现的比例（groundedness）。"""
+    if not answer or not info_text:
+        return 0.0
+    phrases = re.findall(r"[一-鿿]{3,}", answer)
+    if not phrases:
+        return 0.0
+    return sum(1 for p in phrases if p in info_text) / len(phrases)
+
+
 def score_exploration_depth(trajectory: str) -> float:
     """
-    评估是否有效利用 read_page 进行垂直搜索（WebWalker 式深度探索）。
-    同时公平对待 local-only 轨迹：本地检索已充分时给予合理分数。
+    评估探索深度（满分 0.15）。原则：奖励"有效的探索"，而非"为探索而探索"。
 
-    评分标准：
-      【Local-only 轨迹】（无 web 搜索）
-        - 本地信息充分 + 答案充实：0.07（本地探索已足够；压低上限以鼓励 web 探索）
-        - 本地信息充分但答案简短：0.04
-        - 本地信息不充分（空结果/低相关性）：0.02
-      【Web 轨迹】（有 web 搜索）
-        - 有 web 但无 read_page：0.03（仅表面搜索）
-        - 有 read_page 且 URL 有效：+0.05
-        - read_page 内容被 answer 引用：+0.04
-        - 多次 read_page（≤2）：+0.03
-        - read_page 在 search_web 之前：-0.03（顺序错误）
+    通过判断 <answer> 是否引用了 web 信息（web-grounded）来区分"该 web"与"不该 web"：
+      【无 web（纯本地）】
+        - 答案 grounded 于本地 + 充实：0.08（本地可答题的理想形态）
+        - 答案无本地支撑（疑似本该 web 却没 web）：0.04
+        - 本地无实质结果 / 无答案：0.02
+      【有 web】
+        - 答案引用了 web 信息（web 有效）：0.10 + read_page 加成（最高 0.15）
+        - 搜了 web 但答案没用上 web 信息（本地够却多搜 / web 白搜）：0.05（低于纯本地 0.08）
+        - web 无产出且答案无支撑：0.03
+
+    净效果：本地够用时本地作答最划算（0.08 > 浪费 web 的 0.05）；
+    本地不足时用上 web 最划算（0.10+ > 本地硬凑的 0.08）。
     """
-    score = 0.0
-
     has_local = bool(_RE_SEARCH_LOCAL.search(trajectory))
     has_web = bool(_RE_SEARCH_WEB.search(trajectory))
     read_matches = _RE_READ_PAGE.findall(trajectory)
-    read_count = len(read_matches)
     answer_match = _RE_ANSWER.search(trajectory)
+    answer = answer_match.group(1).strip() if answer_match else ""
 
-    # ── Local-only 轨迹：本地检索已足够时给予合理分数 ──────────
+    local_info, web_info = _split_info_by_source(trajectory)
+    ans_local_g = _grounded_ratio(answer, local_info)
+    ans_web_g = _grounded_ratio(answer, web_info)
+
+    # ── 无 web：纯本地轨迹 ────────────────────────────────
     if not has_web:
-        if has_local:
-            info_matches = _RE_INFORMATION.findall(trajectory)
-            # 过滤掉空结果提示（"未检索到"/"相关性较低"）
-            substantive = [
-                m.strip() for m in info_matches
-                if m.strip() and "未检索到" not in m and "相关性较低" not in m
-            ]
-            if substantive and answer_match:
-                answer = answer_match.group(1).strip()
-                # 本地探索上限压低（0.10→0.07），使 web+read_page（最高 0.15）相对更有吸引力，
-                # 抑制"只搜本地就交差"的偷懒捷径
-                score = 0.07 if len(answer) > 20 else 0.04
-            else:
-                score = 0.02  # 本地结果不充分
+        if not has_local:
+            return 0.0
+        if answer and len(answer) > 20 and ans_local_g > 0:
+            return 0.08   # 本地足够、答案 grounded：本地可答题的理想形态
+        if answer:
+            return 0.04   # 有答案但本地无支撑（疑似本该 web 却没 web）
+        return 0.02       # 本地无实质结果
+
+    # ── 有 web ────────────────────────────────────────────
+    # web 信息被答案引用 → web 有效，给予高于纯本地的奖励
+    if ans_web_g > 0:
+        score = 0.10
+        valid_urls = sum(1 for u in read_matches if u.strip().startswith(("http://", "https://")))
+        if valid_urls > 0:
+            score += 0.03                      # read_page 了有效 URL
+        if 1 <= len(read_matches) <= 2 and ans_web_g > 0.2:
+            score += 0.02                      # 合理次数深读 + 较高 web 引用
         return max(0.0, min(0.15, score))
 
-    # ── Web 轨迹：原有逻辑 ──────────────────────────────────
-
-    # 有 web 搜索但没有深入阅读——仅表面搜索
-    if read_count == 0:
-        score = 0.03
-        return max(0.0, min(0.15, score))
-
-    # read_page URL 有效性
-    valid_urls = 0
-    for url in read_matches:
-        url = url.strip()
-        if url.startswith(("http://", "https://")):
-            valid_urls += 1
-
-    if valid_urls > 0:
-        score += 0.05
-
-    # read_page 内容被 answer 引用
-    answer_match = _RE_ANSWER.search(trajectory)
-    if answer_match and read_count > 0:
-        answer = answer_match.group(1).strip()
-        # 检查是否有从 read_page 获得的详细信息被引用
-        # 简单启发式：答案长度较长且包含 read_page 的页面域名
-        for url in read_matches:
-            from urllib.parse import urlparse
-            try:
-                domain = urlparse(url.strip()).netloc
-                if domain and domain in answer:
-                    score += 0.04
-                    break
-            except Exception:
-                pass
-        # 备选：答案足够详细且出现了 read_page 之后的 information 内容关键词
-        if score < 0.09 and len(answer) > 50:
-            # 检查 read_page 之后的 information 块
-            read_pos = trajectory.find("<read_page>")
-            if read_pos >= 0:
-                post_text = trajectory[read_pos:]
-                info_match = _RE_INFORMATION.search(post_text)
-                if info_match:
-                    info_text = info_match.group(1).strip()
-                    # 取 information 中的关键词，看是否在 answer 中出现
-                    info_keywords = set(re.findall(r"[一-鿿]{2,}", info_text[:200]))
-                    ans_keywords = set(re.findall(r"[一-鿿]{2,}", answer))
-                    if info_keywords & ans_keywords:
-                        score += 0.04
-
-    # 多次有效 read_page（≤2 为合理范围）
-    if 1 < read_count <= 2:
-        score += 0.03
-
-    # 顺序检查：read_page 应出现在 search_web 之后
-    web_pos = trajectory.find("<search_web>")
-    for rm in _RE_READ_PAGE.finditer(trajectory):
-        if rm.start() < web_pos:
-            score -= 0.03  # 顺序错误：read_page 不应在 web 搜索之前
-            break
-
-    return max(0.0, min(0.15, score))
+    # 调了 web 但答案没用到 web 信息：本地够却多搜 / web 白搜 → 略低于纯本地
+    if answer and ans_local_g > 0:
+        return 0.05   # 本地足以作答却多搜了 web，不如纯本地 0.08
+    return 0.03       # web 无产出、答案也无支撑
 
 
 # ────────────────────────────────────────────────────────────
