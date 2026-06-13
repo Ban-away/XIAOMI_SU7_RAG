@@ -197,7 +197,6 @@ XIAOMI_SU7_RAG/
 ├─ README.md                                        # 本文档
 ├─ .env.example                                     # 环境变量模板（复制后按需加载）
 ├─ requirements.txt                                 # 依赖清单
-├─ config.ini                                       # 环境变量模板
 ├─ Dockerfile                                       # 主应用容器镜像
 ├─ docker-compose.yml                               # 多服务编排（MongoDB + vLLM + 应用）
 │
@@ -319,6 +318,9 @@ XIAOMI_SU7_RAG/
 ├─ 📂 models/                                    # 本地模型缓存
 │  ├─ m3e-small/
 │  ├─ bge-large-zh-v1.5/
+│  ├─ 📂 BAAI/                   # BAAI 系模型
+│  │  ├─ bge-reranker-v2-minicpm-layerwise/   # 在线/评估重排（默认）
+│  │  └─ bge-reranker-v2-m3/                   # 备选重排
 │  └─ ... (其他下载模型)
 │
 ├─ 📂 mongodb-7.0.20/                            # Mongo 服务器二进制
@@ -328,16 +330,19 @@ XIAOMI_SU7_RAG/
 ├─ 📂 LLaMA-Factory-main/                        # 训练框架 (子项目)
 │  ├─ vllm_serve.sh             # vLLM 启动脚本
 │  ├─ output/
-│  │  └─ qwen3_lora_sft_int4/   # 微调模型产物
+│  │  ├─ qwen3_lora_sft/        # SFT 合并模型（量化前）
+│  │  ├─ qwen3_lora_sft_int4/   # SFT INT4 量化模型（传统 RAG 推理）
+│  │  └─ qwen3_lora_rl/         # GRPO 强化学习导出模型（RL 推理）
 │  └─ ... (完整训练工具链)
 │
-├─ 📂 RAG-Retrieval/                             # 检索实验框架 (子项目)
+├─ 📂 RAG-Retrieval/                             # 检索实验框架 (子项目，默认未启用)
 │  └─ ... (检索模块训练与评估)
 │
 ├─ 📂 deploy/                                    # 部署脚本
 │  ├─ auto_vllm_server.py       # 自动识别单/多卡启动脚本
 │  ├─ download_models.py        # 一键下载项目公开模型（core/all）
-│  └─ baseline_gpt4o.py         # 基线对比测试
+│  ├─ baseline_gpt4o.py         # 基线对比测试
+│  └─ benchmark.py              # vLLM 性能压测
 │
 └─ 📂 configs/                                   # RL 训练配置
    ├─ qwen3_lora_rl_sft.yaml    # SFT warm-up 配置
