@@ -56,7 +56,7 @@ CKPT_PATH      = os.path.join(BASE_DIR, "data/rl_data/web_fallback_ckpt.jsonl")
 LOCAL_TOPK          = 3      # 本地检索返回条数
 RELEVANCE_THRESHOLD = 0.35   # 低于此分数判定为"本地信息不足"
 MAX_WORKERS         = 8      # 并发线程数
-RETRY_TIMES         = 3      # 单条失败重试次数
+RETRY_TIMES         = 1      # 单条失败重试次数
 
 # ── 轨迹生成提示词（已弃用）─────────────────────────────────
 # 轨迹结构现已改为确定性拼装（见 TrajectoryBuilder.build），LLM 只负责综合 <answer>
@@ -145,6 +145,10 @@ class WebSearchTool:
 
     def __init__(self, backend: str = "auto"):
         self._backends = self._build_chain(backend)
+        self._stats = {}          # backend → 成功次数
+        self._fallback_used = 0   # 经 fallback 才成功的次数
+        self._all_failed = 0      # 全部后端都失败的次数
+        self._lock = threading.Lock()
         print(f"[INFO] 网络搜索后端链：{' → '.join(self._backends)}")
 
     def _build_chain(self, backend: str) -> list:
@@ -163,26 +167,41 @@ class WebSearchTool:
         return chain
 
     def search(self, query: str) -> str:
-        # 链式 fallback：每个后端重试 RETRY_TIMES 次，耗尽则顺延下一个后端
-        last_err = None
+        # 链式 fallback：每个后端重试 RETRY_TIMES 次，耗尽则顺延；过程静默，结果在 summary() 汇总
+        failed = []
         for be in self._backends:
             for attempt in range(RETRY_TIMES):
                 try:
                     if be == "bing":
-                        return self._search_bing(query)
+                        result = self._search_bing(query)
                     elif be == "serpapi":
-                        return self._search_serpapi(query)
+                        result = self._search_serpapi(query)
                     elif be == "serper":
-                        return self._search_serper(query)
+                        result = self._search_serper(query)
                     else:
-                        return self._search_via_doubao(query)
-                except Exception as e:
-                    last_err = e
+                        result = self._search_via_doubao(query)
+                    with self._lock:
+                        self._stats[be] = self._stats.get(be, 0) + 1
+                        if failed:
+                            self._fallback_used += 1
+                    return result
+                except Exception:
                     if attempt < RETRY_TIMES - 1:
                         time.sleep(2 ** attempt)
-            print(f"[WARN] 搜索后端 {be} 重试{RETRY_TIMES}次仍失败（{last_err}），顺延下一个")
-        print(f"[WARN] 所有搜索后端均失败（{query}）：{last_err}")
+            failed.append(be)
+        with self._lock:
+            self._all_failed += 1
         return ""
+
+    def summary(self) -> str:
+        """网络搜索汇总（成功分布 / 兜底次数 / 全失败次数），供结束时打印。"""
+        parts = [f"{be}×{n}" for be, n in self._stats.items()]
+        line = f"成功 {' '.join(parts) if parts else '0'}"
+        if self._fallback_used:
+            line += f" | 兜底 {self._fallback_used} 次"
+        if self._all_failed:
+            line += f" | 全失败 {self._all_failed} 次"
+        return line
 
     def _search_bing(self, query: str) -> str:
         import requests
@@ -550,6 +569,7 @@ def main():
     print("📊 生成完成")
     print("=" * 60)
     print(f"总轨迹数：{len(results)} 条")
+    print(f"网络搜索：{web_tool.summary()}")
     print(f"\n分类分布：")
     for cat, cnt in sorted(category_counts.items(), key=lambda x: -x[1]):
         print(f"  {cat}：{cnt} 条")
