@@ -465,12 +465,12 @@ def run_grpo_training(config_path: str):
         beta=GRPO_HYPERPARAMS["beta"],
         temperature=GRPO_HYPERPARAMS["temperature"],
         top_p=GRPO_HYPERPARAMS["top_p"],
-        # vLLM 加速（server 模式）：设环境变量 GRPO_VLLM_SERVER_URL=http://localhost:5527 启用
-        # 需先在另一终端启动：trl vllm-serve --model <base_model> --port 5527 --gpu-memory-utilization 0.3
-        # 不设则用 HF model.generate()（慢但稳定）。colocate 模式与 PEFT 冲突，仅用 server 模式。
-        use_vllm=bool(os.getenv("GRPO_VLLM_SERVER_URL")),
-        vllm_mode="server",
-        vllm_server_base_url=os.getenv("GRPO_VLLM_SERVER_URL"),
+        # vLLM 加速（colocate 模式）：设 GRPO_USE_VLLM=1 启用，vLLM 在训练进程内运行
+        # colocate 无需 NCCL/独立 server（server 模式在单卡上 NCCL barrier 超时，不可用）
+        # 若 colocate + PEFT 挂起，则不设 GRPO_USE_VLLM，回退 HF generate
+        use_vllm=(os.getenv("GRPO_USE_VLLM") == "1"),
+        vllm_mode="colocate",
+        vllm_gpu_memory_utilization=0.3,
         logging_steps=5,
         save_steps=50,
         report_to="none",
@@ -481,8 +481,8 @@ def run_grpo_training(config_path: str):
     print(f"     SFT:  {sft_adapter_path}")
     print(f"     数据: {len(dataset)} 条")
     print(f"     候选: num_generations={GRPO_HYPERPARAMS['num_generations']}")
-    _vllm_url = os.getenv("GRPO_VLLM_SERVER_URL")
-    print(f"     vLLM: {_vllm_url + '（server 模式，3-10x 加速）' if _vllm_url else '未启用（HF generate，设 GRPO_VLLM_SERVER_URL=http://localhost:5527 启用）'}")
+    _use_vllm = os.getenv("GRPO_USE_VLLM") == "1"
+    print(f"     vLLM: {'colocate 模式' if _use_vllm else '未启用（HF generate，设 GRPO_USE_VLLM=1 启用）'}")
     print(f"     输出: {grpo_output_dir}")
 
     # ── 创建 Trainer 并训练 ─────────────────────────────
