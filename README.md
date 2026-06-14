@@ -730,12 +730,12 @@ python src/rl/train_grpo.py --stage export   # 导出合并模型（链式：bas
 >
 > **GRPO 训练技术细节**：
 > - 使用 `trl` 库的 `GRPOTrainer`（需 `trl >= 0.14`）+ `peft` 的 `LoRA`
-> - 训练数据：从合并数据集中随机采样 300 条子集（`max_train_samples` 可调）
+> - 训练数据：从合并数据集中随机采样 80 条子集（单卡；多卡可调至 300，`max_train_samples` 可调）
 > - 加载 Qwen3-8B 基座 → 合并 SFT 适配器 → 应用新 LoRA → GRPO 训练
 > - 6 维自定义奖励函数通过 `reward_funcs` 参数注入
 > - 训练配置（`GRPO_HYPERPARAMS` 字典）定义在 `src/rl/train_grpo.py` 中
 > - GRPO 训练使用 HuggingFace `generate()`，不需要 vLLM
-> - 关键超参数：`beta=0.1`（KL 惩罚），`lr=2e-5`，`lora_rank=16`，`num_generations=6`，`max_completion_length=768`（有效 batch 须被 `num_generations` 整除）
+> - 关键超参数：`beta=0.1`（KL 惩罚），`lr=2e-5`，`lora_rank=16`，`num_generations=4`，`max_completion_length=768`（有效 batch 须被 `num_generations` 整除）
 
 16. RL 增强推理（边生成边检索 + 深度页面阅读）
 
@@ -1220,7 +1220,7 @@ python deploy/auto_vllm_server.py --model LLaMA-Factory-main/output/qwen3_lora_r
 python src/rl/infer_rl.py --model su7_rl --show-reward --show-trajectory
 ```
 
-> **依赖要求**：GRPO 训练需要 `trl >= 0.14` + `peft` + `bitsandbytes`。SFT warm-up 和导出合并仍使用 LLaMA-Factory。SFT warm-up 使用合并数据集（全量 QA 对，按 data_source 分层 80/20 拆分训练/评估集），采用 QLoRA 4-bit 量化降低显存需求；GRPO 从合并数据集中随机采样 300 条子集训练，兼顾"何时联网"和"何时不联网"两种场景。
+> **依赖要求**：GRPO 训练需要 `trl >= 0.14` + `peft` + `bitsandbytes`。SFT warm-up 和导出合并仍使用 LLaMA-Factory。SFT warm-up 使用合并数据集（全量 QA 对，按 data_source 分层 80/20 拆分训练/评估集），采用 QLoRA 4-bit 量化降低显存需求；GRPO 从合并数据集中随机采样 80 条子集训练（单卡；多卡可调至 300），兼顾"何时联网"和"何时不联网"两种场景。
 
 ### 训练数据
 

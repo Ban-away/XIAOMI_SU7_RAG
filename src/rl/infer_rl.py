@@ -73,6 +73,12 @@ MAX_READ_PAGE_HOPS   = 2    # 最大页面深度阅读次数（垂直搜索）
 # is_done 判断改由 step() 内部用 _RE_ANSWER 正则检测
 SEARCH_STOP_TOKENS = ["</search_local>", "</search_web>", "</read_page>"]
 
+# 时效词：问题含这些词时，本地手册大概率没有最新信息，提示模型可调用网络搜索
+TIME_SENSITIVE_KEYWORDS = (
+    "最新", "当前", "现在", "新版", "目前", "刚发布", "刚上市",
+    "版本号", "什么时候", "多少钱", "价格", "上市", "交付量", "销量",
+)
+
 # ── 标签正则（与 environment.py 保持一致）──────────────────
 _RE_ANSWER       = re.compile(r"<answer>(.*?)</answer>",            re.DOTALL)
 _RE_SEARCH_LOCAL = re.compile(r"<search_local>(.*?)</search_local>", re.DOTALL)
@@ -198,12 +204,19 @@ def run_rl_inference(
                 result_str, score = env.local_backend.search(query)
                 info_block = f"<information>{result_str}</information>"
 
-                # 如果本地分数低，追加提示
+                # 如果本地分数低，追加提示（原有逻辑保留）
                 if score < 0.35:
                     info_block = (
                         f"<information>{result_str}\n"
                         f"[提示：本地知识库相关性较低（{score:.2f}），"
                         f"如需更准确信息可调用网络搜索]</information>"
+                    )
+
+                # 时效词触发 web 建议：问题含最新/当前/新版等词时，提示模型可调用网络搜索
+                elif any(w in question for w in TIME_SENSITIVE_KEYWORDS):
+                    info_block = (
+                        f"<information>{result_str}\n"
+                        f"[提示：本地知识库可能不含最新信息，如需最新版本/价格/上市等内容可调用网络搜索]</information>"
                     )
 
                 close_tag = "</search_local>"
