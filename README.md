@@ -186,7 +186,7 @@ query → [🖥️ BGE 召回] → [🖥️ MiniCPM 精排] → [🖥️ Qwen3-8
 问题库 → [🖥️ 本地+网络检索] → [☁️ 豆包API 生成轨迹] → SFT warm-up → GRPO 强化学习（TRL + PEFT）
                                     ↑边生成边检索                    ↑6维自定义奖励函数
 模型自主决定何时检索、检索什么，还可对搜索结果页面深度阅读（垂直探索），而非固定管线检索→生成
-训练数据 = 网络兜底轨迹（~79条）+ 本地可答轨迹（全量 QA 对，去重后数千条）
+训练数据 = 网络兜底轨迹（500条/10类）+ 本地可答轨迹（全量 QA 对，去重后数千条）
 ```
 ---
 
@@ -288,7 +288,7 @@ XIAOMI_SU7_RAG/
 │  │  ├─ train.json / val.json / test.json
 │  │
 │  ├─ 📂 rl_data/                            # RL 强化学习数据
-│  │  ├─ web_fallback_questions.json         # 网络兜底问题库（79条/10类）
+│  │  ├─ web_fallback_questions.json         # 网络兜底问题库（500条/10类，每类50）
 │  │  ├─ web_fallback_trajectories.json      # 网络兜底原始轨迹
 │  │  ├─ web_fallback_trajectories_sft.json  # 网络兜底 SFT 格式
 │  │  ├─ web_fallback_trajectories_grpo.jsonl # 网络兜底 GRPO 格式
@@ -671,11 +671,14 @@ ls -l data/summary_train.json data/summary_test.json data/summary_test_pred.json
 ```bash
 cd /root/autodl-tmp/XIAOMI_SU7_RAG
 
-# 读取 66 条网络兜底问题 → 本地检索 + 网络搜索 + 自动页面抓取 → LLM 生成完整轨迹
+# 读取 500 条网络兜底问题（10类各50）→ 本地检索 + 网络搜索（serpapi→serper 兜底）+ LLM 生成完整轨迹
 # 轨迹包含 <read_page> 垂直搜索周期
 python src/rl/data_builder.py                # 全量运行
 python src/rl/data_builder.py --dry-run      # 先跑 5 条验证
 python src/rl/data_builder.py --resume       # 断点续传
+
+# 验证轨迹质量（确认 search_local→information→search_web→information→answer 完整、答案用了 web）
+python -c "import json; data=json.load(open('data/rl_data/web_fallback_trajectories.json')); print(data[0]['trajectory'])"
 ```
 
 13. 格式转换（轨迹 → SFT / GRPO 格式）
@@ -695,6 +698,11 @@ python src/rl/build_local_trajectories.py
 # 可选参数：
 python src/rl/build_local_trajectories.py --dry-run       # 先跑 5 条验证
 python src/rl/build_local_trajectories.py --sample 200     # 限制采样数量（默认 0=全量）
+
+# 再平衡：web 占比从 ~2% 拉到 ~33%（保留全部 500 条 web，下采样 local 到 1000，零重复）
+# 必须在 SFT/GRPO 之前运行；同时处理 SFT 和 GRPO 两个数据文件
+python src/rl/rebalance_sft_data.py --local-cap 1000
+# 恢复原始数据（如需重新再平衡）：python src/rl/rebalance_sft_data.py --restore
 ```
 
 15. 注册数据集 + SFT warm-up + GRPO 训练
@@ -703,19 +711,18 @@ python src/rl/build_local_trajectories.py --sample 200     # 限制采样数量�
 # SFT warm-up 使用 LLaMA-Factory（步骤 5 相同的框架）
 # GRPO 训练使用 TRL GRPOTrainer + PEFT LoRA（不依赖 LLaMA-Factory GRPO）
 
-# 一键全流程：数据注册 → SFT warm-up → GRPO → 导出
-python src/rl/train_grpo.py --stage all
-
-# 或分步执行：
-python src/rl/train_grpo.py --stage data     # 数据准备 + 本地轨迹生成 + 注册
-python src/rl/train_grpo.py --stage sft      # SFT warm-up（LLaMA-Factory + QLoRA 4-bit 量化）
-python src/rl/train_grpo.py --stage grpo     # GRPO 强化学习（TRL + PEFT，采样 300 条子集）
+# ⚠️ 再平衡后请用分步执行（--stage all 会重跑数据准备，覆盖再平衡结果）
+python src/rl/train_grpo.py --stage sft      # SFT warm-up（用再平衡后的 33% web 数据）
+python src/rl/train_grpo.py --stage grpo     # GRPO 强化学习（TRL + PEFT）
 python src/rl/train_grpo.py --stage export   # 导出合并模型（链式：base→SFT→GRPO，保留全部学习成果）
+
+# 若跳过再平衡、用原始数据一键全流程（web 占比极低，不推荐）：
+# python src/rl/train_grpo.py --stage all
 ```
 
 > **SFT warm-up 技术细节**：
 > - 使用 LLaMA-Factory + QLoRA 4-bit 量化（BitsAndBytes），单卡 A100 40GB 即可训练
-> - 采用合并数据集（全量 QA 对，含网络兜底 + 本地可答轨迹，去重后数千条）
+> - 采用再平衡后的合并数据集（500 条 web 轨迹 33% + 1000 条 local 轨迹 67%，web 零重复）
 > - 按 `data_source` 分层 80/20 拆分训练集和评估集，确保两类轨迹均有代表
 > - 目的：让模型学会 `<search_local>`/`<search_web>`/`<read_page>`/`<answer>` 标签格式
 > - 配置文件：`configs/qwen3_lora_rl_sft.yaml`，QLoRA 4-bit，LoRA rank=16，5 epoch
@@ -830,7 +837,7 @@ python src/rl/batch_eval.py --model su7_rl --resume
 | `data/rerank_data/train.json` | 重排训练集 | 40,849 | Step 4 (`generate_sft_data.py`) |
 | `data/rerank_data/dev.json` | 重排验证集 | - | Step 4 (`generate_sft_data.py`) |
 | `data/rerank_data/test.json` | 重排测试集 | 936 | Step 4 (`generate_sft_data.py`) |
-| `data/rl_data/web_fallback_questions.json` | RL 网络兜底问题库（10 个分类） | 66 | 预置 |
+| `data/rl_data/web_fallback_questions.json` | RL 网络兜底问题库（10 个分类，每类 50） | 500 | 预置 |
 | `data/rl_data/web_fallback_trajectories.json` | RL 原始轨迹数据 | - | Step 12 (`data_builder.py`) |
 | `data/rl_data/web_fallback_trajectories_sft.json` | RL SFT 格式训练数据 | - | Step 13 (`format_converter.py`) |
 | `data/rl_data/web_fallback_trajectories_grpo.jsonl` | RL GRPO 格式训练数据 | - | Step 13 (`format_converter.py`) |
@@ -1221,7 +1228,7 @@ python src/rl/infer_rl.py --model su7_rl --show-reward --show-trajectory
 
 | 数据类型 | 数量 | 轨迹特点 | 训练目标 |
 |:---|:---:|:---|:---|
-| 网络兜底轨迹 | ~79 条 | `<search_local>` + `<search_web>` + `<read_page>` | 学会何时联网 + 深度阅读 |
+| 网络兜底轨迹 | 500 条（每类 50） | `<search_local>` + `<search_web>` + `<read_page>` | 学会何时联网 + 深度阅读 |
 | 本地可答轨迹 | 全量 QA（去重后数千条） | 只有 `<search_local>` + `<answer>` | 学会本地够用时不要联网搜索 |
 
 | 分类 | 数量 | 示例问题 |
