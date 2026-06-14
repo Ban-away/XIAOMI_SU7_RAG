@@ -75,8 +75,9 @@ def rebalance(items: list, web_ratio: float, local_cap: int, rng: random.Random)
 
 
 def backup_path(path: str) -> str:
-    # combined_trajectories_sft.json → combined_trajectories_sft.original.json
-    return path.replace(".json", ".original.json").replace(".jsonl", ".original.jsonl")
+    # 在最后扩展名前插入 .original：file.json→file.original.json, file.jsonl→file.original.jsonl
+    base, ext = os.path.splitext(path)
+    return base + ".original" + ext
 
 
 def main():
