@@ -146,25 +146,37 @@ class WebSearchBackend:
             chain.append("doubao")  # 无任何搜索 key 时用豆包 LLM 模拟
         self._backends = chain
         self.backend = chain[0]  # 兼容旧引用（主后端名）
+        self.last_note = ""      # 最近一次搜索的 fallback 提示（供调用方展示，不进模型上下文）
 
     def search(self, query: str) -> str:
         # 限定网络搜索只针对小米汽车（query 未含小米车型词时加前缀）
         query = self._scope_to_xiaomi(query)
+        self.last_note = ""   # 本轮搜索的 fallback 提示（供调用方展示，但不进模型上下文）
         last_err = None
+        failed = []
+        result = None
         for be in self._backends:
             try:
                 if be == "serpapi":
-                    return self._serpapi(query)
+                    result = self._serpapi(query)
                 elif be == "serper":
-                    return self._serper(query)
+                    result = self._serper(query)
                 elif be == "bing":
-                    return self._bing(query)
+                    result = self._bing(query)
                 else:
-                    return self._doubao(query)
+                    result = self._doubao(query)
+                break  # 成功则跳出
             except Exception as e:
                 last_err = e
-                print(f"[WARN] 搜索后端 {be} 失败（{e}），顺延到下一个")
-        return f"网络搜索暂时不可用（所有后端均失败）：{last_err}"
+                failed.append(be)
+                continue
+        if result is None:
+            self.last_note = f"[检索提示：全部后端失败：{last_err}]"
+            return f"网络搜索暂时不可用（尝试 {'→'.join(failed) or '所有'} 后端均失败：{last_err}）"
+        if failed:
+            # 提示存到 last_note，由调用方决定展示在哪；不写进 result（避免污染模型上下文）
+            self.last_note = f"[检索提示：{'→'.join(failed)} 失败，已顺延]"
+        return result
 
     # 限定网络搜索只针对小米汽车：query 未含小米车型词时加 "小米SU7" 前缀
     _XIAOMI_TERMS = ("小米汽车", "小米SU7", "小米 SU7", "小米YU7", "小米 YU7",

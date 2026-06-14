@@ -171,6 +171,7 @@ def run_rl_inference(
         if hit_search:
             # vLLM 在 stop token 处截断，需要补回闭合标签
             # 判断是哪种工具被触发
+            web_note = ""   # web 搜索的 fallback 提示（只进展示轨迹，不进模型上下文）
             if "<search_local>" in generated and "</search_local>" not in generated:
                 # ── 总搜索次数限制 ──
                 total_search_count += 1
@@ -231,6 +232,7 @@ def run_rl_inference(
 
                 # 执行网络搜索
                 result_str = env.web_backend.search(query)
+                web_note = env.web_backend.last_note   # fallback 提示（只展示，不给模型看）
                 info_block = f"<information>{result_str}</information>"
 
                 close_tag = "</search_web>"
@@ -280,8 +282,12 @@ def run_rl_inference(
 
             if info_block:
                 # 注入检索结果
-                trajectory += "\n" + info_block + "\n"
-                # 将当前生成内容 + 检索结果作为 assistant 消息
+                # web_note（如 fallback 提示）只进展示轨迹，不进 messages（模型上下文看不到）
+                if web_note:
+                    trajectory += "\n" + web_note + "\n" + info_block + "\n"
+                else:
+                    trajectory += "\n" + info_block + "\n"
+                # 将当前生成内容 + 检索结果作为 assistant 消息（不含 web_note，模型看不到）
                 messages.append({
                     "role": "assistant",
                     "content": generated + close_tag + "\n" + info_block + "\n",

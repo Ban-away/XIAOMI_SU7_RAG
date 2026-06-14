@@ -362,7 +362,6 @@ def run_grpo_training(config_path: str):
     import sys
 
     # 生成后端：当前使用 HF model.generate()（见下方 GRPOConfig.use_vllm=False）
-    # 注意：启用 vLLM 需安装兼容 transformers 5.x 的 vllm 版本，并改用 server 模式
     try:
         import torch
         from transformers import AutoModelForCausalLM, AutoTokenizer
