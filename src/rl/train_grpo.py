@@ -312,24 +312,20 @@ def run_sft_warmup(config_path: str):
 # ────────────────────────────────────────────────────────────
 
 # ── GRPO 训练超参数（原 configs/qwen3_lora_grpo.yaml）────────
-# 配置说明（当前为「验证模式」——先用小规模快速验证奖励信号与流程跑通，再放大）：
-# 1. num_generations=4：受 batch 整除约束。TRL 要求 有效batch = world×per_device×grad_accum
-#    能被 num_generations 整除；当前有效batch=1×2×2=4，仅可被 4 或 2 整除。
-#    原值 6 需有效batch≥6（即 per_device≥3 → 单卡显存 OOM 风险），故取 4（仍是合格 GRPO 对比组）。
-# 2. per_device_train_batch_size=2 + gradient_accumulation_steps=2：有效batch=4（保持不变，显存安全）。
-# 3. beta=0.1：适度增加KL惩罚，平衡探索与稳定。
-# 4. lora_rank=16：增加LoRA秩，提升表达能力。
-# ── 正式训练恢复放大值：num_generations=6 / max_completion_length=768 /
-#    num_train_epochs=5.0 / max_train_samples=300（并相应增大 per_device 或 grad_accum，
-#    使有效batch 被 6 整除，如 per_device=3,grad_accum=2 → 有效batch=6）──
+# 配置说明（正式训练规模，搭配 vLLM server 加速）：
+# 1. num_generations=4：有效batch=1×2×2=4，被 4 整除 ✓。4 组对比够 GRPO 学习。
+# 2. max_train_samples=300：从 1500 条再平衡数据中采样 300（~100 web prompt），3 epoch 充分训练。
+# 3. max_completion_length=768：web 轨迹较长，768 足够。
+# 4. beta=0.1, lora_rank=16：适度 KL 惩罚 + 较高 LoRA 秩。
+# vLLM 加速：设 GRPO_VLLM_SERVER_URL=http://localhost:5527 启用（需先启动 trl vllm-serve）
 GRPO_HYPERPARAMS = {
-    "num_generations":           4,        # 【验证模式】受batch整除约束取4；正式训练恢复6
-    "max_completion_length":     512,      # 【验证模式】512；正式训练恢复768
-    "per_device_train_batch_size": 2,      # 单卡batch（显存安全，保持不变）
-    "gradient_accumulation_steps": 2,      # 有效batch=1×2×2=4（保持不变，被num_generations整除）
+    "num_generations":           4,        # 每个 prompt 生成 4 条候选（有效batch=4，被4整除）
+    "max_completion_length":     768,      # web 轨迹较长，768 足够
+    "per_device_train_batch_size": 2,      # 单卡 batch（显存安全）
+    "gradient_accumulation_steps": 2,      # 有效batch=1×2×2=4（被 num_generations 整除）
     "learning_rate":            2e-5,      # 适度提高学习率
-    "num_train_epochs":         1.0,       # 【验证模式】1轮跑通流程；正式训练恢复5.0
-    "max_train_samples":        80,        # 【验证模式】80条快速迭代；正式训练恢复300
+    "num_train_epochs":         3.0,       # 3 轮充分学习
+    "max_train_samples":        300,       # 从 1500 条采样 300（~100 web prompt）
     "lr_scheduler_type":        "cosine",
     "warmup_ratio":             0.1,
     "bf16":                     True,
@@ -469,9 +465,12 @@ def run_grpo_training(config_path: str):
         beta=GRPO_HYPERPARAMS["beta"],
         temperature=GRPO_HYPERPARAMS["temperature"],
         top_p=GRPO_HYPERPARAMS["top_p"],
-        use_vllm=False,               # 暂用 HF model.generate()；TRL 0.18 的 vLLM(colocate) 与 PEFT 存在挂起风险
-        # 如需启用 vLLM 加速：改为 use_vllm=True 并以 `trl vllm-serve` 启动 server 模式，
-        # TRL 0.18 已移除 vllm_model_kwargs（不再转发任意 kwargs 到 vLLM 引擎）。
+        # vLLM 加速（server 模式）：设环境变量 GRPO_VLLM_SERVER_URL=http://localhost:5527 启用
+        # 需先在另一终端启动：trl vllm-serve --model <base_model> --port 5527 --gpu-memory-utilization 0.3
+        # 不设则用 HF model.generate()（慢但稳定）。colocate 模式与 PEFT 冲突，仅用 server 模式。
+        use_vllm=bool(os.getenv("GRPO_VLLM_SERVER_URL")),
+        vllm_mode="server",
+        vllm_server_base_url=os.getenv("GRPO_VLLM_SERVER_URL"),
         logging_steps=5,
         save_steps=50,
         report_to="none",
@@ -482,6 +481,8 @@ def run_grpo_training(config_path: str):
     print(f"     SFT:  {sft_adapter_path}")
     print(f"     数据: {len(dataset)} 条")
     print(f"     候选: num_generations={GRPO_HYPERPARAMS['num_generations']}")
+    _vllm_url = os.getenv("GRPO_VLLM_SERVER_URL")
+    print(f"     vLLM: {_vllm_url + '（server 模式，3-10x 加速）' if _vllm_url else '未启用（HF generate，设 GRPO_VLLM_SERVER_URL=http://localhost:5527 启用）'}")
     print(f"     输出: {grpo_output_dir}")
 
     # ── 创建 Trainer 并训练 ─────────────────────────────
