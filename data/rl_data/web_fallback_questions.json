@@ -631,425 +631,3372 @@
     "web_query_hint": "小米SU7 事故 维修 官方 4S 外面修理厂 费用",
     "local_query_hint": "事故 维修 碰撞修复"
   },
-  {"id":"ota_013","category":"ota_update","category_zh":"OTA软件更新","question":"小米SU7最近一次OTA升级包大概多大？升级过程要多久？","web_query_hint":"小米SU7 OTA升级包大小 升级时长","local_query_hint":"OTA升级 系统更新"},
-  {"id":"ota_014","category":"ota_update","category_zh":"OTA软件更新","question":"小米SU7的城市领航辅助CNOA最新开通了哪些城市？","web_query_hint":"小米SU7 城市NOA CNOA 开通城市 列表 2025","local_query_hint":"城市领航 NOA 辅助驾驶"},
-  {"id":"ota_015","category":"ota_update","category_zh":"OTA软件更新","question":"小米SU7 Ultra的赛道模式是哪个OTA版本上线的？","web_query_hint":"小米SU7 Ultra 赛道模式 OTA版本 上线","local_query_hint":"Ultra 驾驶模式 性能"},
-  {"id":"ota_016","category":"ota_update","category_zh":"OTA软件更新","question":"小米SU7支持无线CarPlay吗？官方说什么时候推送？","web_query_hint":"小米SU7 无线CarPlay 支持 推送 官方","local_query_hint":"CarPlay 手机互联 苹果"},
-  {"id":"ota_017","category":"ota_update","category_zh":"OTA软件更新","question":"小米SU7的车机系统最新版有没有修复卡顿问题？","web_query_hint":"小米SU7 车机 卡顿 卡死 OTA修复","local_query_hint":"车机 系统 流畅"},
-  {"id":"ota_018","category":"ota_update","category_zh":"OTA软件更新","question":"小米SU7的HUD抬头显示最近OTA优化了什么内容？","web_query_hint":"小米SU7 HUD 抬头显示 OTA 更新","local_query_hint":"HUD 抬头显示"},
-  {"id":"ota_019","category":"ota_update","category_zh":"OTA软件更新","question":"小米汽车OTA一般多久推送一次？有固定节奏吗？","web_query_hint":"小米汽车 OTA 推送频率 节奏 周期","local_query_hint":"OTA 系统更新"},
-  {"id":"ota_020","category":"ota_update","category_zh":"OTA软件更新","question":"小米SU7的小爱同学车机版最新支持哪些新功能？","web_query_hint":"小米SU7 小爱同学 车机 语音助手 新功能","local_query_hint":"小爱同学 语音助手"},
-  {"id":"ota_021","category":"ota_update","category_zh":"OTA软件更新","question":"小米SU7 OTA升级失败了怎么办？官方有回滚机制吗？","web_query_hint":"小米SU7 OTA升级失败 回滚 救砖 官方","local_query_hint":"OTA升级 系统更新"},
-  {"id":"ota_022","category":"ota_update","category_zh":"OTA软件更新","question":"小米SU7的哨兵模式在最新OTA里耗电量优化了吗？","web_query_hint":"小米SU7 哨兵模式 耗电 OTA优化","local_query_hint":"哨兵模式 录像"},
-  {"id":"ota_023","category":"ota_update","category_zh":"OTA软件更新","question":"小米SU7的中控屏界面在最新系统里改版了吗？","web_query_hint":"小米SU7 中控屏 界面 UI 改版 最新","local_query_hint":"中控屏 显示 界面"},
-  {"id":"ota_024","category":"ota_update","category_zh":"OTA软件更新","question":"小米SU7的自动泊车最新版支持机械车位和断头车位吗？","web_query_hint":"小米SU7 自动泊车 机械车位 断头车位 OTA","local_query_hint":"自动泊车 泊车"},
-  {"id":"ota_025","category":"ota_update","category_zh":"OTA软件更新","question":"老款小米SU7车主能收到和新款一样的OTA吗？","web_query_hint":"小米SU7 老车主 OTA 新款 同步","local_query_hint":"OTA 车型"},
-  {"id":"news_011","category":"official_news","category_zh":"小米汽车官方动态","question":"小米YU7什么时候正式上市？预售价多少？","web_query_hint":"小米YU7 上市时间 预售价 发布","local_query_hint":"YU7 新车型 SUV"},
-  {"id":"news_012","category":"official_news","category_zh":"小米汽车官方动态","question":"小米汽车2025年全年交付目标完成情况怎么样？","web_query_hint":"小米汽车 2025 交付目标 完成 销量","local_query_hint":"交付量 销量"},
-  {"id":"news_013","category":"official_news","category_zh":"小米汽车官方动态","question":"小米汽车第二工厂建在哪里？什么时候投产？","web_query_hint":"小米汽车 第二工厂 选址 投产","local_query_hint":"工厂 产能 制造"},
-  {"id":"news_014","category":"official_news","category_zh":"小米汽车官方动态","question":"小米SU7 Ultra在纽北赛道跑了多快？成绩如何？","web_query_hint":"小米SU7 Ultra 纽北赛道 成绩 圈速","local_query_hint":"Ultra 性能 赛道"},
-  {"id":"news_015","category":"official_news","category_zh":"小米汽车官方动态","question":"小米SU7上市至今累计交付量突破多少万辆了？","web_query_hint":"小米SU7 累计交付量 总销量 突破","local_query_hint":"交付量 销量"},
-  {"id":"news_016","category":"official_news","category_zh":"小米汽车官方动态","question":"小米汽车有没有参加今年的上海或广州车展？发布了什么？","web_query_hint":"小米汽车 车展 上海 广州 发布 2025","local_query_hint":"车展 发布"},
-  {"id":"news_017","category":"official_news","category_zh":"小米汽车官方动态","question":"小米汽车的电池供应商是哪家？用的什么电池技术？","web_query_hint":"小米汽车 电池供应商 宁德时代 比亚迪 技术","local_query_hint":"电池 动力电池"},
-  {"id":"news_018","category":"official_news","category_zh":"小米汽车官方动态","question":"雷军最近在微博上说了哪些关于小米汽车的新进展？","web_query_hint":"雷军 微博 小米汽车 进展 最新","local_query_hint":"雷军 官方动态"},
-  {"id":"news_019","category":"official_news","category_zh":"小米汽车官方动态","question":"小米汽车2026年有什么新车型或新规划？","web_query_hint":"小米汽车 2026 新车型 规划 路线","local_query_hint":"新车型 规划"},
-  {"id":"news_020","category":"official_news","category_zh":"小米汽车官方动态","question":"小米汽车app最近更新了什么功能？","web_query_hint":"小米汽车 app 更新 新功能 版本","local_query_hint":"小米汽车APP 手机"},
-  {"id":"news_021","category":"official_news","category_zh":"小米汽车官方动态","question":"小米SU7 Ultra大定和锁单数量是多少？","web_query_hint":"小米SU7 Ultra 大定 锁单 数量 订单","local_query_hint":"订单 大定"},
-  {"id":"news_022","category":"official_news","category_zh":"小米汽车官方动态","question":"小米汽车有没有推出官方认证二手车业务？","web_query_hint":"小米汽车 官方认证 二手车 业务","local_query_hint":"二手车 官方"},
-  {"id":"competitor_007","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7和智界S7相比，哪个更值得买？","web_query_hint":"小米SU7 智界S7 对比 哪个好","local_query_hint":"对比 竞品"},
-  {"id":"competitor_008","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7和极越07的智能座舱谁更好用？","web_query_hint":"小米SU7 极越07 智能座舱 对比","local_query_hint":"智能座舱 车机 对比"},
-  {"id":"competitor_009","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7和阿维塔12相比续航谁更扎实？","web_query_hint":"小米SU7 阿维塔12 续航 对比 实测","local_query_hint":"续航 对比"},
-  {"id":"competitor_010","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7和特斯拉Model 3焕新版，自动驾驶谁更强？","web_query_hint":"小米SU7 Model3 焕新 自动驾驶 FSD NOA 对比","local_query_hint":"自动驾驶 辅助 对比"},
-  {"id":"competitor_011","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7和蔚来ET5T旅行版空间谁更大？","web_query_hint":"小米SU7 蔚来ET5T 旅行版 空间 对比","local_query_hint":"空间 后备箱 对比"},
-  {"id":"competitor_012","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7和极氪007零百加速谁更快？","web_query_hint":"小米SU7 极氪007 加速 零百 对比","local_query_hint":"加速 性能 对比"},
-  {"id":"competitor_013","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7和小鹏P7+的智驾系统谁更领先？","web_query_hint":"小米SU7 小鹏P7 智驾 对比 领先","local_query_hint":"智驾 辅助 对比"},
-  {"id":"competitor_014","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7和比亚迪海豹哪个性价比更高？","web_query_hint":"小米SU7 比亚迪海豹 性价比 对比","local_query_hint":"性价比 对比"},
-  {"id":"competitor_015","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7和理想L6该选哪个？家用哪个合适？","web_query_hint":"小米SU7 理想L6 家用 对比 选择","local_query_hint":"家用 对比"},
-  {"id":"competitor_016","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7 Ultra和保时捷Taycan比性能差距大吗？","web_query_hint":"小米SU7 Ultra 保时捷Taycan 性能 对比","local_query_hint":"Ultra 性能 对比"},
-  {"id":"competitor_017","category":"competitor","category_zh":"竞品对比信息","question":"小米YU7和特斯拉Model Y谁更值得等？","web_query_hint":"小米YU7 特斯拉ModelY 对比 值得","local_query_hint":"YU7 对比 SUV"},
-  {"id":"competitor_018","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7和智己L6的底盘调校谁更好？","web_query_hint":"小米SU7 智己L6 底盘 调校 对比","local_query_hint":"底盘 悬架 对比"},
-  {"id":"competitor_019","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7和问界M5的智能驾驶谁体验更好？","web_query_hint":"小米SU7 问界M5 智能驾驶 体验 对比","local_query_hint":"智能驾驶 对比"},
-  {"id":"competitor_020","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7和深蓝SL03谁更适合作为家庭第一辆车？","web_query_hint":"小米SU7 深蓝SL03 家用 对比 选择","local_query_hint":"家用 对比"},
-  {"id":"competitor_021","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7和零跑C01的故障率口碑谁更好？","web_query_hint":"小米SU7 零跑C01 故障率 口碑 质量","local_query_hint":"故障率 质量 对比"},
-  {"id":"competitor_022","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7和岚图追光的做工用料谁更厚道？","web_query_hint":"小米SU7 岚图追光 做工 用料 对比","local_query_hint":"做工 用料 对比"},
-  {"id":"recall_008","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7有没有因为软件bug发起过召回？","web_query_hint":"小米SU7 软件bug 召回 缺陷","local_query_hint":"召回 软件 缺陷"},
-  {"id":"recall_009","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7的电池有没有过热或自燃的报告？","web_query_hint":"小米SU7 电池 过热 自燃 燃烧 事故","local_query_hint":"电池安全 热失控"},
-  {"id":"recall_010","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7的制动系统有没有车主集体投诉或维权？","web_query_hint":"小米SU7 制动 刹车 投诉 维权 集体","local_query_hint":"制动 刹车 投诉"},
-  {"id":"recall_011","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7有没有因辅助驾驶事故被监管调查？","web_query_hint":"小米SU7 辅助驾驶 事故 调查 监管","local_query_hint":"辅助驾驶 事故 调查"},
-  {"id":"recall_012","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7的充电接口有没有烧蚀或故障反馈？","web_query_hint":"小米SU7 充电接口 烧蚀 故障 反馈","local_query_hint":"充电接口 故障"},
-  {"id":"recall_013","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米汽车官方有没有发过SU7的质量公告或改进说明？","web_query_hint":"小米汽车 SU7 质量公告 改进 官方说明","local_query_hint":"质量公告 改进"},
-  {"id":"recall_014","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7的车机死机黑屏问题官方修复了吗？","web_query_hint":"小米SU7 车机 死机 黑屏 官方修复","local_query_hint":"车机 死机 黑屏"},
-  {"id":"recall_015","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7的空调系统有没有批量故障的车主反馈？","web_query_hint":"小米SU7 空调 故障 批量 车主反馈","local_query_hint":"空调 故障"},
-  {"id":"charging_007","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米SU7最大支持多少千瓦的充电功率？多久能充满？","web_query_hint":"小米SU7 最大充电功率 千瓦 充满时间","local_query_hint":"充电功率 快充"},
-  {"id":"charging_008","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米超充站充电一分钟大概能增加多少公里续航？","web_query_hint":"小米超充站 充电速度 分钟 公里","local_query_hint":"超充 充电速度"},
-  {"id":"charging_009","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米SU7是基于800V高压平台吗？充电有多快？","web_query_hint":"小米SU7 800V 高压平台 超充","local_query_hint":"高压平台 充电"},
-  {"id":"charging_010","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米SU7家充桩安装要多少钱？怎么申请？","web_query_hint":"小米SU7 家用充电桩 安装 费用 申请","local_query_hint":"家用充电桩 安装"},
-  {"id":"charging_011","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米SU7的V2L外放电功能功率多大？能带动哪些电器？","web_query_hint":"小米SU7 V2L 外放电 功率 电器 露营","local_query_hint":"外放电 V2L"},
-  {"id":"charging_012","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米SU7用慢充充满大概需要多久？","web_query_hint":"小米SU7 慢充 充满 时间 交流","local_query_hint":"慢充 交流充电"},
-  {"id":"charging_013","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米SU7的充电接口采用什么标准？和国网兼容吗？","web_query_hint":"小米SU7 充电接口 标准 国标 GB/T","local_query_hint":"充电接口 标准"},
-  {"id":"charging_014","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米汽车自建超充站相比第三方有什么优势？","web_query_hint":"小米超充站 自建 优势 第三方 对比","local_query_hint":"超充 充电网络"},
-  {"id":"policy_007","category":"ev_policy","category_zh":"新能源政策与补贴","question":"小米SU7在限牌城市能直接上绿牌吗？需要摇号吗？","web_query_hint":"小米SU7 绿牌 限牌城市 摇号 牌照","local_query_hint":"绿牌 牌照 限牌"},
-  {"id":"policy_008","category":"ev_policy","category_zh":"新能源政策与补贴","question":"报废旧车换小米SU7能拿多少补贴？怎么申请？","web_query_hint":"报废 旧车 小米SU7 补贴 以旧换新","local_query_hint":"报废 补贴 以旧换新"},
-  {"id":"policy_009","category":"ev_policy","category_zh":"新能源政策与补贴","question":"新能源汽车购置税减免政策2026年还有吗？","web_query_hint":"新能源汽车 购置税 减免 2026 政策","local_query_hint":"购置税 减免 政策"},
-  {"id":"policy_010","category":"ev_policy","category_zh":"新能源政策与补贴","question":"小米SU7在杭州、深圳、成都上牌分别有什么政策？","web_query_hint":"杭州 深圳 成都 小米SU7 上牌 政策","local_query_hint":"上牌 地方政策"},
-  {"id":"policy_011","category":"ev_policy","category_zh":"新能源政策与补贴","question":"企业以公司名义买小米SU7能抵税吗？怎么操作？","web_query_hint":"公司 企业 购买 小米SU7 抵税 新能源","local_query_hint":"企业购车 抵税"},
-  {"id":"policy_012","category":"ev_policy","category_zh":"新能源政策与补贴","question":"小米SU7在海南有没有特殊的新能源购车优惠？","web_query_hint":"海南 小米SU7 新能源 优惠 政策","local_query_hint":"地方优惠 海南"},
-  {"id":"price_008","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7标准版、Pro版、Max版目前官方指导价分别是多少？","web_query_hint":"小米SU7 标准版 Pro Max 官方指导价","local_query_hint":"售价 配置版本"},
-  {"id":"price_009","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7创始版和普通版有什么区别？现在还买得到吗？","web_query_hint":"小米SU7 创始版 普通版 区别 购买","local_query_hint":"创始版 配置"},
-  {"id":"price_010","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7二手车现在值多少钱？保值率怎么样？","web_query_hint":"小米SU7 二手车 价格 保值率 残值","local_query_hint":"二手车 保值率"},
-  {"id":"price_011","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7选装特殊颜色或轮毂需要加多少钱？","web_query_hint":"小米SU7 选装 颜色 轮毂 加钱 价格","local_query_hint":"选装 颜色 轮毂"},
-  {"id":"price_012","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7的订金是多少钱？退订方不方便？","web_query_hint":"小米SU7 订金 退订 退款 流程","local_query_hint":"订金 退订"},
-  {"id":"price_013","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7金融分期首付最低多少？月供大概多少？","web_query_hint":"小米SU7 金融 分期 首付 月供 利率","local_query_hint":"金融 分期 首付"},
-  {"id":"price_014","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7现在有没有现车？哪个城市提车最快？","web_query_hint":"小米SU7 现车 提车 城市 等待","local_query_hint":"现车 提车"},
-  {"id":"price_015","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7的官方置换旧车估价怎么查？划算吗？","web_query_hint":"小米SU7 官方置换 估价 旧车 评估","local_query_hint":"置换 估价"},
-  {"id":"price_016","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7 Ultra的订金和预计交付周期是多久？","web_query_hint":"小米SU7 Ultra 订金 交付周期 等待","local_query_hint":"Ultra 订金 交付"},
-  {"id":"insurance_006","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7第一年全险大概多少钱？各大保险公司报价对比","web_query_hint":"小米SU7 第一年 全险 价格 保险公司 报价","local_query_hint":"保险 费用 报价"},
-  {"id":"insurance_007","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7的电池包保险赔不赔？需要单独买吗？","web_query_hint":"小米SU7 电池 保险 赔付 单独购买","local_query_hint":"电池 保险"},
-  {"id":"insurance_008","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7出险一次后第二年保费大概涨多少？","web_query_hint":"小米SU7 出险 第二年 保费 涨幅","local_query_hint":"出险 保费"},
-  {"id":"insurance_009","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7的三电系统终身质保具体有什么条件？","web_query_hint":"小米SU7 三电系统 终身质保 条件 政策","local_query_hint":"三电 质保"},
-  {"id":"insurance_010","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7的延保服务值得买吗？大概多少钱？","web_query_hint":"小米SU7 延保 值得 价格 延长保修","local_query_hint":"延保 延长质保"},
-  {"id":"insurance_011","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7前挡风玻璃单独破碎险有必要买吗？换一块多少钱？","web_query_hint":"小米SU7 前挡风玻璃 破碎险 必要 换价格","local_query_hint":"玻璃险 前挡"},
-  {"id":"insurance_012","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7贷款买车哪个银行利率最低？","web_query_hint":"小米SU7 贷款 银行 利率 最低","local_query_hint":"贷款 利率 金融"},
-  {"id":"maintenance_005","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7一年保险加电费加保养总共大概要花多少钱？","web_query_hint":"小米SU7 年用车成本 保险 电费 保养 总计","local_query_hint":"用车成本 年度"},
-  {"id":"maintenance_006","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7的电池衰减到什么程度需要更换？换电池多少钱？","web_query_hint":"小米SU7 电池衰减 更换 费用 换电池","local_query_hint":"电池 衰减 更换"},
-  {"id":"maintenance_007","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7的小保养和大保养分别做哪些项目？各多少钱？","web_query_hint":"小米SU7 小保养 大保养 项目 费用","local_query_hint":"保养 项目 费用"},
-  {"id":"maintenance_008","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7的空调滤芯自己能换吗？原厂多少钱？","web_query_hint":"小米SU7 空调滤芯 自己换 原厂 价格","local_query_hint":"空调滤芯 保养"},
-  {"id":"maintenance_009","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7原厂雨刮片多少钱？多久需要换一次？","web_query_hint":"小米SU7 雨刮片 原厂 价格 更换周期","local_query_hint":"雨刮 保养"},
-  {"id":"maintenance_010","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7轮毂剐蹭修复大概多少钱？","web_query_hint":"小米SU7 轮毂 剐蹭 修复 费用","local_query_hint":"轮毂 修复"},
-  {"id":"maintenance_011","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7贴隐形车衣大概多少钱？有必要吗？","web_query_hint":"小米SU7 隐形车衣 贴膜 价格 必要","local_query_hint":"车衣 贴膜"},
-  {"id":"maintenance_012","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7家用充电桩的电费怎么算？谷电充电划算吗？","web_query_hint":"小米SU7 家用充电桩 电费 谷电 阶梯","local_query_hint":"家用充电 电费"},
-  {"id":"user_feedback_007","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7车主普遍最满意的几个点是什么？","web_query_hint":"小米SU7 车主 满意 优点 评价","local_query_hint":"车主反馈 优点"},
-  {"id":"user_feedback_008","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7的真实百公里电耗是多少？市区和高速差别大吗？","web_query_hint":"小米SU7 真实 百公里电耗 市区 高速 实测","local_query_hint":"电耗 能耗"},
-  {"id":"user_feedback_009","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7的车机系统流畅度怎么样？用久了会卡吗？","web_query_hint":"小米SU7 车机 流畅 卡顿 真实体验","local_query_hint":"车机 流畅"},
-  {"id":"user_feedback_010","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7的高速领航辅助可靠吗？经常需要接管吗？","web_query_hint":"小米SU7 高速领航 NOA 接管 可靠 实测","local_query_hint":"高速领航 辅助驾驶"},
-  {"id":"user_feedback_011","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7的隔音和NVH表现怎么样？高速吵吗？","web_query_hint":"小米SU7 隔音 NVH 风噪 高速 体验","local_query_hint":"隔音 噪音 NVH"},
-  {"id":"user_feedback_012","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7的座椅长时间开长途累不累？舒服吗？","web_query_hint":"小米SU7 座椅 长途 舒服 腰部","local_query_hint":"座椅 舒适"},
-  {"id":"user_feedback_013","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7的后备箱和前备箱空间实际够用吗？","web_query_hint":"小米SU7 后备箱 前备箱 空间 实用","local_query_hint":"储物空间 后备箱"},
-  {"id":"user_feedback_014","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7的语音助手小爱同学识别准确吗？方言能听懂吗？","web_query_hint":"小米SU7 小爱同学 语音识别 准确 方言","local_query_hint":"小爱同学 语音"},
-  {"id":"user_feedback_015","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7的自动泊车实际成功率怎么样？好用吗？","web_query_hint":"小米SU7 自动泊车 成功率 好用 实测","local_query_hint":"自动泊车"},
-  {"id":"user_feedback_016","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7的HUD抬头显示阳光下清晰吗？","web_query_hint":"小米SU7 HUD 抬头显示 阳光 清晰 体验","local_query_hint":"HUD 抬头显示"},
-  {"id":"user_feedback_017","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7的蓝牙手机钥匙稳定吗？有没有失灵打不开门的情况？","web_query_hint":"小米SU7 蓝牙钥匙 手机钥匙 失灵 打不开门","local_query_hint":"蓝牙钥匙 手机钥匙"},
-  {"id":"user_feedback_018","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7车主一般在哪些社区论坛交流？活跃吗？","web_query_hint":"小米SU7 车主 社区 论坛 贴吧","local_query_hint":"车主社区 论坛"},
-  {"id":"spec_001","category":"official_news","category_zh":"小米汽车官方动态","question":"小米SU7 Ultra的最高时速和零百加速分别是多少？","web_query_hint":"小米SU7 Ultra 最高时速 零百加速 参数","local_query_hint":"Ultra 性能 参数"},
-  {"id":"spec_002","category":"official_news","category_zh":"小米汽车官方动态","question":"小米SU7 Max版的CLTC续航和电池容量是多少？","web_query_hint":"小米SU7 Max CLTC续航 电池容量 kWh","local_query_hint":"Max 续航 电池"},
-  {"id":"spec_003","category":"official_news","category_zh":"小米汽车官方动态","question":"小米SU7用的电机是自研的吗？最大功率多少？","web_query_hint":"小米SU7 电机 自研 功率 V6s 超级电机","local_query_hint":"电机 驱动"},
-  {"id":"media_001","category":"official_news","category_zh":"小米汽车官方动态","question":"小米SU7在懂车帝或汽车之家的实测续航排名怎么样？","web_query_hint":"小米SU7 懂车帝 汽车之家 实测续航 排名","local_query_hint":"实测续航 评测"},
-  {"id":"media_002","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7在中保研的碰撞测试成绩如何？各项目多少分？","web_query_hint":"小米SU7 中保研 碰撞测试 成绩 评分","local_query_hint":"碰撞测试 安全"},
-  {"id":"media_003","category":"official_news","category_zh":"小米汽车官方动态","question":"媒体对小米SU7 Ultra的赛道表现评价如何？","web_query_hint":"小米SU7 Ultra 赛道 媒体评测 表现","local_query_hint":"Ultra 评测 赛道"},
-  {"id":"ota_026","category":"ota_update","category_zh":"OTA软件更新","question":"小米SU7的无线投屏功能什么时候OTA支持？","web_query_hint":"小米SU7 无线投屏 OTA 支持","local_query_hint":"投屏 手机互联"},
-  {"id":"ota_027","category":"ota_update","category_zh":"OTA软件更新","question":"小米SU7的仪表盘主题最新OTA能自定义了吗？","web_query_hint":"小米SU7 仪表盘 主题 自定义 OTA","local_query_hint":"仪表盘 显示"},
-  {"id":"ota_028","category":"ota_update","category_zh":"OTA软件更新","question":"小米SU7的遥控召唤功能上线了吗？是哪个版本？","web_query_hint":"小米SU7 遥控召唤 智能召唤 OTA 版本","local_query_hint":"召唤 泊车"},
-  {"id":"ota_029","category":"ota_update","category_zh":"OTA软件更新","question":"小米SU7的车载KTV功能是哪个OTA加的？","web_query_hint":"小米SU7 车载KTV 唱歌 OTA","local_query_hint":"娱乐 KTV"},
-  {"id":"ota_030","category":"ota_update","category_zh":"OTA软件更新","question":"小米SU7的行车记录仪画质最新固件提升了吗？","web_query_hint":"小米SU7 行车记录仪 画质 固件 提升","local_query_hint":"行车记录仪 录像"},
-  {"id":"ota_031","category":"ota_update","category_zh":"OTA软件更新","question":"小米SU7的手机无线充电功率OTA后有提升吗？","web_query_hint":"小米SU7 手机无线充电 功率 OTA","local_query_hint":"无线充电 手机"},
-  {"id":"ota_032","category":"ota_update","category_zh":"OTA软件更新","question":"小米SU7的AEB自动紧急制动灵敏度最新版调整了吗？","web_query_hint":"小米SU7 AEB 自动紧急制动 灵敏度 OTA","local_query_hint":"AEB 紧急制动"},
-  {"id":"ota_033","category":"ota_update","category_zh":"OTA软件更新","question":"小米SU7的露营模式是哪个OTA版本加入的？","web_query_hint":"小米SU7 露营模式 OTA 版本","local_query_hint":"露营 用电"},
-  {"id":"ota_034","category":"ota_update","category_zh":"OTA软件更新","question":"小米SU7的能量回收适中挡位是哪个OTA加的？","web_query_hint":"小米SU7 能量回收 适中 挡位 OTA","local_query_hint":"能量回收 制动"},
-  {"id":"ota_035","category":"ota_update","category_zh":"OTA软件更新","question":"小米SU7的智能远光灯最新版反应速度改善了吗？","web_query_hint":"小米SU7 智能远光灯 IHC OTA 反应","local_query_hint":"远光灯 辅助"},
-  {"id":"ota_036","category":"ota_update","category_zh":"OTA软件更新","question":"小米SU7的车道偏离预警最新OTA误报减少了吗？","web_query_hint":"小米SU7 车道偏离预警 LDW 误报 OTA","local_query_hint":"车道偏离 辅助"},
-  {"id":"ota_037","category":"ota_update","category_zh":"OTA软件更新","question":"小米SU7手机APP远程控制最新加了哪些功能？","web_query_hint":"小米SU7 手机APP 远程控制 新功能","local_query_hint":"手机APP 远程"},
-  {"id":"ota_038","category":"ota_update","category_zh":"OTA软件更新","question":"小米SU7的氛围灯最新OTA支持音乐联动了吗？","web_query_hint":"小米SU7 氛围灯 音乐联动 OTA","local_query_hint":"氛围灯 灯光"},
-  {"id":"ota_039","category":"ota_update","category_zh":"OTA软件更新","question":"小米SU7的座椅记忆OTA后支持几个账号了？","web_query_hint":"小米SU7 座椅记忆 账号 OTA","local_query_hint":"座椅记忆"},
-  {"id":"ota_040","category":"ota_update","category_zh":"OTA软件更新","question":"小米SU7的后视镜自动防眩目最新版改善了吗？","web_query_hint":"小米SU7 后视镜 防眩目 OTA","local_query_hint":"后视镜 防眩目"},
-  {"id":"ota_041","category":"ota_update","category_zh":"OTA软件更新","question":"小米SU7的车机地图最新版更新了什么内容？","web_query_hint":"小米SU7 车机地图 高德 更新","local_query_hint":"导航 地图"},
-  {"id":"ota_042","category":"ota_update","category_zh":"OTA软件更新","question":"小米SU7的方向盘加热OTA后能分区调节了吗？","web_query_hint":"小米SU7 方向盘加热 分区 OTA","local_query_hint":"方向盘加热"},
-  {"id":"ota_043","category":"ota_update","category_zh":"OTA软件更新","question":"小米SU7的儿童锁最新OTA能在中控屏控制了吗？","web_query_hint":"小米SU7 儿童锁 中控屏 OTA","local_query_hint":"儿童锁 车门"},
-  {"id":"ota_044","category":"ota_update","category_zh":"OTA软件更新","question":"小米SU7的迎宾灯效最新OTA增加了几种？","web_query_hint":"小米SU7 迎宾灯效 灯语 OTA","local_query_hint":"迎宾灯 灯效"},
-  {"id":"ota_045","category":"ota_update","category_zh":"OTA软件更新","question":"小米SU7的雨量感应灵敏度最新OTA能调了吗？","web_query_hint":"小米SU7 雨量感应 灵敏度 OTA","local_query_hint":"雨刮 雨量感应"},
-  {"id":"ota_046","category":"ota_update","category_zh":"OTA软件更新","question":"小米SU7的窄道辅助最新OTA推送了吗？","web_query_hint":"小米SU7 窄道辅助 OTA 推送","local_query_hint":"窄道辅助 雷达"},
-  {"id":"ota_047","category":"ota_update","category_zh":"OTA软件更新","question":"小米SU7的后排娱乐屏最新OTA支持哪些应用？","web_query_hint":"小米SU7 后排娱乐屏 应用 OTA","local_query_hint":"后排屏 娱乐"},
-  {"id":"ota_048","category":"ota_update","category_zh":"OTA软件更新","question":"小米SU7的老板键功能OTA会加吗？官方有计划吗？","web_query_hint":"小米SU7 老板键 OTA 计划","local_query_hint":"座椅 按钮"},
-  {"id":"news_023","category":"official_news","category_zh":"小米汽车官方动态","question":"小米汽车今年营收和汽车业务利润情况如何？","web_query_hint":"小米汽车 营收 利润 财报 2025","local_query_hint":"营收 财报"},
-  {"id":"news_024","category":"official_news","category_zh":"小米汽车官方动态","question":"小米SU7在30万级轿车市场占有率是多少？","web_query_hint":"小米SU7 30万 轿车 市场占有率 销量排名","local_query_hint":"市场份额 销量"},
-  {"id":"news_025","category":"official_news","category_zh":"小米汽车官方动态","question":"小米汽车有没有计划进入欧洲或东南亚市场？","web_query_hint":"小米汽车 海外 欧洲 东南亚 出口","local_query_hint":"海外 出口"},
-  {"id":"news_026","category":"official_news","category_zh":"小米汽车官方动态","question":"雷军说小米汽车要进入全球前五是哪一年？","web_query_hint":"雷军 小米汽车 全球前五 目标 时间","local_query_hint":"目标 全球"},
-  {"id":"news_027","category":"official_news","category_zh":"小米汽车官方动态","question":"小米汽车有没有自建电池工厂的计划？","web_query_hint":"小米汽车 电池工厂 自建 计划","local_query_hint":"电池 制造"},
-  {"id":"news_028","category":"official_news","category_zh":"小米汽车官方动态","question":"小米SU7订单的退订率高吗？官方公布过吗？","web_query_hint":"小米SU7 退订率 订单 官方","local_query_hint":"订单 退订"},
-  {"id":"news_029","category":"official_news","category_zh":"小米汽车官方动态","question":"小米汽车和宁德时代的合作具体是什么内容？","web_query_hint":"小米汽车 宁德时代 合作 电池","local_query_hint":"合作 电池"},
-  {"id":"news_030","category":"official_news","category_zh":"小米汽车官方动态","question":"小米造车后公司市值涨了多少？","web_query_hint":"小米 市值 造车 股价","local_query_hint":"市值 股价"},
-  {"id":"news_031","category":"official_news","category_zh":"小米汽车官方动态","question":"小米SU7有没有被列入政府采购或公务用车？","web_query_hint":"小米SU7 政府采购 公务用车","local_query_hint":"政府采购"},
-  {"id":"news_032","category":"official_news","category_zh":"小米汽车官方动态","question":"小米汽车的客服热线和服务口碑怎么样？","web_query_hint":"小米汽车 客服热线 服务 口碑 评价","local_query_hint":"客服 售后"},
-  {"id":"news_033","category":"official_news","category_zh":"小米汽车官方动态","question":"小米汽车有没有开放加盟经销商或代理？","web_query_hint":"小米汽车 加盟 经销商 代理 渠道","local_query_hint":"经销商 渠道"},
-  {"id":"news_034","category":"official_news","category_zh":"小米汽车官方动态","question":"小米SU7的产能瓶颈解决了吗？现在月产多少？","web_query_hint":"小米SU7 产能 月产 瓶颈 2025","local_query_hint":"产能 工厂"},
-  {"id":"news_035","category":"official_news","category_zh":"小米汽车官方动态","question":"小米汽车有没有发布过概念车？","web_query_hint":"小米汽车 概念车 发布","local_query_hint":"概念车"},
-  {"id":"news_036","category":"official_news","category_zh":"小米汽车官方动态","question":"小米SU7 Ultra是不是纽北最速四门量产车？","web_query_hint":"小米SU7 Ultra 纽北 最速 量产 圈速纪录","local_query_hint":"Ultra 纽北 纪录"},
-  {"id":"news_037","category":"official_news","category_zh":"小米汽车官方动态","question":"小米汽车走换电还是超充路线？官方怎么说？","web_query_hint":"小米汽车 换电 超充 路线 官方","local_query_hint":"换电 超充"},
-  {"id":"news_038","category":"official_news","category_zh":"小米汽车官方动态","question":"小米汽车有没有自研芯片用在车机上？","web_query_hint":"小米汽车 自研芯片 玄铁 车机","local_query_hint":"芯片 车机"},
-  {"id":"news_039","category":"official_news","category_zh":"小米汽车官方动态","question":"小米SU7的续航达成率媒体实测是多少？","web_query_hint":"小米SU7 续航达成率 媒体实测","local_query_hint":"续航 实测"},
-  {"id":"news_040","category":"official_news","category_zh":"小米汽车官方动态","question":"小米汽车服务网点2025年覆盖到多少个城市？","web_query_hint":"小米汽车 服务网点 城市 覆盖 2025","local_query_hint":"服务网点 售后"},
-  {"id":"news_041","category":"official_news","category_zh":"小米汽车官方动态","question":"小米SU7车主的NPS净推荐值官方公布过吗？","web_query_hint":"小米SU7 NPS 净推荐值 满意度 官方","local_query_hint":"满意度 NPS"},
-  {"id":"news_042","category":"official_news","category_zh":"小米汽车官方动态","question":"小米汽车2025年研发投入大概多少？","web_query_hint":"小米汽车 研发投入 2025","local_query_hint":"研发 投入"},
-  {"id":"news_043","category":"official_news","category_zh":"小米汽车官方动态","question":"小米汽车的积分商城有什么权益可兑换？","web_query_hint":"小米汽车 积分商城 权益 兑换","local_query_hint":"积分 权益"},
-  {"id":"news_044","category":"official_news","category_zh":"小米汽车官方动态","question":"小米SU7 Ultra大定车主享有什么专属权益？","web_query_hint":"小米SU7 Ultra 大定 专属 权益 Ultra Club","local_query_hint":"Ultra 权益"},
-  {"id":"competitor_023","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7和腾势N7谁的智驾更成熟？","web_query_hint":"小米SU7 腾势N7 智驾 对比","local_query_hint":"智驾 对比"},
-  {"id":"competitor_024","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7和银河E8的内饰质感谁更好？","web_query_hint":"小米SU7 银河E8 内饰 质感 对比","local_query_hint":"内饰 对比"},
-  {"id":"competitor_025","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7和昊铂GT的操控谁更运动？","web_query_hint":"小米SU7 昊铂GT 操控 运动 对比","local_query_hint":"操控 对比"},
-  {"id":"competitor_026","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7和星纪元ES谁的配置更丰富？","web_query_hint":"小米SU7 星纪元ES 配置 对比","local_query_hint":"配置 对比"},
-  {"id":"competitor_027","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7和Model 3谁的售后更省心？","web_query_hint":"小米SU7 特斯拉Model3 售后 对比","local_query_hint":"售后 对比"},
-  {"id":"competitor_028","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7和蔚来ET5谁的换电更方便？","web_query_hint":"小米SU7 蔚来ET5 换电 对比","local_query_hint":"换电 对比"},
-  {"id":"competitor_029","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7和极氪001谁的二手车更保值？","web_query_hint":"小米SU7 极氪001 二手车 保值 对比","local_query_hint":"保值 对比"},
-  {"id":"competitor_030","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7和小鹏G6的智能泊车谁强？","web_query_hint":"小米SU7 小鹏G6 智能泊车 对比","local_query_hint":"泊车 对比"},
-  {"id":"competitor_031","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7和问界M5ev谁的能耗更低？","web_query_hint":"小米SU7 问界M5ev 能耗 对比","local_query_hint":"能耗 对比"},
-  {"id":"competitor_032","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7和比亚迪海豹谁的快充更快？","web_query_hint":"小米SU7 比亚迪海豹 快充 对比","local_query_hint":"快充 对比"},
-  {"id":"competitor_033","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7和智己LS6谁是同价位标杆？","web_query_hint":"小米SU7 智己LS6 标杆 对比","local_query_hint":"对比 标杆"},
-  {"id":"competitor_034","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7和理想L7谁更适合长途自驾？","web_query_hint":"小米SU7 理想L7 长途 对比","local_query_hint":"长途 对比"},
-  {"id":"competitor_035","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7和深蓝S7谁的空间更大？","web_query_hint":"小米SU7 深蓝S7 空间 对比","local_query_hint":"空间 对比"},
-  {"id":"competitor_036","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7和启源A07谁的舒适性更好？","web_query_hint":"小米SU7 启源A07 舒适 对比","local_query_hint":"舒适 对比"},
-  {"id":"competitor_037","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7和零跑C10谁更便宜性价比高？","web_query_hint":"小米SU7 零跑C10 价格 性价比 对比","local_query_hint":"性价比 对比"},
-  {"id":"competitor_038","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7和smart精灵谁的设计更好看？","web_query_hint":"小米SU7 smart精灵 设计 对比","local_query_hint":"设计 对比"},
-  {"id":"competitor_039","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7和极星2谁更小众有格调？","web_query_hint":"小米SU7 极星2 小众 对比","local_query_hint":"对比 小众"},
-  {"id":"competitor_040","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7和路特斯繁花谁性能更强？","web_query_hint":"小米SU7 路特斯 繁花 性能 对比","local_query_hint":"性能 对比"},
-  {"id":"competitor_041","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7和大众ID.7谁更成熟可靠？","web_query_hint":"小米SU7 大众ID7 对比 可靠","local_query_hint":"对比 可靠"},
-  {"id":"competitor_042","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7和丰田bZ3谁更省心耐用？","web_query_hint":"小米SU7 丰田bZ3 对比 耐用","local_query_hint":"对比 耐用"},
-  {"id":"competitor_043","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7和红旗EH7谁的品牌力更强？","web_query_hint":"小米SU7 红旗EH7 品牌 对比","local_query_hint":"品牌 对比"},
-  {"id":"competitor_044","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7和机甲龙现在还有可比性吗？","web_query_hint":"小米SU7 机甲龙 对比","local_query_hint":"对比"},
-  {"id":"competitor_045","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7和Lucid Air有可比性吗？","web_query_hint":"小米SU7 Lucid Air 对比","local_query_hint":"对比"},
-  {"id":"competitor_046","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7和飞凡F7谁的智驾更靠谱？","web_query_hint":"小米SU7 飞凡F7 智驾 对比","local_query_hint":"智驾 对比"},
-  {"id":"competitor_047","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7和哪吒S谁的故障率更低？","web_query_hint":"小米SU7 哪吒S 故障率 对比","local_query_hint":"故障率 对比"},
-  {"id":"competitor_048","category":"competitor","category_zh":"竞品对比信息","question":"小米SU7 Ultra和保时捷Taycan Turbo S谁圈速快？","web_query_hint":"小米SU7 Ultra 保时捷Taycan 圈速 对比","local_query_hint":"Ultra 圈速 对比"},
-  {"id":"recall_016","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7的车窗升降有没有异响故障的反馈？","web_query_hint":"小米SU7 车窗 异响 故障 反馈","local_query_hint":"车窗 故障"},
-  {"id":"recall_017","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7的方向盘有没有跑偏的投诉？","web_query_hint":"小米SU7 方向盘 跑偏 投诉","local_query_hint":"方向盘 跑偏"},
-  {"id":"recall_018","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7的尾灯有没有进水起雾的车主反馈？","web_query_hint":"小米SU7 尾灯 进水 起雾 反馈","local_query_hint":"尾灯 进水"},
-  {"id":"recall_019","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7的前后玻璃有没有自裂的报告？","web_query_hint":"小米SU7 玻璃 自裂 报告","local_query_hint":"玻璃 破裂"},
-  {"id":"recall_020","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7的充电盖有没有打不开的故障？","web_query_hint":"小米SU7 充电盖 打不开 故障","local_query_hint":"充电盖 故障"},
-  {"id":"recall_021","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7的中控屏有没有花屏或闪烁的反馈？","web_query_hint":"小米SU7 中控屏 花屏 闪烁 故障","local_query_hint":"中控屏 花屏"},
-  {"id":"recall_022","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7的底盘有没有异响的车主反馈？","web_query_hint":"小米SU7 底盘 异响 反馈","local_query_hint":"底盘 异响"},
-  {"id":"recall_023","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7的轮毂有没有变形或失圆的投诉？","web_query_hint":"小米SU7 轮毂 变形 失圆 投诉","local_query_hint":"轮毂 变形"},
-  {"id":"recall_024","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7的电池冬季掉电快有没有集体投诉？","web_query_hint":"小米SU7 电池 冬季 掉电 投诉","local_query_hint":"电池 冬季 掉电"},
-  {"id":"recall_025","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7的蓝牙有没有频繁断连的反馈？","web_query_hint":"小米SU7 蓝牙 断连 故障 反馈","local_query_hint":"蓝牙 断连"},
-  {"id":"recall_026","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7的摄像头有没有起雾影响画质的反馈？","web_query_hint":"小米SU7 摄像头 起雾 画质 反馈","local_query_hint":"摄像头 起雾"},
-  {"id":"recall_027","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7的雷达有没有误报幽灵刹车的反馈？","web_query_hint":"小米SU7 雷达 误报 幽灵刹车","local_query_hint":"雷达 误报"},
-  {"id":"recall_028","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7的无钥匙进入有没有失灵的反馈？","web_query_hint":"小米SU7 无钥匙进入 失灵 故障","local_query_hint":"无钥匙进入 失灵"},
-  {"id":"recall_029","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7的天窗有没有异响或漏水的反馈？","web_query_hint":"小米SU7 天窗 异响 漏水 反馈","local_query_hint":"天窗 漏水"},
-  {"id":"recall_030","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7的HUD有没有重影模糊的反馈？","web_query_hint":"小米SU7 HUD 重影 模糊 故障","local_query_hint":"HUD 重影"},
-  {"id":"recall_031","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7的喇叭有没有破音的反馈？","web_query_hint":"小米SU7 喇叭 破音 故障","local_query_hint":"喇叭 破音"},
-  {"id":"recall_032","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7的座椅通风有没有不凉的反馈？","web_query_hint":"小米SU7 座椅通风 不凉 故障","local_query_hint":"座椅通风 故障"},
-  {"id":"recall_033","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7的自动驻车有没有异常解除的反馈？","web_query_hint":"小米SU7 自动驻车 异常解除 故障","local_query_hint":"自动驻车 故障"},
-  {"id":"recall_034","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7的上坡辅助有没有溜车的反馈？","web_query_hint":"小米SU7 上坡辅助 溜车 故障","local_query_hint":"上坡辅助 溜车"},
-  {"id":"recall_035","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7有没有被中保研或C-IASI评为低分的项目？","web_query_hint":"小米SU7 中保研 C-IASI 耐撞 评分","local_query_hint":"碰撞测试 安全"},
-  {"id":"recall_036","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米汽车对早期SU7的质量问题有没有官方改进说明？","web_query_hint":"小米汽车 SU7 质量 改进 官方说明","local_query_hint":"质量 改进"},
-  {"id":"recall_037","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7的雨刮电机有没有早期失效反馈？","web_query_hint":"小米SU7 雨刮电机 失效 反馈","local_query_hint":"雨刮 电机"},
-  {"id":"recall_038","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7的座椅有没有异响或电机故障反馈？","web_query_hint":"小米SU7 座椅 异响 电机 故障","local_query_hint":"座椅 异响"},
-  {"id":"recall_039","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7的无线充电板有没有过热反馈？","web_query_hint":"小米SU7 无线充电板 过热 反馈","local_query_hint":"无线充电 过热"},
-  {"id":"recall_040","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7的空调压缩机有没有异响反馈？","web_query_hint":"小米SU7 空调压缩机 异响 故障","local_query_hint":"空调 压缩机"},
-  {"id":"recall_041","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7的刹车有没有异响或抖动的车主反馈？","web_query_hint":"小米SU7 刹车 异响 抖动 反馈","local_query_hint":"刹车 异响"},
-  {"id":"recall_042","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7的车机有没有死机自动重启的投诉？","web_query_hint":"小米SU7 车机 死机 重启 投诉","local_query_hint":"车机 死机"},
-  {"id":"recall_043","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7的GPS定位有没有不准的反馈？","web_query_hint":"小米SU7 GPS 定位 不准 反馈","local_query_hint":"GPS 定位"},
-  {"id":"recall_044","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7的自动雨刮有没有不灵敏的反馈？","web_query_hint":"小米SU7 自动雨刮 不灵敏 反馈","local_query_hint":"自动雨刮"},
-  {"id":"recall_045","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7的电吸门有没有故障反馈？","web_query_hint":"小米SU7 电吸门 故障 反馈","local_query_hint":"电吸门 故障"},
-  {"id":"recall_046","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7的后视镜有没有折叠故障反馈？","web_query_hint":"小米SU7 后视镜 折叠 故障","local_query_hint":"后视镜 折叠"},
-  {"id":"recall_047","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7的氛围灯有没有不亮的反馈？","web_query_hint":"小米SU7 氛围灯 不亮 故障","local_query_hint":"氛围灯 故障"},
-  {"id":"recall_048","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7的方向盘加热有没有不热的反馈？","web_query_hint":"小米SU7 方向盘加热 不热 故障","local_query_hint":"方向盘加热"},
-  {"id":"recall_049","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7的USB接口有没有失灵的反馈？","web_query_hint":"小米SU7 USB 接口 失灵 故障","local_query_hint":"USB 接口"},
-  {"id":"recall_050","category":"recall_notice","category_zh":"召回与技术服务公告","question":"小米SU7有没有因排放或能耗不达标被通报？","web_query_hint":"小米SU7 能耗 通报 达标","local_query_hint":"能耗 达标"},
-  {"id":"charging_015","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米SU7在高速服务区充电排队严重吗？","web_query_hint":"小米SU7 高速 服务区 充电 排队","local_query_hint":"高速 充电"},
-  {"id":"charging_016","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米超充站目前在全国有多少座？覆盖哪些高速？","web_query_hint":"小米超充站 数量 高速 覆盖 2025","local_query_hint":"超充站 数量"},
-  {"id":"charging_017","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米SU7在北方冬天充电速度衰减多少？","web_query_hint":"小米SU7 北方 冬天 充电 衰减 低温","local_query_hint":"低温 充电"},
-  {"id":"charging_018","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米SU7能用特斯拉超充桩吗？兼容吗？","web_query_hint":"小米SU7 特斯拉 超充桩 兼容 使用","local_query_hint":"特斯拉超充 兼容"},
-  {"id":"charging_019","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米SU7家充桩支持预约谷电充电吗？","web_query_hint":"小米SU7 家用充电桩 预约 谷电","local_query_hint":"家充 谷电"},
-  {"id":"charging_020","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米SU7的随车充枪功率多大？应急好用吗？","web_query_hint":"小米SU7 随车充 应急 功率","local_query_hint":"随车充 应急"},
-  {"id":"charging_021","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米SU7充电时能在车里开空调用电吗？耗电吗？","web_query_hint":"小米SU7 充电 车内 空调 用电","local_query_hint":"充电 空调"},
-  {"id":"charging_022","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米SU7的充电口在左边还是右边？","web_query_hint":"小米SU7 充电口 位置 左右","local_query_hint":"充电口 位置"},
-  {"id":"charging_023","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米SU7充满电从20%到80%最快多久？","web_query_hint":"小米SU7 充电 20% 80% 时间 快充","local_query_hint":"快充 时间"},
-  {"id":"charging_024","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米SU7的充电协议支持即插即充吗？","web_query_hint":"小米SU7 充电 即插即充 协议","local_query_hint":"充电 即插即充"},
-  {"id":"charging_025","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米SU7的电池预热功能充电前有用吗？","web_query_hint":"小米SU7 电池预热 充电 冬季","local_query_hint":"电池预热"},
-  {"id":"charging_026","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米SU7用特来电充电需要下载APP吗？","web_query_hint":"小米SU7 特来电 充电 APP 扫码","local_query_hint":"特来电 第三方"},
-  {"id":"charging_027","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米SU7在小区安装家充桩物业不批怎么办？","web_query_hint":"小米SU7 家用充电桩 小区 物业 安装","local_query_hint":"家充 安装 物业"},
-  {"id":"charging_028","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米SU7的电池健康度怎么看？在哪查？","web_query_hint":"小米SU7 电池健康度 SOH 查询","local_query_hint":"电池健康度"},
-  {"id":"charging_029","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米SU7长期快充会伤电池吗？官方怎么说？","web_query_hint":"小米SU7 快充 伤电池 官方 电池寿命","local_query_hint":"快充 电池寿命"},
-  {"id":"charging_030","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米SU7的充电会员和免费充电怎么领？","web_query_hint":"小米SU7 充电会员 免费充电 权益","local_query_hint":"充电会员 权益"},
-  {"id":"charging_031","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米SU7能不能用光伏太阳能板充电？","web_query_hint":"小米SU7 光伏 太阳能 充电","local_query_hint":"光伏 充电"},
-  {"id":"charging_032","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米SU7在高原地区充电有影响吗？","web_query_hint":"小米SU7 高原 充电 影响","local_query_hint":"高原 充电"},
-  {"id":"charging_033","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米SU7的对外放电能支持多久？费电吗？","web_query_hint":"小米SU7 对外放电 V2L 时长 耗电","local_query_hint":"V2L 放电"},
-  {"id":"charging_034","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米SU7的充电功率会随电量降低而下降吗？","web_query_hint":"小米SU7 充电功率 下降 电量 曲线","local_query_hint":"充电曲线"},
-  {"id":"charging_035","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米汽车自建超充桩功率最大多少千瓦？","web_query_hint":"小米汽车 超充桩 功率 千瓦 最大","local_query_hint":"超充 功率"},
-  {"id":"policy_013","category":"ev_policy","category_zh":"新能源政策与补贴","question":"小米SU7在北上广深上绿牌需要什么条件？","web_query_hint":"小米SU7 北京 上海 广州 深圳 绿牌 条件","local_query_hint":"绿牌 限牌"},
-  {"id":"policy_014","category":"ev_policy","category_zh":"新能源政策与补贴","question":"新能源车免征购置税2025年底到期后还有吗？","web_query_hint":"新能源车 购置税 免征 到期 2025 续","local_query_hint":"购置税 免征"},
-  {"id":"policy_015","category":"ev_policy","category_zh":"新能源政策与补贴","question":"买小米SU7以旧换新国补和地补能叠加吗？","web_query_hint":"小米SU7 以旧换新 国补 地补 叠加","local_query_hint":"以旧换新 补贴"},
-  {"id":"policy_016","category":"ev_policy","category_zh":"新能源政策与补贴","question":"小米SU7在天津、杭州摇号中签率高吗？","web_query_hint":"小米SU7 天津 杭州 摇号 中签 新能源","local_query_hint":"摇号 牌照"},
-  {"id":"policy_017","category":"ev_policy","category_zh":"新能源政策与补贴","question":"报废旧燃油车换小米SU7能拿多少补贴？","web_query_hint":"报废 燃油车 小米SU7 补贴 以旧换新","local_query_hint":"报废 补贴"},
-  {"id":"policy_018","category":"ev_policy","category_zh":"新能源政策与补贴","question":"小米SU7在西安、武汉、成都上牌有什么新能源优惠？","web_query_hint":"西安 武汉 成都 小米SU7 新能源 上牌 优惠","local_query_hint":"地方优惠 上牌"},
-  {"id":"policy_019","category":"ev_policy","category_zh":"新能源政策与补贴","question":"事业单位采购小米SU7有专门政策吗？","web_query_hint":"事业单位 采购 小米SU7 新能源 政策","local_query_hint":"采购 政策"},
-  {"id":"policy_020","category":"ev_policy","category_zh":"新能源政策与补贴","question":"新能源车下乡补贴买小米SU7能享受吗？","web_query_hint":"新能源车 下乡 补贴 小米SU7","local_query_hint":"下乡 补贴"},
-  {"id":"policy_021","category":"ev_policy","category_zh":"新能源政策与补贴","question":"小米SU7的交强险和车船税新能源有减免吗？","web_query_hint":"小米SU7 交强险 车船税 新能源 减免","local_query_hint":"车船税 交强险"},
-  {"id":"policy_022","category":"ev_policy","category_zh":"新能源政策与补贴","question":"外地买小米SU7回本地上牌有补贴限制吗？","web_query_hint":"小米SU7 异地购车 上牌 补贴 限制","local_query_hint":"异地购车 补贴"},
-  {"id":"policy_023","category":"ev_policy","category_zh":"新能源政策与补贴","question":"小米SU7在限行城市是不是不限号？","web_query_hint":"小米SU7 限行 不限号 新能源 城市","local_query_hint":"限行 牌照"},
-  {"id":"policy_024","category":"ev_policy","category_zh":"新能源政策与补贴","question":"买小米SU7能申请充电桩安装补贴吗？","web_query_hint":"小米SU7 充电桩安装 补贴 申请","local_query_hint":"充电桩 补贴"},
-  {"id":"policy_025","category":"ev_policy","category_zh":"新能源政策与补贴","question":"个人买小米SU7能享受车贷利息补贴吗？","web_query_hint":"小米SU7 车贷 利息 补贴 个人","local_query_hint":"车贷 补贴"},
-  {"id":"policy_026","category":"ev_policy","category_zh":"新能源政策与补贴","question":"小米SU7在海南自贸港购车有特殊优惠吗？","web_query_hint":"海南 自贸港 小米SU7 购车 优惠","local_query_hint":"海南 优惠"},
-  {"id":"policy_027","category":"ev_policy","category_zh":"新能源政策与补贴","question":"新能源指标过期了买小米SU7还能用吗？","web_query_hint":"新能源指标 过期 小米SU7 牌照","local_query_hint":"新能源指标"},
-  {"id":"policy_028","category":"ev_policy","category_zh":"新能源政策与补贴","question":"小米SU7的碳排放积分能交易吗？怎么算？","web_query_hint":"小米SU7 碳排放 积分 交易 新能源","local_query_hint":"碳积分"},
-  {"id":"policy_029","category":"ev_policy","category_zh":"新能源政策与补贴","question":"网约车/营运买小米SU7还能享受三包吗？","web_query_hint":"小米SU7 网约车 营运 三包 政策","local_query_hint":"营运 三包"},
-  {"id":"policy_030","category":"ev_policy","category_zh":"新能源政策与补贴","question":"小米SU7新能源补贴申请需要哪些材料？","web_query_hint":"小米SU7 新能源补贴 申请 材料 流程","local_query_hint":"补贴 申请"},
-  {"id":"price_017","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7 Pro版和Max版价格差多少？配置差在哪？","web_query_hint":"小米SU7 Pro Max 价格 配置 差异","local_query_hint":"Pro Max 配置"},
-  {"id":"price_018","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7 Ultra官方指导价是多少？有哪些版本？","web_query_hint":"小米SU7 Ultra 指导价 版本 配置","local_query_hint":"Ultra 价格"},
-  {"id":"price_019","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7现在锁单后多久能提车？","web_query_hint":"小米SU7 锁单 提车 周期 2025","local_query_hint":"锁单 提车"},
-  {"id":"price_020","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7二手车一年后大概贬值多少？","web_query_hint":"小米SU7 二手车 贬值 一年 残值","local_query_hint":"二手车 贬值"},
-  {"id":"price_021","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7选装Nappa真皮座椅加多少钱？","web_query_hint":"小米SU7 Nappa真皮 选装 价格","local_query_hint":"选装 真皮"},
-  {"id":"price_022","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7有大客户/集团购车优惠吗？","web_query_hint":"小米SU7 大客户 集团 购车 优惠","local_query_hint":"大客户 优惠"},
-  {"id":"price_023","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7的尾款有什么支付方式？支持花呗吗？","web_query_hint":"小米SU7 尾款 支付 花呗 分期","local_query_hint":"尾款 支付"},
-  {"id":"price_024","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7老带新有什么奖励？","web_query_hint":"小米SU7 老带新 奖励 推荐","local_query_hint":"老带新 奖励"},
-  {"id":"price_025","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7在双十一或618有购车优惠吗？","web_query_hint":"小米SU7 双十一 618 购车 优惠 活动","local_query_hint":"活动 优惠"},
-  {"id":"price_026","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7订金5000块退订要扣钱吗？","web_query_hint":"小米SU7 订金 退订 扣款 规则","local_query_hint":"订金 退订"},
-  {"id":"price_027","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7 Max版实测值不值那个差价？","web_query_hint":"小米SU7 Max 值不值 差价 评价","local_query_hint":"Max 价值"},
-  {"id":"price_028","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7的保险4S店上和外面上差多少钱？","web_query_hint":"小米SU7 保险 4S店 外面 差价","local_query_hint":"保险 渠道"},
-  {"id":"price_029","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7创始版现在二手车还能溢价吗？","web_query_hint":"小米SU7 创始版 二手车 溢价","local_query_hint":"创始版 二手"},
-  {"id":"price_030","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7全国统一价还是各地有差价？","web_query_hint":"小米SU7 全国 统一价 地区 差价","local_query_hint":"售价 地区"},
-  {"id":"price_031","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7有没有0首付或低首付方案？","web_query_hint":"小米SU7 0首付 低首付 金融 方案","local_query_hint":"金融 首付"},
-  {"id":"price_032","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7的金融贴息活动什么时候有？","web_query_hint":"小米SU7 金融 贴息 活动 时间","local_query_hint":"金融 贴息"},
-  {"id":"price_033","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7置换旧车官方估价低于市场怎么办？","web_query_hint":"小米SU7 置换 估价 低 市场","local_query_hint":"置换 估价"},
-  {"id":"price_034","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7的购车合同有哪些要注意的坑？","web_query_hint":"小米SU7 购车合同 注意 坑 维权","local_query_hint":"购车合同"},
-  {"id":"price_035","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7提车时要交哪些费用？有隐藏费用吗？","web_query_hint":"小米SU7 提车 费用 隐藏 上牌","local_query_hint":"提车 费用"},
-  {"id":"insurance_013","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7的人保、平安、太保车险报价差别大吗？","web_query_hint":"小米SU7 人保 平安 太保 车险 报价","local_query_hint":"车险 报价"},
-  {"id":"insurance_014","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7只买交强险和三者险够吗？","web_query_hint":"小米SU7 交强险 三者险 够用","local_query_hint":"交强险 三者"},
-  {"id":"insurance_015","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7的车损险保额按什么算？折旧吗？","web_query_hint":"小米SU7 车损险 保额 折旧","local_query_hint":"车损险 保额"},
-  {"id":"insurance_016","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7的无责也被拒赔的情况有哪些？","web_query_hint":"小米SU7 拒赔 无责 理赔 保险","local_query_hint":"理赔 拒赔"},
-  {"id":"insurance_017","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7三电终身质保二手车能延续吗？","web_query_hint":"小米SU7 三电 终身质保 二手车 延续","local_query_hint":"三电 质保 二手"},
-  {"id":"insurance_018","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7的玻璃险和轮胎险有必要买吗？","web_query_hint":"小米SU7 玻璃险 轮胎险 必要","local_query_hint":"玻璃险 轮胎险"},
-  {"id":"insurance_019","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7出过险还能享受续保优惠吗？","web_query_hint":"小米SU7 出险 续保 优惠 保费","local_query_hint":"续保 出险"},
-  {"id":"insurance_020","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7的座位险和驾乘险买哪个好？","web_query_hint":"小米SU7 座位险 驾乘险 推荐","local_query_hint":"座位险 驾乘险"},
-  {"id":"insurance_021","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7的全险一般都包含哪些险种？","web_query_hint":"小米SU7 全险 险种 包含","local_query_hint":"全险 险种"},
-  {"id":"insurance_022","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7贷款买车GPS费和服务费合理吗？","web_query_hint":"小米SU7 贷款 GPS费 服务费 合理","local_query_hint":"贷款 费用"},
-  {"id":"insurance_023","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7的残值担保或保值回购有吗？","web_query_hint":"小米SU7 残值担保 保值回购 政策","local_query_hint":"残值 回购"},
-  {"id":"insurance_024","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7融资租赁和银行贷款哪个划算？","web_query_hint":"小米SU7 融资租赁 银行贷款 划算","local_query_hint":"融资租赁 贷款"},
-  {"id":"insurance_025","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7的自然损失险有必要单独买吗？","web_query_hint":"小米SU7 自燃险 自然损失险 必要","local_query_hint":"自燃险"},
-  {"id":"insurance_026","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7的划痕险值得买吗？小剐蹭赔吗？","web_query_hint":"小米SU7 划痕险 值得 小剐蹭","local_query_hint":"划痕险"},
-  {"id":"insurance_027","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7的精神抚慰金附加险是什么？要买吗？","web_query_hint":"小米SU7 精神抚慰金 附加险","local_query_hint":"附加险"},
-  {"id":"insurance_028","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7的医保外用药责任险有用吗？","web_query_hint":"小米SU7 医保外用药 责任险","local_query_hint":"责任险 医保"},
-  {"id":"insurance_029","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7分期逾期会上征信吗？影响大吗？","web_query_hint":"小米SU7 分期 逾期 征信 影响","local_query_hint":"分期 征信"},
-  {"id":"maintenance_013","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7的首次保养什么时候做？免费吗？","web_query_hint":"小米SU7 首保 时间 免费 里程","local_query_hint":"首保 保养"},
-  {"id":"maintenance_014","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7的保养周期是按时间还是里程？","web_query_hint":"小米SU7 保养周期 时间 里程","local_query_hint":"保养周期"},
-  {"id":"maintenance_015","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7的刹车油多久换一次？多少钱？","web_query_hint":"小米SU7 刹车油 更换 周期 费用","local_query_hint":"刹车油 保养"},
-  {"id":"maintenance_016","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7的防冻液多久换？自己能加吗？","web_query_hint":"小米SU7 防冻液 更换 周期 自己加","local_query_hint":"防冻液"},
-  {"id":"maintenance_017","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7的空调清洗除味多少钱？","web_query_hint":"小米SU7 空调清洗 除味 价格","local_query_hint":"空调清洗"},
-  {"id":"maintenance_018","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7的内饰深度清洁多少钱？","web_query_hint":"小米SU7 内饰 深度清洁 价格","local_query_hint":"内饰清洁"},
-  {"id":"maintenance_019","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7的底盘装甲有必要做吗？多少钱？","web_query_hint":"小米SU7 底盘装甲 必要 价格","local_query_hint":"底盘装甲"},
-  {"id":"maintenance_020","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7的玻璃水用完了自己加买哪种？","web_query_hint":"小米SU7 玻璃水 哪种 自己加 推荐","local_query_hint":"玻璃水"},
-  {"id":"maintenance_021","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7的电机和电控需要保养吗？","web_query_hint":"小米SU7 电机 电控 保养","local_query_hint":"电机 电控"},
-  {"id":"maintenance_022","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7的轮胎一般几年或几万公里换？","web_query_hint":"小米SU7 轮胎 更换 周期 公里 年","local_query_hint":"轮胎 更换"},
-  {"id":"maintenance_023","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7的小毛病维修贵不贵？配件好买吗？","web_query_hint":"小米SU7 维修 配件 价格 供应","local_query_hint":"维修 配件"},
-  {"id":"maintenance_024","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7过保后维修费用高吗？","web_query_hint":"小米SU7 过保 维修 费用 自费","local_query_hint":"过保 维修"},
-  {"id":"maintenance_025","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7的三滤指什么？多久换？","web_query_hint":"小米SU7 三滤 空调滤 空气滤 更换","local_query_hint":"三滤 保养"},
-  {"id":"maintenance_026","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7的底盘要不要定期做四轮定位？","web_query_hint":"小米SU7 四轮定位 底盘 周期","local_query_hint":"四轮定位"},
-  {"id":"maintenance_027","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7长期不开电瓶会亏电吗？怎么维护？","web_query_hint":"小米SU7 长期停放 亏电 12V 维护","local_query_hint":"长期停放 亏电"},
-  {"id":"maintenance_028","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7的洗车和镀晶一年要花多少？","web_query_hint":"小米SU7 洗车 镀晶 年费用","local_query_hint":"洗车 镀晶"},
-  {"id":"maintenance_029","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7的保险一年比一年便宜吗？不出险降多少？","web_query_hint":"小米SU7 保险 逐年 降价 不出险","local_query_hint":"保险 降价"},
-  {"id":"user_feedback_019","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7的真实续航冬天打几折？车主怎么说？","web_query_hint":"小米SU7 冬季续航 折扣 车主 实测","local_query_hint":"冬季续航"},
-  {"id":"user_feedback_020","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7的空调制冷效果怎么样？夏天够冷吗？","web_query_hint":"小米SU7 空调 制冷 夏天 车主","local_query_hint":"空调 制冷"},
-  {"id":"user_feedback_021","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7的高速续航实测能跑多少公里？","web_query_hint":"小米SU7 高速续航 实测 公里 车主","local_query_hint":"高速续航"},
-  {"id":"user_feedback_022","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7的城市续航实测能跑多少？","web_query_hint":"小米SU7 城市续航 实测 车主","local_query_hint":"城市续航"},
-  {"id":"user_feedback_023","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7的辅助驾驶在雨雪天可靠吗？","web_query_hint":"小米SU7 辅助驾驶 雨雪 可靠 车主","local_query_hint":"辅助驾驶 雨雪"},
-  {"id":"user_feedback_024","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7的远程控制实际响应快吗？延迟大吗？","web_query_hint":"小米SU7 远程控制 响应 延迟 车主","local_query_hint":"远程控制"},
-  {"id":"user_feedback_025","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7的导航准吗？会绕路吗？","web_query_hint":"小米SU7 导航 准 绕路 车主","local_query_hint":"导航"},
-  {"id":"user_feedback_026","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7的音响效果怎么样？低音够吗？","web_query_hint":"小米SU7 音响 效果 低音 车主","local_query_hint":"音响"},
-  {"id":"user_feedback_027","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7的无线充电手机会发烫吗？","web_query_hint":"小米SU7 无线充电 手机 发烫 车主","local_query_hint":"无线充电 发烫"},
-  {"id":"user_feedback_028","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7的夜间行驶大灯够亮吗？","web_query_hint":"小米SU7 大灯 夜间 亮 车主","local_query_hint":"大灯 夜间"},
-  {"id":"user_feedback_029","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7的360环影清晰吗？夜间看得清吗？","web_query_hint":"小米SU7 360环影 清晰 夜间 车主","local_query_hint":"360环影"},
-  {"id":"user_feedback_030","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7的OTA升级过程车能用吗？要等多久？","web_query_hint":"小米SU7 OTA升级 过程 等待 车主","local_query_hint":"OTA升级"},
-  {"id":"user_feedback_031","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7的车主 app 远程查看车辆位置准吗？","web_query_hint":"小米SU7 车主APP 车辆位置 定位 车主","local_query_hint":"车辆定位"},
-  {"id":"user_feedback_032","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7的智能空气悬挂舒适度怎么样？","web_query_hint":"小米SU7 空气悬挂 舒适 车主","local_query_hint":"空气悬挂"},
-  {"id":"user_feedback_033","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7的轮胎噪音大吗？换静音胎有用吗？","web_query_hint":"小米SU7 轮胎噪音 静音胎 车主","local_query_hint":"轮胎噪音"},
-  {"id":"user_feedback_034","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7的后排中间座位舒服吗？长途坐人吗？","web_query_hint":"小米SU7 后排中间 座位 舒服 车主","local_query_hint":"后排 中间座"},
-  {"id":"user_feedback_035","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7的防晒隔热玻璃效果好吗？夏天烫吗？","web_query_hint":"小米SU7 防晒隔热玻璃 夏天 车主","local_query_hint":"隔热玻璃"},
-  {"id":"user_feedback_036","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7的电动尾门支持脚踢感应吗？好用吗？","web_query_hint":"小米SU7 电动尾门 脚踢感应 车主","local_query_hint":"电动尾门"},
-  {"id":"user_feedback_037","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7的手机蓝牙解锁比实体钥匙方便吗？","web_query_hint":"小米SU7 蓝牙解锁 实体钥匙 方便 车主","local_query_hint":"蓝牙解锁"},
-  {"id":"user_feedback_038","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7的座椅加热通风实际效果怎么样？","web_query_hint":"小米SU7 座椅加热 通风 效果 车主","local_query_hint":"座椅加热通风"},
-  {"id":"user_feedback_039","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7的车主最不满意的三个点是什么？","web_query_hint":"小米SU7 车主 不满意 缺点 槽点","local_query_hint":"车主 缺点"},
-  {"id":"user_feedback_040","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7的真实故障率在新能源里算高吗？","web_query_hint":"小米SU7 故障率 新能源 排名 可靠性","local_query_hint":"故障率 可靠性"},
-  {"id":"user_feedback_041","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7的售后服务态度和效率车主评价如何？","web_query_hint":"小米SU7 售后 服务 效率 车主评价","local_query_hint":"售后 评价"},
-  {"id":"user_feedback_042","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7的智能驾驶升级包值得买吗？车主怎么说？","web_query_hint":"小米SU7 智能驾驶 升级包 值得 车主","local_query_hint":"智驾 升级包"},
-  {"id":"user_feedback_043","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7的真实车主口碑在汽车之家评分多少？","web_query_hint":"小米SU7 车主口碑 汽车之家 评分","local_query_hint":"口碑 评分"},
-  {"id":"user_feedback_044","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7的新车味道大吗？多久散掉？","web_query_hint":"小米SU7 新车 味道 甲醛 车主","local_query_hint":"新车味道"},
-  {"id":"user_feedback_045","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7的油漆薄吗？小石子一蹦就掉漆吗？","web_query_hint":"小米SU7 油漆 掉漆 石子 车主","local_query_hint":"油漆 掉漆"},
-  {"id":"user_feedback_046","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7的二手车检测要注意什么？","web_query_hint":"小米SU7 二手车 检测 注意 电池","local_query_hint":"二手车 检测"},
-  {"id":"user_feedback_047","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7的车主社区有没有改装案例分享？","web_query_hint":"小米SU7 改装 案例 车主 社区","local_query_hint":"改装 案例"},
-  {"id":"user_feedback_048","category":"user_feedback","category_zh":"车主真实反馈","question":"小米SU7开三年后电池衰减多少？车主实测？","web_query_hint":"小米SU7 电池衰减 三年 车主 实测","local_query_hint":"电池衰减"},
-  {"id":"charging_036","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米SU7能不能边充电边用V2L给别的设备供电？","web_query_hint":"小米SU7 充电 V2L 同时 放电","local_query_hint":"充电 V2L"},
-  {"id":"charging_037","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米SU7家充桩安装需要多大容量的电表？","web_query_hint":"小米SU7 家用充电桩 电表 容量","local_query_hint":"家充 电表"},
-  {"id":"charging_038","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米SU7快充时电池温度会很高吗？有影响吗？","web_query_hint":"小米SU7 快充 电池温度 影响","local_query_hint":"快充 电池温度"},
-  {"id":"charging_039","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米SU7的充电枪拔不下来怎么办？","web_query_hint":"小米SU7 充电枪 拔不下来 应急","local_query_hint":"充电枪 故障"},
-  {"id":"charging_040","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米SU7的预约充电怎么设置？谷电时段怎么用？","web_query_hint":"小米SU7 预约充电 谷电 设置","local_query_hint":"预约充电 谷电"},
-  {"id":"charging_041","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米SU7在充电站扫码充不上电怎么办？","web_query_hint":"小米SU7 充电站 扫码 充不上 故障","local_query_hint":"充电站 扫码"},
-  {"id":"charging_042","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米SU7的电池充满后会自动断电吗？","web_query_hint":"小米SU7 充满 自动断电 满充","local_query_hint":"满充 断电"},
-  {"id":"charging_043","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米SU7的充电功率为什么有时达不到标称值？","web_query_hint":"小米SU7 充电功率 不达标 原因","local_query_hint":"充电功率"},
-  {"id":"charging_044","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米SU7能用家用插座应急慢充吗？","web_query_hint":"小米SU7 家用插座 应急 慢充 随车充","local_query_hint":"家用插座 慢充"},
-  {"id":"charging_045","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米SU7的充电口防水吗？下雨天能充吗？","web_query_hint":"小米SU7 充电口 防水 下雨 充电","local_query_hint":"充电口 防水"},
-  {"id":"charging_046","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米SU7的充电策略能设置为充到80%就停吗？","web_query_hint":"小米SU7 充电限制 80% 设置","local_query_hint":"充电限值"},
-  {"id":"charging_047","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米SU7直流快充和交流慢充接口是同一个吗？","web_query_hint":"小米SU7 直流 交流 充电接口 区别","local_query_hint":"充电接口"},
-  {"id":"charging_048","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米SU7在停车场找充电桩方便吗？车机有桩位导航吗？","web_query_hint":"小米SU7 停车场 充电桩 导航 找桩","local_query_hint":"找桩 导航"},
-  {"id":"charging_049","category":"charging_infra","category_zh":"充电网络与基础设施","question":"小米SU7长期不充电电池会饿坏吗？怎么维护？","web_query_hint":"小米SU7 长期不充电 电池 维护","local_query_hint":"电池 长期停放"},
-  {"id":"price_036","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7加装HUD抬头显示要多少钱？","web_query_hint":"小米SU7 HUD 加装 价格 选装","local_query_hint":"HUD 加装"},
-  {"id":"price_037","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7的电动尾门加装多少钱？","web_query_hint":"小米SU7 电动尾门 加装 价格","local_query_hint":"电动尾门 加装"},
-  {"id":"price_038","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7原厂行车记录仪和第三方哪个划算？","web_query_hint":"小米SU7 行车记录仪 原厂 第三方 价格","local_query_hint":"行车记录仪"},
-  {"id":"price_039","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7的官方脚垫和后备箱垫多少钱？","web_query_hint":"小米SU7 脚垫 后备箱垫 官方 价格","local_query_hint":"脚垫 配件"},
-  {"id":"price_040","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7玻璃贴膜4S店和外面差多少？","web_query_hint":"小米SU7 玻璃贴膜 4S店 外面 差价","local_query_hint":"贴膜 渠道"},
-  {"id":"price_041","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7底盘护板有必要装吗？多少钱？","web_query_hint":"小米SU7 底盘护板 必要 价格","local_query_hint":"底盘护板"},
-  {"id":"price_042","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7的儿童安全座椅接口是标配吗？","web_query_hint":"小米SU7 儿童座椅 ISOFIX 标配","local_query_hint":"儿童座椅 接口"},
-  {"id":"price_043","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7购车大礼包一般都送什么？值多少钱？","web_query_hint":"小米SU7 购车 大礼包 赠品","local_query_hint":"大礼包 赠品"},
-  {"id":"price_044","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7首付20%和30%月供差多少？","web_query_hint":"小米SU7 首付 20% 30% 月供 对比","local_query_hint":"首付 月供"},
-  {"id":"price_045","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7保值率三年后预计剩多少？","web_query_hint":"小米SU7 保值率 三年 残值 预测","local_query_hint":"保值率"},
-  {"id":"price_046","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7 Max版选装大尺寸轮毂加多少钱？","web_query_hint":"小米SU7 Max 轮毂 选装 价格","local_query_hint":"轮毂 选装"},
-  {"id":"price_047","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7提车有加价或捆绑销售的情况吗？","web_query_hint":"小米SU7 提车 加价 捆绑 销售","local_query_hint":"提车 加价"},
-  {"id":"price_048","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7购车能不能用数字人民币支付？","web_query_hint":"小米SU7 数字人民币 支付 购车","local_query_hint":"支付 数字人民币"},
-  {"id":"price_049","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7不同车身颜色有加价吗？哪些免费？","web_query_hint":"小米SU7 颜色 加价 免费 选装","local_query_hint":"颜色 选装"},
-  {"id":"price_050","category":"pricing","category_zh":"价格与购车优惠","question":"小米SU7的官方置换和外面二手车商哪个估价高？","web_query_hint":"小米SU7 官方置换 二手车商 估价 对比","local_query_hint":"置换 估价"},
-  {"id":"policy_031","category":"ev_policy","category_zh":"新能源政策与补贴","question":"小米SU7在限号城市周六日和节假日限行吗？","web_query_hint":"小米SU7 新能源 周末 节假日 限行","local_query_hint":"限行 周末"},
-  {"id":"policy_032","category":"ev_policy","category_zh":"新能源政策与补贴","question":"新能源车电池回收政策对小米SU7有什么要求？","web_query_hint":"新能源车 电池回收 政策 小米SU7","local_query_hint":"电池回收 政策"},
-  {"id":"policy_033","category":"ev_policy","category_zh":"新能源政策与补贴","question":"小米SU7上牌后多久能拿到绿牌？","web_query_hint":"小米SU7 上牌 绿牌 多久 流程","local_query_hint":"上牌 绿牌"},
-  {"id":"policy_034","category":"ev_policy","category_zh":"新能源政策与补贴","question":"小米SU7换车后绿牌能保留吗？怎么操作？","web_query_hint":"小米SU7 换车 绿牌 保留 流程","local_query_hint":"绿牌 保留"},
-  {"id":"policy_035","category":"ev_policy","category_zh":"新能源政策与补贴","question":"小米SU7的新能源补贴是直接抵车价还是购车后返还？","web_query_hint":"小米SU7 新能源补贴 抵扣 返还 方式","local_query_hint":"补贴 方式"},
-  {"id":"policy_036","category":"ev_policy","category_zh":"新能源政策与补贴","question":"买小米SU7外地户口需要居住证吗？","web_query_hint":"小米SU7 外地户口 居住证 上牌","local_query_hint":"居住证 上牌"},
-  {"id":"policy_037","category":"ev_policy","category_zh":"新能源政策与补贴","question":"小米SU7的新能源车船税减免要每年申请吗？","web_query_hint":"小米SU7 车船税 减免 申请 每年","local_query_hint":"车船税 减免"},
-  {"id":"policy_038","category":"ev_policy","category_zh":"新能源政策与补贴","question":"小米SU7的临时牌照能办几次？有效期多久？","web_query_hint":"小米SU7 临时牌照 次数 有效期","local_query_hint":"临牌"},
-  {"id":"policy_039","category":"ev_policy","category_zh":"新能源政策与补贴","question":"小米SU7上牌选号有什么技巧？能自编吗？","web_query_hint":"小米SU7 上牌 选号 自编 技巧","local_query_hint":"选号"},
-  {"id":"policy_040","category":"ev_policy","category_zh":"新能源政策与补贴","question":"小米SU7二手新能源车还能享受补贴吗？","web_query_hint":"小米SU7 二手 新能源 补贴 政策","local_query_hint":"二手 补贴"},
-  {"id":"policy_041","category":"ev_policy","category_zh":"新能源政策与补贴","question":"小米SU7在东北严寒地区有特殊的三包政策吗？","web_query_hint":"小米SU7 东北 严寒 三包 电池","local_query_hint":"严寒 三包"},
-  {"id":"policy_042","category":"ev_policy","category_zh":"新能源政策与补贴","question":"小米SU7的车辆环保清单在哪下载？上牌要用吗？","web_query_hint":"小米SU7 环保清单 下载 上牌","local_query_hint":"环保清单"},
-  {"id":"policy_043","category":"ev_policy","category_zh":"新能源政策与补贴","question":"小米SU7在港口城市有自贸区购车优惠吗？","web_query_hint":"小米SU7 自贸区 港口 购车 优惠","local_query_hint":"自贸区 优惠"},
-  {"id":"policy_044","category":"ev_policy","category_zh":"新能源政策与补贴","question":"小米SU7车牌邮寄一般要多久能收到？","web_query_hint":"小米SU7 车牌 邮寄 多久 选号","local_query_hint":"车牌 邮寄"},
-  {"id":"policy_045","category":"ev_policy","category_zh":"新能源政策与补贴","question":"小米SU7非营运改营运有什么政策影响？","web_query_hint":"小米SU7 非营运 营运 政策 变更","local_query_hint":"营运 政策"},
-  {"id":"policy_046","category":"ev_policy","category_zh":"新能源政策与补贴","question":"小米SU7的购置税完税证明怎么开？","web_query_hint":"小米SU7 购置税 完税证明 开具","local_query_hint":"购置税 完税"},
-  {"id":"policy_047","category":"ev_policy","category_zh":"新能源政策与补贴","question":"小米SU7车辆一致性证书有什么用？","web_query_hint":"小米SU7 车辆一致性证书 作用","local_query_hint":"一致性证书"},
-  {"id":"policy_048","category":"ev_policy","category_zh":"新能源政策与补贴","question":"买小米SU7能同时领国补地补和厂家优惠吗？","web_query_hint":"小米SU7 国补 地补 厂家优惠 叠加","local_query_hint":"补贴 叠加"},
-  {"id":"policy_049","category":"ev_policy","category_zh":"新能源政策与补贴","question":"小米SU7在县城和地级市上牌费用有区别吗？","web_query_hint":"小米SU7 县城 地级市 上牌 费用","local_query_hint":"上牌 费用"},
-  {"id":"insurance_030","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7的涉水险新能源车还需要买吗？","web_query_hint":"小米SU7 涉水险 新能源 必要","local_query_hint":"涉水险"},
-  {"id":"insurance_031","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7修理期间代步车费用险有吗？要买吗？","web_query_hint":"小米SU7 修理期间 代步车 险","local_query_hint":"代步车险"},
-  {"id":"insurance_032","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7的车上货物责任险要买吗？","web_query_hint":"小米SU7 车上货物 责任险 必要","local_query_hint":"货物责任险"},
-  {"id":"insurance_033","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7的指定专修厂险有必要加吗？","web_query_hint":"小米SU7 指定专修厂 险 必要","local_query_hint":"专修厂险"},
-  {"id":"insurance_034","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7出事故后拖车费保险给报销吗？","web_query_hint":"小米SU7 拖车费 保险 报销 救援","local_query_hint":"拖车费 救援"},
-  {"id":"insurance_035","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7车险第二年换保险公司能更便宜吗？","web_query_hint":"小米SU7 车险 换公司 续保 便宜","local_query_hint":"换保险 续保"},
-  {"id":"insurance_036","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7多次出险会被保险公司拒保吗？","web_query_hint":"小米SU7 多次出险 拒保 高风险","local_query_hint":"出险 拒保"},
-  {"id":"insurance_037","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7的全车盗抢险新能源车还需要吗？","web_query_hint":"小米SU7 全车盗抢险 新能源 必要","local_query_hint":"盗抢险"},
-  {"id":"insurance_038","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7的随车行李物品损失险要买吗？","web_query_hint":"小米SU7 随车行李 物品 损失险","local_query_hint":"行李物品险"},
-  {"id":"insurance_039","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7的法定节假日限额翻倍险有用吗？","web_query_hint":"小米SU7 法定节假日 限额翻倍 险","local_query_hint":"节假日翻倍险"},
-  {"id":"insurance_040","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7车险电子保单和纸质保单效力一样吗？","web_query_hint":"小米SU7 车险 电子保单 纸质 效力","local_query_hint":"电子保单"},
-  {"id":"insurance_041","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7保险理赔需要拍几张现场照片？","web_query_hint":"小米SU7 保险理赔 现场 照片 几张","local_query_hint":"理赔 照片"},
-  {"id":"insurance_042","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7小额理赔会影响次年保费吗？","web_query_hint":"小米SU7 小额理赔 次年 保费 影响","local_query_hint":"小额理赔 保费"},
-  {"id":"insurance_043","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7事故维修必须去官方4S店吗？","web_query_hint":"小米SU7 事故维修 官方 4S店 指定","local_query_hint":"事故维修 4S"},
-  {"id":"insurance_044","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7第三者责任险买100万还是200万合适？","web_query_hint":"小米SU7 三者险 100万 200万 保额","local_query_hint":"三者险 保额"},
-  {"id":"insurance_045","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7的医保外用药责任险买多少额度合适？","web_query_hint":"小米SU7 医保外用药 责任险 额度","local_query_hint":"医保外用药险"},
-  {"id":"insurance_046","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7的车险可以按月买吗？有短期险吗？","web_query_hint":"小米SU7 车险 按月 短期 临时","local_query_hint":"短期车险"},
-  {"id":"insurance_047","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7的发动机特别损失险新能源车用得上吗？","web_query_hint":"小米SU7 发动机特别损失险 新能源 涉水","local_query_hint":"发动机损失险"},
-  {"id":"insurance_048","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7的无过责补偿险是什么？有必要吗？","web_query_hint":"小米SU7 无过责补偿险 必要","local_query_hint":"无过责补偿险"},
-  {"id":"insurance_049","category":"insurance_finance","category_zh":"保险与金融服务","question":"小米SU7的精神损害抚慰金责任险要买吗？","web_query_hint":"小米SU7 精神损害 抚慰金 责任险","local_query_hint":"精神损害险"},
-  {"id":"maintenance_030","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7的轮毂剐蹭走保险还是自费划算？","web_query_hint":"小米SU7 轮毂剐蹭 保险 自费 划算","local_query_hint":"轮毂剐蹭"},
-  {"id":"maintenance_031","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7的前挡风玻璃被石子崩了能修复吗？","web_query_hint":"小米SU7 前挡风玻璃 石子 崩 修复","local_query_hint":"玻璃 牛眼"},
-  {"id":"maintenance_032","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7的内饰顶棚脏了怎么清洁？","web_query_hint":"小米SU7 内饰顶棚 清洁 方法","local_query_hint":"顶棚清洁"},
-  {"id":"maintenance_033","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7的真皮座椅保养用什么产品好？","web_query_hint":"小米SU7 真皮座椅 保养 皮革护理","local_query_hint":"真皮保养"},
-  {"id":"maintenance_034","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7的车漆打蜡和镀晶哪个更划算？","web_query_hint":"小米SU7 车漆 打蜡 镀晶 划算","local_query_hint":"打蜡 镀晶"},
-  {"id":"maintenance_035","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7的雨刮刮不干净是胶条问题吗？怎么换？","web_query_hint":"小米SU7 雨刮 刮不干净 胶条 更换","local_query_hint":"雨刮 胶条"},
-  {"id":"maintenance_036","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7的天窗轨道需要定期润滑保养吗？","web_query_hint":"小米SU7 天窗 轨道 润滑 保养","local_query_hint":"天窗 保养"},
-  {"id":"maintenance_037","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7的充电接口怎么清洁保养？","web_query_hint":"小米SU7 充电接口 清洁 保养","local_query_hint":"充电接口 清洁"},
-  {"id":"maintenance_038","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7的车门密封条老化了怎么办？","web_query_hint":"小米SU7 车门 密封条 老化 更换","local_query_hint":"密封条 老化"},
-  {"id":"maintenance_039","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7的真皮方向盘磨损了怎么修复？","web_query_hint":"小米SU7 真皮方向盘 磨损 修复","local_query_hint":"方向盘 磨损"},
-  {"id":"maintenance_040","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7的中控屏清洁用什么？会刮花吗？","web_query_hint":"小米SU7 中控屏 清洁 刮花 屏幕","local_query_hint":"中控屏 清洁"},
-  {"id":"maintenance_041","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7的脚垫哪种材质最好打理？","web_query_hint":"小米SU7 脚垫 材质 推荐 打理","local_query_hint":"脚垫 材质"},
-  {"id":"maintenance_042","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7后视镜外壳剐蹭换一个多少钱？","web_query_hint":"小米SU7 后视镜 外壳 剐蹭 更换 价格","local_query_hint":"后视镜 更换"},
-  {"id":"maintenance_043","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7有备胎吗？还是只有补胎液？","web_query_hint":"小米SU7 备胎 补胎液 随车工具","local_query_hint":"备胎 补胎液"},
-  {"id":"maintenance_044","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7随车带千斤顶和三角警示牌吗？","web_query_hint":"小米SU7 千斤顶 三角警示牌 随车","local_query_hint":"随车工具"},
-  {"id":"maintenance_045","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7需要随车配灭火器吗？官方送吗？","web_query_hint":"小米SU7 灭火器 随车 配备 官方","local_query_hint":"灭火器"},
-  {"id":"maintenance_046","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7的车身镀铬条发乌怎么处理？","web_query_hint":"小米SU7 镀铬条 发乌 氧化 清理","local_query_hint":"镀铬条 氧化"},
-  {"id":"maintenance_047","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7的空调管道多久清洗一次？多少钱？","web_query_hint":"小米SU7 空调管道 清洗 周期 价格","local_query_hint":"空调管道 清洗"},
-  {"id":"maintenance_048","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7的牌照架需要自己买吗？上牌送吗？","web_query_hint":"小米SU7 牌照架 购买 上牌 赠送","local_query_hint":"牌照架"},
-  {"id":"maintenance_049","category":"maintenance_cost","category_zh":"用车成本与保养","question":"小米SU7的刹车盘生锈正常吗？怎么处理？","web_query_hint":"小米SU7 刹车盘 生锈 处理 正常","local_query_hint":"刹车盘 生锈"}
+  {
+    "id": "ota_013",
+    "category": "ota_update",
+    "category_zh": "OTA软件更新",
+    "question": "小米SU7最近一次OTA升级包大概多大？升级过程要多久？",
+    "web_query_hint": "小米SU7 OTA升级包大小 升级时长",
+    "local_query_hint": "OTA升级 系统更新"
+  },
+  {
+    "id": "ota_014",
+    "category": "ota_update",
+    "category_zh": "OTA软件更新",
+    "question": "小米SU7的城市领航辅助CNOA最新开通了哪些城市？",
+    "web_query_hint": "小米SU7 城市NOA CNOA 开通城市 列表 2025",
+    "local_query_hint": "城市领航 NOA 辅助驾驶"
+  },
+  {
+    "id": "ota_015",
+    "category": "ota_update",
+    "category_zh": "OTA软件更新",
+    "question": "小米SU7 Ultra的赛道模式是哪个OTA版本上线的？",
+    "web_query_hint": "小米SU7 Ultra 赛道模式 OTA版本 上线",
+    "local_query_hint": "Ultra 驾驶模式 性能"
+  },
+  {
+    "id": "ota_016",
+    "category": "ota_update",
+    "category_zh": "OTA软件更新",
+    "question": "小米SU7支持无线CarPlay吗？官方说什么时候推送？",
+    "web_query_hint": "小米SU7 无线CarPlay 支持 推送 官方",
+    "local_query_hint": "CarPlay 手机互联 苹果"
+  },
+  {
+    "id": "ota_017",
+    "category": "ota_update",
+    "category_zh": "OTA软件更新",
+    "question": "小米SU7的车机系统最新版有没有修复卡顿问题？",
+    "web_query_hint": "小米SU7 车机 卡顿 卡死 OTA修复",
+    "local_query_hint": "车机 系统 流畅"
+  },
+  {
+    "id": "ota_018",
+    "category": "ota_update",
+    "category_zh": "OTA软件更新",
+    "question": "小米SU7的HUD抬头显示最近OTA优化了什么内容？",
+    "web_query_hint": "小米SU7 HUD 抬头显示 OTA 更新",
+    "local_query_hint": "HUD 抬头显示"
+  },
+  {
+    "id": "ota_019",
+    "category": "ota_update",
+    "category_zh": "OTA软件更新",
+    "question": "小米汽车OTA一般多久推送一次？有固定节奏吗？",
+    "web_query_hint": "小米汽车 OTA 推送频率 节奏 周期",
+    "local_query_hint": "OTA 系统更新"
+  },
+  {
+    "id": "ota_020",
+    "category": "ota_update",
+    "category_zh": "OTA软件更新",
+    "question": "小米SU7的小爱同学车机版最新支持哪些新功能？",
+    "web_query_hint": "小米SU7 小爱同学 车机 语音助手 新功能",
+    "local_query_hint": "小爱同学 语音助手"
+  },
+  {
+    "id": "ota_021",
+    "category": "ota_update",
+    "category_zh": "OTA软件更新",
+    "question": "小米SU7 OTA升级失败了怎么办？官方有回滚机制吗？",
+    "web_query_hint": "小米SU7 OTA升级失败 回滚 救砖 官方",
+    "local_query_hint": "OTA升级 系统更新"
+  },
+  {
+    "id": "ota_022",
+    "category": "ota_update",
+    "category_zh": "OTA软件更新",
+    "question": "小米SU7的哨兵模式在最新OTA里耗电量优化了吗？",
+    "web_query_hint": "小米SU7 哨兵模式 耗电 OTA优化",
+    "local_query_hint": "哨兵模式 录像"
+  },
+  {
+    "id": "ota_023",
+    "category": "ota_update",
+    "category_zh": "OTA软件更新",
+    "question": "小米SU7的中控屏界面在最新系统里改版了吗？",
+    "web_query_hint": "小米SU7 中控屏 界面 UI 改版 最新",
+    "local_query_hint": "中控屏 显示 界面"
+  },
+  {
+    "id": "ota_024",
+    "category": "ota_update",
+    "category_zh": "OTA软件更新",
+    "question": "小米SU7的自动泊车最新版支持机械车位和断头车位吗？",
+    "web_query_hint": "小米SU7 自动泊车 机械车位 断头车位 OTA",
+    "local_query_hint": "自动泊车 泊车"
+  },
+  {
+    "id": "ota_025",
+    "category": "ota_update",
+    "category_zh": "OTA软件更新",
+    "question": "老款小米SU7车主能收到和新款一样的OTA吗？",
+    "web_query_hint": "小米SU7 老车主 OTA 新款 同步",
+    "local_query_hint": "OTA 车型"
+  },
+  {
+    "id": "news_011",
+    "category": "official_news",
+    "category_zh": "小米汽车官方动态",
+    "question": "小米YU7什么时候正式上市？预售价多少？",
+    "web_query_hint": "小米YU7 上市时间 预售价 发布",
+    "local_query_hint": "YU7 新车型 SUV"
+  },
+  {
+    "id": "news_012",
+    "category": "official_news",
+    "category_zh": "小米汽车官方动态",
+    "question": "小米汽车2025年全年交付目标完成情况怎么样？",
+    "web_query_hint": "小米汽车 2025 交付目标 完成 销量",
+    "local_query_hint": "交付量 销量"
+  },
+  {
+    "id": "news_013",
+    "category": "official_news",
+    "category_zh": "小米汽车官方动态",
+    "question": "小米汽车第二工厂建在哪里？什么时候投产？",
+    "web_query_hint": "小米汽车 第二工厂 选址 投产",
+    "local_query_hint": "工厂 产能 制造"
+  },
+  {
+    "id": "news_014",
+    "category": "official_news",
+    "category_zh": "小米汽车官方动态",
+    "question": "小米SU7 Ultra在纽北赛道跑了多快？成绩如何？",
+    "web_query_hint": "小米SU7 Ultra 纽北赛道 成绩 圈速",
+    "local_query_hint": "Ultra 性能 赛道"
+  },
+  {
+    "id": "news_015",
+    "category": "official_news",
+    "category_zh": "小米汽车官方动态",
+    "question": "小米SU7上市至今累计交付量突破多少万辆了？",
+    "web_query_hint": "小米SU7 累计交付量 总销量 突破",
+    "local_query_hint": "交付量 销量"
+  },
+  {
+    "id": "news_016",
+    "category": "official_news",
+    "category_zh": "小米汽车官方动态",
+    "question": "小米汽车有没有参加今年的上海或广州车展？发布了什么？",
+    "web_query_hint": "小米汽车 车展 上海 广州 发布 2025",
+    "local_query_hint": "车展 发布"
+  },
+  {
+    "id": "news_017",
+    "category": "official_news",
+    "category_zh": "小米汽车官方动态",
+    "question": "小米汽车的电池供应商是哪家？用的什么电池技术？",
+    "web_query_hint": "小米汽车 电池供应商 宁德时代 比亚迪 技术",
+    "local_query_hint": "电池 动力电池"
+  },
+  {
+    "id": "news_018",
+    "category": "official_news",
+    "category_zh": "小米汽车官方动态",
+    "question": "雷军最近在微博上说了哪些关于小米汽车的新进展？",
+    "web_query_hint": "雷军 微博 小米汽车 进展 最新",
+    "local_query_hint": "雷军 官方动态"
+  },
+  {
+    "id": "news_019",
+    "category": "official_news",
+    "category_zh": "小米汽车官方动态",
+    "question": "小米汽车2026年有什么新车型或新规划？",
+    "web_query_hint": "小米汽车 2026 新车型 规划 路线",
+    "local_query_hint": "新车型 规划"
+  },
+  {
+    "id": "news_020",
+    "category": "official_news",
+    "category_zh": "小米汽车官方动态",
+    "question": "小米汽车app最近更新了什么功能？",
+    "web_query_hint": "小米汽车 app 更新 新功能 版本",
+    "local_query_hint": "小米汽车APP 手机"
+  },
+  {
+    "id": "news_021",
+    "category": "official_news",
+    "category_zh": "小米汽车官方动态",
+    "question": "小米SU7 Ultra大定和锁单数量是多少？",
+    "web_query_hint": "小米SU7 Ultra 大定 锁单 数量 订单",
+    "local_query_hint": "订单 大定"
+  },
+  {
+    "id": "news_022",
+    "category": "official_news",
+    "category_zh": "小米汽车官方动态",
+    "question": "小米汽车有没有推出官方认证二手车业务？",
+    "web_query_hint": "小米汽车 官方认证 二手车 业务",
+    "local_query_hint": "二手车 官方"
+  },
+  {
+    "id": "competitor_007",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7和智界S7相比，哪个更值得买？",
+    "web_query_hint": "小米SU7 智界S7 对比 哪个好",
+    "local_query_hint": "对比 竞品"
+  },
+  {
+    "id": "competitor_008",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7和极越07的智能座舱谁更好用？",
+    "web_query_hint": "小米SU7 极越07 智能座舱 对比",
+    "local_query_hint": "智能座舱 车机 对比"
+  },
+  {
+    "id": "competitor_009",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7和阿维塔12相比续航谁更扎实？",
+    "web_query_hint": "小米SU7 阿维塔12 续航 对比 实测",
+    "local_query_hint": "续航 对比"
+  },
+  {
+    "id": "competitor_010",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7和特斯拉Model 3焕新版，自动驾驶谁更强？",
+    "web_query_hint": "小米SU7 Model3 焕新 自动驾驶 FSD NOA 对比",
+    "local_query_hint": "自动驾驶 辅助 对比"
+  },
+  {
+    "id": "competitor_011",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7和蔚来ET5T旅行版空间谁更大？",
+    "web_query_hint": "小米SU7 蔚来ET5T 旅行版 空间 对比",
+    "local_query_hint": "空间 后备箱 对比"
+  },
+  {
+    "id": "competitor_012",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7和极氪007零百加速谁更快？",
+    "web_query_hint": "小米SU7 极氪007 加速 零百 对比",
+    "local_query_hint": "加速 性能 对比"
+  },
+  {
+    "id": "competitor_013",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7和小鹏P7+的智驾系统谁更领先？",
+    "web_query_hint": "小米SU7 小鹏P7 智驾 对比 领先",
+    "local_query_hint": "智驾 辅助 对比"
+  },
+  {
+    "id": "competitor_014",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7和比亚迪海豹哪个性价比更高？",
+    "web_query_hint": "小米SU7 比亚迪海豹 性价比 对比",
+    "local_query_hint": "性价比 对比"
+  },
+  {
+    "id": "competitor_015",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7和理想L6该选哪个？家用哪个合适？",
+    "web_query_hint": "小米SU7 理想L6 家用 对比 选择",
+    "local_query_hint": "家用 对比"
+  },
+  {
+    "id": "competitor_016",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7 Ultra和保时捷Taycan比性能差距大吗？",
+    "web_query_hint": "小米SU7 Ultra 保时捷Taycan 性能 对比",
+    "local_query_hint": "Ultra 性能 对比"
+  },
+  {
+    "id": "competitor_017",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米YU7和特斯拉Model Y谁更值得等？",
+    "web_query_hint": "小米YU7 特斯拉ModelY 对比 值得",
+    "local_query_hint": "YU7 对比 SUV"
+  },
+  {
+    "id": "competitor_018",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7和智己L6的底盘调校谁更好？",
+    "web_query_hint": "小米SU7 智己L6 底盘 调校 对比",
+    "local_query_hint": "底盘 悬架 对比"
+  },
+  {
+    "id": "competitor_019",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7和问界M5的智能驾驶谁体验更好？",
+    "web_query_hint": "小米SU7 问界M5 智能驾驶 体验 对比",
+    "local_query_hint": "智能驾驶 对比"
+  },
+  {
+    "id": "competitor_020",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7和深蓝SL03谁更适合作为家庭第一辆车？",
+    "web_query_hint": "小米SU7 深蓝SL03 家用 对比 选择",
+    "local_query_hint": "家用 对比"
+  },
+  {
+    "id": "competitor_021",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7和零跑C01的故障率口碑谁更好？",
+    "web_query_hint": "小米SU7 零跑C01 故障率 口碑 质量",
+    "local_query_hint": "故障率 质量 对比"
+  },
+  {
+    "id": "competitor_022",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7和岚图追光的做工用料谁更厚道？",
+    "web_query_hint": "小米SU7 岚图追光 做工 用料 对比",
+    "local_query_hint": "做工 用料 对比"
+  },
+  {
+    "id": "recall_008",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7有没有因为软件bug发起过召回？",
+    "web_query_hint": "小米SU7 软件bug 召回 缺陷",
+    "local_query_hint": "召回 软件 缺陷"
+  },
+  {
+    "id": "recall_009",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7的电池有没有过热或自燃的报告？",
+    "web_query_hint": "小米SU7 电池 过热 自燃 燃烧 事故",
+    "local_query_hint": "电池安全 热失控"
+  },
+  {
+    "id": "recall_010",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7的制动系统有没有车主集体投诉或维权？",
+    "web_query_hint": "小米SU7 制动 刹车 投诉 维权 集体",
+    "local_query_hint": "制动 刹车 投诉"
+  },
+  {
+    "id": "recall_011",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7有没有因辅助驾驶事故被监管调查？",
+    "web_query_hint": "小米SU7 辅助驾驶 事故 调查 监管",
+    "local_query_hint": "辅助驾驶 事故 调查"
+  },
+  {
+    "id": "recall_012",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7的充电接口有没有烧蚀或故障反馈？",
+    "web_query_hint": "小米SU7 充电接口 烧蚀 故障 反馈",
+    "local_query_hint": "充电接口 故障"
+  },
+  {
+    "id": "recall_013",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米汽车官方有没有发过SU7的质量公告或改进说明？",
+    "web_query_hint": "小米汽车 SU7 质量公告 改进 官方说明",
+    "local_query_hint": "质量公告 改进"
+  },
+  {
+    "id": "recall_014",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7的车机死机黑屏问题官方修复了吗？",
+    "web_query_hint": "小米SU7 车机 死机 黑屏 官方修复",
+    "local_query_hint": "车机 死机 黑屏"
+  },
+  {
+    "id": "recall_015",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7的空调系统有没有批量故障的车主反馈？",
+    "web_query_hint": "小米SU7 空调 故障 批量 车主反馈",
+    "local_query_hint": "空调 故障"
+  },
+  {
+    "id": "charging_007",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米SU7最大支持多少千瓦的充电功率？多久能充满？",
+    "web_query_hint": "小米SU7 最大充电功率 千瓦 充满时间",
+    "local_query_hint": "充电功率 快充"
+  },
+  {
+    "id": "charging_008",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米超充站充电一分钟大概能增加多少公里续航？",
+    "web_query_hint": "小米超充站 充电速度 分钟 公里",
+    "local_query_hint": "超充 充电速度"
+  },
+  {
+    "id": "charging_009",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米SU7是基于800V高压平台吗？充电有多快？",
+    "web_query_hint": "小米SU7 800V 高压平台 超充",
+    "local_query_hint": "高压平台 充电"
+  },
+  {
+    "id": "charging_010",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米SU7家充桩安装要多少钱？怎么申请？",
+    "web_query_hint": "小米SU7 家用充电桩 安装 费用 申请",
+    "local_query_hint": "家用充电桩 安装"
+  },
+  {
+    "id": "charging_011",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米SU7的V2L外放电功能功率多大？能带动哪些电器？",
+    "web_query_hint": "小米SU7 V2L 外放电 功率 电器 露营",
+    "local_query_hint": "外放电 V2L"
+  },
+  {
+    "id": "charging_012",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米SU7用慢充充满大概需要多久？",
+    "web_query_hint": "小米SU7 慢充 充满 时间 交流",
+    "local_query_hint": "慢充 交流充电"
+  },
+  {
+    "id": "charging_013",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米SU7的充电接口采用什么标准？和国网兼容吗？",
+    "web_query_hint": "小米SU7 充电接口 标准 国标 GB/T",
+    "local_query_hint": "充电接口 标准"
+  },
+  {
+    "id": "charging_014",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米汽车自建超充站相比第三方有什么优势？",
+    "web_query_hint": "小米超充站 自建 优势 第三方 对比",
+    "local_query_hint": "超充 充电网络"
+  },
+  {
+    "id": "policy_007",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "小米SU7在限牌城市能直接上绿牌吗？需要摇号吗？",
+    "web_query_hint": "小米SU7 绿牌 限牌城市 摇号 牌照",
+    "local_query_hint": "绿牌 牌照 限牌"
+  },
+  {
+    "id": "policy_008",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "报废旧车换小米SU7能拿多少补贴？怎么申请？",
+    "web_query_hint": "报废 旧车 小米SU7 补贴 以旧换新",
+    "local_query_hint": "报废 补贴 以旧换新"
+  },
+  {
+    "id": "policy_009",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "新能源汽车购置税减免政策2026年还有吗？",
+    "web_query_hint": "新能源汽车 购置税 减免 2026 政策",
+    "local_query_hint": "购置税 减免 政策"
+  },
+  {
+    "id": "policy_010",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "小米SU7在杭州、深圳、成都上牌分别有什么政策？",
+    "web_query_hint": "杭州 深圳 成都 小米SU7 上牌 政策",
+    "local_query_hint": "上牌 地方政策"
+  },
+  {
+    "id": "policy_011",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "企业以公司名义买小米SU7能抵税吗？怎么操作？",
+    "web_query_hint": "公司 企业 购买 小米SU7 抵税 新能源",
+    "local_query_hint": "企业购车 抵税"
+  },
+  {
+    "id": "policy_012",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "小米SU7在海南有没有特殊的新能源购车优惠？",
+    "web_query_hint": "海南 小米SU7 新能源 优惠 政策",
+    "local_query_hint": "地方优惠 海南"
+  },
+  {
+    "id": "price_008",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7标准版、Pro版、Max版目前官方指导价分别是多少？",
+    "web_query_hint": "小米SU7 标准版 Pro Max 官方指导价",
+    "local_query_hint": "售价 配置版本"
+  },
+  {
+    "id": "price_009",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7创始版和普通版有什么区别？现在还买得到吗？",
+    "web_query_hint": "小米SU7 创始版 普通版 区别 购买",
+    "local_query_hint": "创始版 配置"
+  },
+  {
+    "id": "price_010",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7二手车现在值多少钱？保值率怎么样？",
+    "web_query_hint": "小米SU7 二手车 价格 保值率 残值",
+    "local_query_hint": "二手车 保值率"
+  },
+  {
+    "id": "price_011",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7选装特殊颜色或轮毂需要加多少钱？",
+    "web_query_hint": "小米SU7 选装 颜色 轮毂 加钱 价格",
+    "local_query_hint": "选装 颜色 轮毂"
+  },
+  {
+    "id": "price_012",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7的订金是多少钱？退订方不方便？",
+    "web_query_hint": "小米SU7 订金 退订 退款 流程",
+    "local_query_hint": "订金 退订"
+  },
+  {
+    "id": "price_013",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7金融分期首付最低多少？月供大概多少？",
+    "web_query_hint": "小米SU7 金融 分期 首付 月供 利率",
+    "local_query_hint": "金融 分期 首付"
+  },
+  {
+    "id": "price_014",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7现在有没有现车？哪个城市提车最快？",
+    "web_query_hint": "小米SU7 现车 提车 城市 等待",
+    "local_query_hint": "现车 提车"
+  },
+  {
+    "id": "price_015",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7的官方置换旧车估价怎么查？划算吗？",
+    "web_query_hint": "小米SU7 官方置换 估价 旧车 评估",
+    "local_query_hint": "置换 估价"
+  },
+  {
+    "id": "price_016",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7 Ultra的订金和预计交付周期是多久？",
+    "web_query_hint": "小米SU7 Ultra 订金 交付周期 等待",
+    "local_query_hint": "Ultra 订金 交付"
+  },
+  {
+    "id": "insurance_006",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7第一年全险大概多少钱？各大保险公司报价对比",
+    "web_query_hint": "小米SU7 第一年 全险 价格 保险公司 报价",
+    "local_query_hint": "保险 费用 报价"
+  },
+  {
+    "id": "insurance_007",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7的电池包保险赔不赔？需要单独买吗？",
+    "web_query_hint": "小米SU7 电池 保险 赔付 单独购买",
+    "local_query_hint": "电池 保险"
+  },
+  {
+    "id": "insurance_008",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7出险一次后第二年保费大概涨多少？",
+    "web_query_hint": "小米SU7 出险 第二年 保费 涨幅",
+    "local_query_hint": "出险 保费"
+  },
+  {
+    "id": "insurance_009",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7的三电系统终身质保具体有什么条件？",
+    "web_query_hint": "小米SU7 三电系统 终身质保 条件 政策",
+    "local_query_hint": "三电 质保"
+  },
+  {
+    "id": "insurance_010",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7的延保服务值得买吗？大概多少钱？",
+    "web_query_hint": "小米SU7 延保 值得 价格 延长保修",
+    "local_query_hint": "延保 延长质保"
+  },
+  {
+    "id": "insurance_011",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7前挡风玻璃单独破碎险有必要买吗？换一块多少钱？",
+    "web_query_hint": "小米SU7 前挡风玻璃 破碎险 必要 换价格",
+    "local_query_hint": "玻璃险 前挡"
+  },
+  {
+    "id": "insurance_012",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7贷款买车哪个银行利率最低？",
+    "web_query_hint": "小米SU7 贷款 银行 利率 最低",
+    "local_query_hint": "贷款 利率 金融"
+  },
+  {
+    "id": "maintenance_005",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7一年保险加电费加保养总共大概要花多少钱？",
+    "web_query_hint": "小米SU7 年用车成本 保险 电费 保养 总计",
+    "local_query_hint": "用车成本 年度"
+  },
+  {
+    "id": "maintenance_006",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7的电池衰减到什么程度需要更换？换电池多少钱？",
+    "web_query_hint": "小米SU7 电池衰减 更换 费用 换电池",
+    "local_query_hint": "电池 衰减 更换"
+  },
+  {
+    "id": "maintenance_007",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7的小保养和大保养分别做哪些项目？各多少钱？",
+    "web_query_hint": "小米SU7 小保养 大保养 项目 费用",
+    "local_query_hint": "保养 项目 费用"
+  },
+  {
+    "id": "maintenance_008",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7的空调滤芯自己能换吗？原厂多少钱？",
+    "web_query_hint": "小米SU7 空调滤芯 自己换 原厂 价格",
+    "local_query_hint": "空调滤芯 保养"
+  },
+  {
+    "id": "maintenance_009",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7原厂雨刮片多少钱？多久需要换一次？",
+    "web_query_hint": "小米SU7 雨刮片 原厂 价格 更换周期",
+    "local_query_hint": "雨刮 保养"
+  },
+  {
+    "id": "maintenance_010",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7轮毂剐蹭修复大概多少钱？",
+    "web_query_hint": "小米SU7 轮毂 剐蹭 修复 费用",
+    "local_query_hint": "轮毂 修复"
+  },
+  {
+    "id": "maintenance_011",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7贴隐形车衣大概多少钱？有必要吗？",
+    "web_query_hint": "小米SU7 隐形车衣 贴膜 价格 必要",
+    "local_query_hint": "车衣 贴膜"
+  },
+  {
+    "id": "maintenance_012",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7家用充电桩的电费怎么算？谷电充电划算吗？",
+    "web_query_hint": "小米SU7 家用充电桩 电费 谷电 阶梯",
+    "local_query_hint": "家用充电 电费"
+  },
+  {
+    "id": "user_feedback_007",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7车主普遍最满意的几个点是什么？",
+    "web_query_hint": "小米SU7 车主 满意 优点 评价",
+    "local_query_hint": "车主反馈 优点"
+  },
+  {
+    "id": "user_feedback_008",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7的真实百公里电耗是多少？市区和高速差别大吗？",
+    "web_query_hint": "小米SU7 真实 百公里电耗 市区 高速 实测",
+    "local_query_hint": "电耗 能耗"
+  },
+  {
+    "id": "user_feedback_009",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7的车机系统流畅度怎么样？用久了会卡吗？",
+    "web_query_hint": "小米SU7 车机 流畅 卡顿 真实体验",
+    "local_query_hint": "车机 流畅"
+  },
+  {
+    "id": "user_feedback_010",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7的高速领航辅助可靠吗？经常需要接管吗？",
+    "web_query_hint": "小米SU7 高速领航 NOA 接管 可靠 实测",
+    "local_query_hint": "高速领航 辅助驾驶"
+  },
+  {
+    "id": "user_feedback_011",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7的隔音和NVH表现怎么样？高速吵吗？",
+    "web_query_hint": "小米SU7 隔音 NVH 风噪 高速 体验",
+    "local_query_hint": "隔音 噪音 NVH"
+  },
+  {
+    "id": "user_feedback_012",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7的座椅长时间开长途累不累？舒服吗？",
+    "web_query_hint": "小米SU7 座椅 长途 舒服 腰部",
+    "local_query_hint": "座椅 舒适"
+  },
+  {
+    "id": "user_feedback_013",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7的后备箱和前备箱空间实际够用吗？",
+    "web_query_hint": "小米SU7 后备箱 前备箱 空间 实用",
+    "local_query_hint": "储物空间 后备箱"
+  },
+  {
+    "id": "user_feedback_014",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7的语音助手小爱同学识别准确吗？方言能听懂吗？",
+    "web_query_hint": "小米SU7 小爱同学 语音识别 准确 方言",
+    "local_query_hint": "小爱同学 语音"
+  },
+  {
+    "id": "user_feedback_015",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7的自动泊车实际成功率怎么样？好用吗？",
+    "web_query_hint": "小米SU7 自动泊车 成功率 好用 实测",
+    "local_query_hint": "自动泊车"
+  },
+  {
+    "id": "user_feedback_016",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7的HUD抬头显示阳光下清晰吗？",
+    "web_query_hint": "小米SU7 HUD 抬头显示 阳光 清晰 体验",
+    "local_query_hint": "HUD 抬头显示"
+  },
+  {
+    "id": "user_feedback_017",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7的蓝牙手机钥匙稳定吗？有没有失灵打不开门的情况？",
+    "web_query_hint": "小米SU7 蓝牙钥匙 手机钥匙 失灵 打不开门",
+    "local_query_hint": "蓝牙钥匙 手机钥匙"
+  },
+  {
+    "id": "user_feedback_018",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7车主一般在哪些社区论坛交流？活跃吗？",
+    "web_query_hint": "小米SU7 车主 社区 论坛 贴吧",
+    "local_query_hint": "车主社区 论坛"
+  },
+  {
+    "id": "spec_001",
+    "category": "official_news",
+    "category_zh": "小米汽车官方动态",
+    "question": "小米SU7 Ultra的最高时速和零百加速分别是多少？",
+    "web_query_hint": "小米SU7 Ultra 最高时速 零百加速 参数",
+    "local_query_hint": "Ultra 性能 参数"
+  },
+  {
+    "id": "spec_002",
+    "category": "official_news",
+    "category_zh": "小米汽车官方动态",
+    "question": "小米SU7 Max版的CLTC续航和电池容量是多少？",
+    "web_query_hint": "小米SU7 Max CLTC续航 电池容量 kWh",
+    "local_query_hint": "Max 续航 电池"
+  },
+  {
+    "id": "spec_003",
+    "category": "official_news",
+    "category_zh": "小米汽车官方动态",
+    "question": "小米SU7用的电机是自研的吗？最大功率多少？",
+    "web_query_hint": "小米SU7 电机 自研 功率 V6s 超级电机",
+    "local_query_hint": "电机 驱动"
+  },
+  {
+    "id": "media_001",
+    "category": "official_news",
+    "category_zh": "小米汽车官方动态",
+    "question": "小米SU7在懂车帝或汽车之家的实测续航排名怎么样？",
+    "web_query_hint": "小米SU7 懂车帝 汽车之家 实测续航 排名",
+    "local_query_hint": "实测续航 评测"
+  },
+  {
+    "id": "media_002",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7在中保研的碰撞测试成绩如何？各项目多少分？",
+    "web_query_hint": "小米SU7 中保研 碰撞测试 成绩 评分",
+    "local_query_hint": "碰撞测试 安全"
+  },
+  {
+    "id": "media_003",
+    "category": "official_news",
+    "category_zh": "小米汽车官方动态",
+    "question": "媒体对小米SU7 Ultra的赛道表现评价如何？",
+    "web_query_hint": "小米SU7 Ultra 赛道 媒体评测 表现",
+    "local_query_hint": "Ultra 评测 赛道"
+  },
+  {
+    "id": "ota_026",
+    "category": "ota_update",
+    "category_zh": "OTA软件更新",
+    "question": "小米SU7的无线投屏功能什么时候OTA支持？",
+    "web_query_hint": "小米SU7 无线投屏 OTA 支持",
+    "local_query_hint": "投屏 手机互联"
+  },
+  {
+    "id": "ota_027",
+    "category": "ota_update",
+    "category_zh": "OTA软件更新",
+    "question": "小米SU7的仪表盘主题最新OTA能自定义了吗？",
+    "web_query_hint": "小米SU7 仪表盘 主题 自定义 OTA",
+    "local_query_hint": "仪表盘 显示"
+  },
+  {
+    "id": "ota_028",
+    "category": "ota_update",
+    "category_zh": "OTA软件更新",
+    "question": "小米SU7的遥控召唤功能上线了吗？是哪个版本？",
+    "web_query_hint": "小米SU7 遥控召唤 智能召唤 OTA 版本",
+    "local_query_hint": "召唤 泊车"
+  },
+  {
+    "id": "ota_029",
+    "category": "ota_update",
+    "category_zh": "OTA软件更新",
+    "question": "小米SU7的车载KTV功能是哪个OTA加的？",
+    "web_query_hint": "小米SU7 车载KTV 唱歌 OTA",
+    "local_query_hint": "娱乐 KTV"
+  },
+  {
+    "id": "ota_030",
+    "category": "ota_update",
+    "category_zh": "OTA软件更新",
+    "question": "小米SU7的行车记录仪画质最新固件提升了吗？",
+    "web_query_hint": "小米SU7 行车记录仪 画质 固件 提升",
+    "local_query_hint": "行车记录仪 录像"
+  },
+  {
+    "id": "ota_031",
+    "category": "ota_update",
+    "category_zh": "OTA软件更新",
+    "question": "小米SU7的手机无线充电功率OTA后有提升吗？",
+    "web_query_hint": "小米SU7 手机无线充电 功率 OTA",
+    "local_query_hint": "无线充电 手机"
+  },
+  {
+    "id": "ota_032",
+    "category": "ota_update",
+    "category_zh": "OTA软件更新",
+    "question": "小米SU7的AEB自动紧急制动灵敏度最新版调整了吗？",
+    "web_query_hint": "小米SU7 AEB 自动紧急制动 灵敏度 OTA",
+    "local_query_hint": "AEB 紧急制动"
+  },
+  {
+    "id": "ota_033",
+    "category": "ota_update",
+    "category_zh": "OTA软件更新",
+    "question": "小米SU7的露营模式是哪个OTA版本加入的？",
+    "web_query_hint": "小米SU7 露营模式 OTA 版本",
+    "local_query_hint": "露营 用电"
+  },
+  {
+    "id": "ota_034",
+    "category": "ota_update",
+    "category_zh": "OTA软件更新",
+    "question": "小米SU7的能量回收适中挡位是哪个OTA加的？",
+    "web_query_hint": "小米SU7 能量回收 适中 挡位 OTA",
+    "local_query_hint": "能量回收 制动"
+  },
+  {
+    "id": "ota_035",
+    "category": "ota_update",
+    "category_zh": "OTA软件更新",
+    "question": "小米SU7的智能远光灯最新版反应速度改善了吗？",
+    "web_query_hint": "小米SU7 智能远光灯 IHC OTA 反应",
+    "local_query_hint": "远光灯 辅助"
+  },
+  {
+    "id": "ota_036",
+    "category": "ota_update",
+    "category_zh": "OTA软件更新",
+    "question": "小米SU7的车道偏离预警最新OTA误报减少了吗？",
+    "web_query_hint": "小米SU7 车道偏离预警 LDW 误报 OTA",
+    "local_query_hint": "车道偏离 辅助"
+  },
+  {
+    "id": "ota_037",
+    "category": "ota_update",
+    "category_zh": "OTA软件更新",
+    "question": "小米SU7手机APP远程控制最新加了哪些功能？",
+    "web_query_hint": "小米SU7 手机APP 远程控制 新功能",
+    "local_query_hint": "手机APP 远程"
+  },
+  {
+    "id": "ota_038",
+    "category": "ota_update",
+    "category_zh": "OTA软件更新",
+    "question": "小米SU7的氛围灯最新OTA支持音乐联动了吗？",
+    "web_query_hint": "小米SU7 氛围灯 音乐联动 OTA",
+    "local_query_hint": "氛围灯 灯光"
+  },
+  {
+    "id": "ota_039",
+    "category": "ota_update",
+    "category_zh": "OTA软件更新",
+    "question": "小米SU7的座椅记忆OTA后支持几个账号了？",
+    "web_query_hint": "小米SU7 座椅记忆 账号 OTA",
+    "local_query_hint": "座椅记忆"
+  },
+  {
+    "id": "ota_040",
+    "category": "ota_update",
+    "category_zh": "OTA软件更新",
+    "question": "小米SU7的后视镜自动防眩目最新版改善了吗？",
+    "web_query_hint": "小米SU7 后视镜 防眩目 OTA",
+    "local_query_hint": "后视镜 防眩目"
+  },
+  {
+    "id": "ota_041",
+    "category": "ota_update",
+    "category_zh": "OTA软件更新",
+    "question": "小米SU7的车机地图最新版更新了什么内容？",
+    "web_query_hint": "小米SU7 车机地图 高德 更新",
+    "local_query_hint": "导航 地图"
+  },
+  {
+    "id": "ota_042",
+    "category": "ota_update",
+    "category_zh": "OTA软件更新",
+    "question": "小米SU7的方向盘加热OTA后能分区调节了吗？",
+    "web_query_hint": "小米SU7 方向盘加热 分区 OTA",
+    "local_query_hint": "方向盘加热"
+  },
+  {
+    "id": "ota_043",
+    "category": "ota_update",
+    "category_zh": "OTA软件更新",
+    "question": "小米SU7的儿童锁最新OTA能在中控屏控制了吗？",
+    "web_query_hint": "小米SU7 儿童锁 中控屏 OTA",
+    "local_query_hint": "儿童锁 车门"
+  },
+  {
+    "id": "ota_044",
+    "category": "ota_update",
+    "category_zh": "OTA软件更新",
+    "question": "小米SU7的迎宾灯效最新OTA增加了几种？",
+    "web_query_hint": "小米SU7 迎宾灯效 灯语 OTA",
+    "local_query_hint": "迎宾灯 灯效"
+  },
+  {
+    "id": "ota_045",
+    "category": "ota_update",
+    "category_zh": "OTA软件更新",
+    "question": "小米SU7的雨量感应灵敏度最新OTA能调了吗？",
+    "web_query_hint": "小米SU7 雨量感应 灵敏度 OTA",
+    "local_query_hint": "雨刮 雨量感应"
+  },
+  {
+    "id": "ota_046",
+    "category": "ota_update",
+    "category_zh": "OTA软件更新",
+    "question": "小米SU7的窄道辅助最新OTA推送了吗？",
+    "web_query_hint": "小米SU7 窄道辅助 OTA 推送",
+    "local_query_hint": "窄道辅助 雷达"
+  },
+  {
+    "id": "ota_047",
+    "category": "ota_update",
+    "category_zh": "OTA软件更新",
+    "question": "小米SU7的后排娱乐屏最新OTA支持哪些应用？",
+    "web_query_hint": "小米SU7 后排娱乐屏 应用 OTA",
+    "local_query_hint": "后排屏 娱乐"
+  },
+  {
+    "id": "ota_048",
+    "category": "ota_update",
+    "category_zh": "OTA软件更新",
+    "question": "小米SU7的老板键功能OTA会加吗？官方有计划吗？",
+    "web_query_hint": "小米SU7 老板键 OTA 计划",
+    "local_query_hint": "座椅 按钮"
+  },
+  {
+    "id": "news_023",
+    "category": "official_news",
+    "category_zh": "小米汽车官方动态",
+    "question": "小米汽车今年营收和汽车业务利润情况如何？",
+    "web_query_hint": "小米汽车 营收 利润 财报 2025",
+    "local_query_hint": "营收 财报"
+  },
+  {
+    "id": "news_024",
+    "category": "official_news",
+    "category_zh": "小米汽车官方动态",
+    "question": "小米SU7在30万级轿车市场占有率是多少？",
+    "web_query_hint": "小米SU7 30万 轿车 市场占有率 销量排名",
+    "local_query_hint": "市场份额 销量"
+  },
+  {
+    "id": "news_025",
+    "category": "official_news",
+    "category_zh": "小米汽车官方动态",
+    "question": "小米汽车有没有计划进入欧洲或东南亚市场？",
+    "web_query_hint": "小米汽车 海外 欧洲 东南亚 出口",
+    "local_query_hint": "海外 出口"
+  },
+  {
+    "id": "news_026",
+    "category": "official_news",
+    "category_zh": "小米汽车官方动态",
+    "question": "雷军说小米汽车要进入全球前五是哪一年？",
+    "web_query_hint": "雷军 小米汽车 全球前五 目标 时间",
+    "local_query_hint": "目标 全球"
+  },
+  {
+    "id": "news_027",
+    "category": "official_news",
+    "category_zh": "小米汽车官方动态",
+    "question": "小米汽车有没有自建电池工厂的计划？",
+    "web_query_hint": "小米汽车 电池工厂 自建 计划",
+    "local_query_hint": "电池 制造"
+  },
+  {
+    "id": "news_028",
+    "category": "official_news",
+    "category_zh": "小米汽车官方动态",
+    "question": "小米SU7订单的退订率高吗？官方公布过吗？",
+    "web_query_hint": "小米SU7 退订率 订单 官方",
+    "local_query_hint": "订单 退订"
+  },
+  {
+    "id": "news_029",
+    "category": "official_news",
+    "category_zh": "小米汽车官方动态",
+    "question": "小米汽车和宁德时代的合作具体是什么内容？",
+    "web_query_hint": "小米汽车 宁德时代 合作 电池",
+    "local_query_hint": "合作 电池"
+  },
+  {
+    "id": "news_030",
+    "category": "official_news",
+    "category_zh": "小米汽车官方动态",
+    "question": "小米造车后公司市值涨了多少？",
+    "web_query_hint": "小米 市值 造车 股价",
+    "local_query_hint": "市值 股价"
+  },
+  {
+    "id": "news_031",
+    "category": "official_news",
+    "category_zh": "小米汽车官方动态",
+    "question": "小米SU7有没有被列入政府采购或公务用车？",
+    "web_query_hint": "小米SU7 政府采购 公务用车",
+    "local_query_hint": "政府采购"
+  },
+  {
+    "id": "news_032",
+    "category": "official_news",
+    "category_zh": "小米汽车官方动态",
+    "question": "小米汽车的客服热线和服务口碑怎么样？",
+    "web_query_hint": "小米汽车 客服热线 服务 口碑 评价",
+    "local_query_hint": "客服 售后"
+  },
+  {
+    "id": "news_033",
+    "category": "official_news",
+    "category_zh": "小米汽车官方动态",
+    "question": "小米汽车有没有开放加盟经销商或代理？",
+    "web_query_hint": "小米汽车 加盟 经销商 代理 渠道",
+    "local_query_hint": "经销商 渠道"
+  },
+  {
+    "id": "news_034",
+    "category": "official_news",
+    "category_zh": "小米汽车官方动态",
+    "question": "小米SU7的产能瓶颈解决了吗？现在月产多少？",
+    "web_query_hint": "小米SU7 产能 月产 瓶颈 2025",
+    "local_query_hint": "产能 工厂"
+  },
+  {
+    "id": "news_035",
+    "category": "official_news",
+    "category_zh": "小米汽车官方动态",
+    "question": "小米汽车有没有发布过概念车？",
+    "web_query_hint": "小米汽车 概念车 发布",
+    "local_query_hint": "概念车"
+  },
+  {
+    "id": "news_036",
+    "category": "official_news",
+    "category_zh": "小米汽车官方动态",
+    "question": "小米SU7 Ultra是不是纽北最速四门量产车？",
+    "web_query_hint": "小米SU7 Ultra 纽北 最速 量产 圈速纪录",
+    "local_query_hint": "Ultra 纽北 纪录"
+  },
+  {
+    "id": "news_037",
+    "category": "official_news",
+    "category_zh": "小米汽车官方动态",
+    "question": "小米汽车走换电还是超充路线？官方怎么说？",
+    "web_query_hint": "小米汽车 换电 超充 路线 官方",
+    "local_query_hint": "换电 超充"
+  },
+  {
+    "id": "news_038",
+    "category": "official_news",
+    "category_zh": "小米汽车官方动态",
+    "question": "小米汽车有没有自研芯片用在车机上？",
+    "web_query_hint": "小米汽车 自研芯片 玄铁 车机",
+    "local_query_hint": "芯片 车机"
+  },
+  {
+    "id": "news_039",
+    "category": "official_news",
+    "category_zh": "小米汽车官方动态",
+    "question": "小米SU7的续航达成率媒体实测是多少？",
+    "web_query_hint": "小米SU7 续航达成率 媒体实测",
+    "local_query_hint": "续航 实测"
+  },
+  {
+    "id": "news_040",
+    "category": "official_news",
+    "category_zh": "小米汽车官方动态",
+    "question": "小米汽车服务网点2025年覆盖到多少个城市？",
+    "web_query_hint": "小米汽车 服务网点 城市 覆盖 2025",
+    "local_query_hint": "服务网点 售后"
+  },
+  {
+    "id": "news_041",
+    "category": "official_news",
+    "category_zh": "小米汽车官方动态",
+    "question": "小米SU7车主的NPS净推荐值官方公布过吗？",
+    "web_query_hint": "小米SU7 NPS 净推荐值 满意度 官方",
+    "local_query_hint": "满意度 NPS"
+  },
+  {
+    "id": "news_042",
+    "category": "official_news",
+    "category_zh": "小米汽车官方动态",
+    "question": "小米汽车2025年研发投入大概多少？",
+    "web_query_hint": "小米汽车 研发投入 2025",
+    "local_query_hint": "研发 投入"
+  },
+  {
+    "id": "news_043",
+    "category": "official_news",
+    "category_zh": "小米汽车官方动态",
+    "question": "小米汽车的积分商城有什么权益可兑换？",
+    "web_query_hint": "小米汽车 积分商城 权益 兑换",
+    "local_query_hint": "积分 权益"
+  },
+  {
+    "id": "news_044",
+    "category": "official_news",
+    "category_zh": "小米汽车官方动态",
+    "question": "小米SU7 Ultra大定车主享有什么专属权益？",
+    "web_query_hint": "小米SU7 Ultra 大定 专属 权益 Ultra Club",
+    "local_query_hint": "Ultra 权益"
+  },
+  {
+    "id": "competitor_023",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7和腾势N7谁的智驾更成熟？",
+    "web_query_hint": "小米SU7 腾势N7 智驾 对比",
+    "local_query_hint": "智驾 对比"
+  },
+  {
+    "id": "competitor_024",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7和银河E8的内饰质感谁更好？",
+    "web_query_hint": "小米SU7 银河E8 内饰 质感 对比",
+    "local_query_hint": "内饰 对比"
+  },
+  {
+    "id": "competitor_025",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7和昊铂GT的操控谁更运动？",
+    "web_query_hint": "小米SU7 昊铂GT 操控 运动 对比",
+    "local_query_hint": "操控 对比"
+  },
+  {
+    "id": "competitor_026",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7和星纪元ES谁的配置更丰富？",
+    "web_query_hint": "小米SU7 星纪元ES 配置 对比",
+    "local_query_hint": "配置 对比"
+  },
+  {
+    "id": "competitor_027",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7和Model 3谁的售后更省心？",
+    "web_query_hint": "小米SU7 特斯拉Model3 售后 对比",
+    "local_query_hint": "售后 对比"
+  },
+  {
+    "id": "competitor_028",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7和蔚来ET5谁的换电更方便？",
+    "web_query_hint": "小米SU7 蔚来ET5 换电 对比",
+    "local_query_hint": "换电 对比"
+  },
+  {
+    "id": "competitor_029",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7和极氪001谁的二手车更保值？",
+    "web_query_hint": "小米SU7 极氪001 二手车 保值 对比",
+    "local_query_hint": "保值 对比"
+  },
+  {
+    "id": "competitor_030",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7和小鹏G6的智能泊车谁强？",
+    "web_query_hint": "小米SU7 小鹏G6 智能泊车 对比",
+    "local_query_hint": "泊车 对比"
+  },
+  {
+    "id": "competitor_031",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7和问界M5ev谁的能耗更低？",
+    "web_query_hint": "小米SU7 问界M5ev 能耗 对比",
+    "local_query_hint": "能耗 对比"
+  },
+  {
+    "id": "competitor_032",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7和比亚迪海豹谁的快充更快？",
+    "web_query_hint": "小米SU7 比亚迪海豹 快充 对比",
+    "local_query_hint": "快充 对比"
+  },
+  {
+    "id": "competitor_033",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7和智己LS6谁是同价位标杆？",
+    "web_query_hint": "小米SU7 智己LS6 标杆 对比",
+    "local_query_hint": "对比 标杆"
+  },
+  {
+    "id": "competitor_034",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7和理想L7谁更适合长途自驾？",
+    "web_query_hint": "小米SU7 理想L7 长途 对比",
+    "local_query_hint": "长途 对比"
+  },
+  {
+    "id": "competitor_035",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7和深蓝S7谁的空间更大？",
+    "web_query_hint": "小米SU7 深蓝S7 空间 对比",
+    "local_query_hint": "空间 对比"
+  },
+  {
+    "id": "competitor_036",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7和启源A07谁的舒适性更好？",
+    "web_query_hint": "小米SU7 启源A07 舒适 对比",
+    "local_query_hint": "舒适 对比"
+  },
+  {
+    "id": "competitor_037",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7和零跑C10谁更便宜性价比高？",
+    "web_query_hint": "小米SU7 零跑C10 价格 性价比 对比",
+    "local_query_hint": "性价比 对比"
+  },
+  {
+    "id": "competitor_038",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7和smart精灵谁的设计更好看？",
+    "web_query_hint": "小米SU7 smart精灵 设计 对比",
+    "local_query_hint": "设计 对比"
+  },
+  {
+    "id": "competitor_039",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7和极星2谁更小众有格调？",
+    "web_query_hint": "小米SU7 极星2 小众 对比",
+    "local_query_hint": "对比 小众"
+  },
+  {
+    "id": "competitor_040",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7和路特斯繁花谁性能更强？",
+    "web_query_hint": "小米SU7 路特斯 繁花 性能 对比",
+    "local_query_hint": "性能 对比"
+  },
+  {
+    "id": "competitor_041",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7和大众ID.7谁更成熟可靠？",
+    "web_query_hint": "小米SU7 大众ID7 对比 可靠",
+    "local_query_hint": "对比 可靠"
+  },
+  {
+    "id": "competitor_042",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7和丰田bZ3谁更省心耐用？",
+    "web_query_hint": "小米SU7 丰田bZ3 对比 耐用",
+    "local_query_hint": "对比 耐用"
+  },
+  {
+    "id": "competitor_043",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7和红旗EH7谁的品牌力更强？",
+    "web_query_hint": "小米SU7 红旗EH7 品牌 对比",
+    "local_query_hint": "品牌 对比"
+  },
+  {
+    "id": "competitor_044",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7和机甲龙现在还有可比性吗？",
+    "web_query_hint": "小米SU7 机甲龙 对比",
+    "local_query_hint": "对比"
+  },
+  {
+    "id": "competitor_045",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7和Lucid Air有可比性吗？",
+    "web_query_hint": "小米SU7 Lucid Air 对比",
+    "local_query_hint": "对比"
+  },
+  {
+    "id": "competitor_046",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7和飞凡F7谁的智驾更靠谱？",
+    "web_query_hint": "小米SU7 飞凡F7 智驾 对比",
+    "local_query_hint": "智驾 对比"
+  },
+  {
+    "id": "competitor_047",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7和哪吒S谁的故障率更低？",
+    "web_query_hint": "小米SU7 哪吒S 故障率 对比",
+    "local_query_hint": "故障率 对比"
+  },
+  {
+    "id": "competitor_048",
+    "category": "competitor",
+    "category_zh": "竞品对比信息",
+    "question": "小米SU7 Ultra和保时捷Taycan Turbo S谁圈速快？",
+    "web_query_hint": "小米SU7 Ultra 保时捷Taycan 圈速 对比",
+    "local_query_hint": "Ultra 圈速 对比"
+  },
+  {
+    "id": "recall_016",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7的车窗升降有没有异响故障的反馈？",
+    "web_query_hint": "小米SU7 车窗 异响 故障 反馈",
+    "local_query_hint": "车窗 故障"
+  },
+  {
+    "id": "recall_017",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7的方向盘有没有跑偏的投诉？",
+    "web_query_hint": "小米SU7 方向盘 跑偏 投诉",
+    "local_query_hint": "方向盘 跑偏"
+  },
+  {
+    "id": "recall_018",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7的尾灯有没有进水起雾的车主反馈？",
+    "web_query_hint": "小米SU7 尾灯 进水 起雾 反馈",
+    "local_query_hint": "尾灯 进水"
+  },
+  {
+    "id": "recall_019",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7的前后玻璃有没有自裂的报告？",
+    "web_query_hint": "小米SU7 玻璃 自裂 报告",
+    "local_query_hint": "玻璃 破裂"
+  },
+  {
+    "id": "recall_020",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7的充电盖有没有打不开的故障？",
+    "web_query_hint": "小米SU7 充电盖 打不开 故障",
+    "local_query_hint": "充电盖 故障"
+  },
+  {
+    "id": "recall_021",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7的中控屏有没有花屏或闪烁的反馈？",
+    "web_query_hint": "小米SU7 中控屏 花屏 闪烁 故障",
+    "local_query_hint": "中控屏 花屏"
+  },
+  {
+    "id": "recall_022",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7的底盘有没有异响的车主反馈？",
+    "web_query_hint": "小米SU7 底盘 异响 反馈",
+    "local_query_hint": "底盘 异响"
+  },
+  {
+    "id": "recall_023",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7的轮毂有没有变形或失圆的投诉？",
+    "web_query_hint": "小米SU7 轮毂 变形 失圆 投诉",
+    "local_query_hint": "轮毂 变形"
+  },
+  {
+    "id": "recall_024",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7的电池冬季掉电快有没有集体投诉？",
+    "web_query_hint": "小米SU7 电池 冬季 掉电 投诉",
+    "local_query_hint": "电池 冬季 掉电"
+  },
+  {
+    "id": "recall_025",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7的蓝牙有没有频繁断连的反馈？",
+    "web_query_hint": "小米SU7 蓝牙 断连 故障 反馈",
+    "local_query_hint": "蓝牙 断连"
+  },
+  {
+    "id": "recall_026",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7的摄像头有没有起雾影响画质的反馈？",
+    "web_query_hint": "小米SU7 摄像头 起雾 画质 反馈",
+    "local_query_hint": "摄像头 起雾"
+  },
+  {
+    "id": "recall_027",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7的雷达有没有误报幽灵刹车的反馈？",
+    "web_query_hint": "小米SU7 雷达 误报 幽灵刹车",
+    "local_query_hint": "雷达 误报"
+  },
+  {
+    "id": "recall_028",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7的无钥匙进入有没有失灵的反馈？",
+    "web_query_hint": "小米SU7 无钥匙进入 失灵 故障",
+    "local_query_hint": "无钥匙进入 失灵"
+  },
+  {
+    "id": "recall_029",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7的天窗有没有异响或漏水的反馈？",
+    "web_query_hint": "小米SU7 天窗 异响 漏水 反馈",
+    "local_query_hint": "天窗 漏水"
+  },
+  {
+    "id": "recall_030",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7的HUD有没有重影模糊的反馈？",
+    "web_query_hint": "小米SU7 HUD 重影 模糊 故障",
+    "local_query_hint": "HUD 重影"
+  },
+  {
+    "id": "recall_031",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7的喇叭有没有破音的反馈？",
+    "web_query_hint": "小米SU7 喇叭 破音 故障",
+    "local_query_hint": "喇叭 破音"
+  },
+  {
+    "id": "recall_032",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7的座椅通风有没有不凉的反馈？",
+    "web_query_hint": "小米SU7 座椅通风 不凉 故障",
+    "local_query_hint": "座椅通风 故障"
+  },
+  {
+    "id": "recall_033",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7的自动驻车有没有异常解除的反馈？",
+    "web_query_hint": "小米SU7 自动驻车 异常解除 故障",
+    "local_query_hint": "自动驻车 故障"
+  },
+  {
+    "id": "recall_034",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7的上坡辅助有没有溜车的反馈？",
+    "web_query_hint": "小米SU7 上坡辅助 溜车 故障",
+    "local_query_hint": "上坡辅助 溜车"
+  },
+  {
+    "id": "recall_035",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7有没有被中保研或C-IASI评为低分的项目？",
+    "web_query_hint": "小米SU7 中保研 C-IASI 耐撞 评分",
+    "local_query_hint": "碰撞测试 安全"
+  },
+  {
+    "id": "recall_036",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米汽车对早期SU7的质量问题有没有官方改进说明？",
+    "web_query_hint": "小米汽车 SU7 质量 改进 官方说明",
+    "local_query_hint": "质量 改进"
+  },
+  {
+    "id": "recall_037",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7的雨刮电机有没有早期失效反馈？",
+    "web_query_hint": "小米SU7 雨刮电机 失效 反馈",
+    "local_query_hint": "雨刮 电机"
+  },
+  {
+    "id": "recall_038",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7的座椅有没有异响或电机故障反馈？",
+    "web_query_hint": "小米SU7 座椅 异响 电机 故障",
+    "local_query_hint": "座椅 异响"
+  },
+  {
+    "id": "recall_039",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7的无线充电板有没有过热反馈？",
+    "web_query_hint": "小米SU7 无线充电板 过热 反馈",
+    "local_query_hint": "无线充电 过热"
+  },
+  {
+    "id": "recall_040",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7的空调压缩机有没有异响反馈？",
+    "web_query_hint": "小米SU7 空调压缩机 异响 故障",
+    "local_query_hint": "空调 压缩机"
+  },
+  {
+    "id": "recall_041",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7的刹车有没有异响或抖动的车主反馈？",
+    "web_query_hint": "小米SU7 刹车 异响 抖动 反馈",
+    "local_query_hint": "刹车 异响"
+  },
+  {
+    "id": "recall_042",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7的车机有没有死机自动重启的投诉？",
+    "web_query_hint": "小米SU7 车机 死机 重启 投诉",
+    "local_query_hint": "车机 死机"
+  },
+  {
+    "id": "recall_043",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7的GPS定位有没有不准的反馈？",
+    "web_query_hint": "小米SU7 GPS 定位 不准 反馈",
+    "local_query_hint": "GPS 定位"
+  },
+  {
+    "id": "recall_044",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7的自动雨刮有没有不灵敏的反馈？",
+    "web_query_hint": "小米SU7 自动雨刮 不灵敏 反馈",
+    "local_query_hint": "自动雨刮"
+  },
+  {
+    "id": "recall_045",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7的电吸门有没有故障反馈？",
+    "web_query_hint": "小米SU7 电吸门 故障 反馈",
+    "local_query_hint": "电吸门 故障"
+  },
+  {
+    "id": "recall_046",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7的后视镜有没有折叠故障反馈？",
+    "web_query_hint": "小米SU7 后视镜 折叠 故障",
+    "local_query_hint": "后视镜 折叠"
+  },
+  {
+    "id": "recall_047",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7的氛围灯有没有不亮的反馈？",
+    "web_query_hint": "小米SU7 氛围灯 不亮 故障",
+    "local_query_hint": "氛围灯 故障"
+  },
+  {
+    "id": "recall_048",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7的方向盘加热有没有不热的反馈？",
+    "web_query_hint": "小米SU7 方向盘加热 不热 故障",
+    "local_query_hint": "方向盘加热"
+  },
+  {
+    "id": "recall_049",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7的USB接口有没有失灵的反馈？",
+    "web_query_hint": "小米SU7 USB 接口 失灵 故障",
+    "local_query_hint": "USB 接口"
+  },
+  {
+    "id": "recall_050",
+    "category": "recall_notice",
+    "category_zh": "召回与技术服务公告",
+    "question": "小米SU7有没有因排放或能耗不达标被通报？",
+    "web_query_hint": "小米SU7 能耗 通报 达标",
+    "local_query_hint": "能耗 达标"
+  },
+  {
+    "id": "charging_015",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米SU7在高速服务区充电排队严重吗？",
+    "web_query_hint": "小米SU7 高速 服务区 充电 排队",
+    "local_query_hint": "高速 充电"
+  },
+  {
+    "id": "charging_016",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米超充站目前在全国有多少座？覆盖哪些高速？",
+    "web_query_hint": "小米超充站 数量 高速 覆盖 2025",
+    "local_query_hint": "超充站 数量"
+  },
+  {
+    "id": "charging_017",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米SU7在北方冬天充电速度衰减多少？",
+    "web_query_hint": "小米SU7 北方 冬天 充电 衰减 低温",
+    "local_query_hint": "低温 充电"
+  },
+  {
+    "id": "charging_018",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米SU7能用特斯拉超充桩吗？兼容吗？",
+    "web_query_hint": "小米SU7 特斯拉 超充桩 兼容 使用",
+    "local_query_hint": "特斯拉超充 兼容"
+  },
+  {
+    "id": "charging_019",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米SU7家充桩支持预约谷电充电吗？",
+    "web_query_hint": "小米SU7 家用充电桩 预约 谷电",
+    "local_query_hint": "家充 谷电"
+  },
+  {
+    "id": "charging_020",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米SU7的随车充枪功率多大？应急好用吗？",
+    "web_query_hint": "小米SU7 随车充 应急 功率",
+    "local_query_hint": "随车充 应急"
+  },
+  {
+    "id": "charging_021",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米SU7充电时能在车里开空调用电吗？耗电吗？",
+    "web_query_hint": "小米SU7 充电 车内 空调 用电",
+    "local_query_hint": "充电 空调"
+  },
+  {
+    "id": "charging_022",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米SU7的充电口在左边还是右边？",
+    "web_query_hint": "小米SU7 充电口 位置 左右",
+    "local_query_hint": "充电口 位置"
+  },
+  {
+    "id": "charging_023",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米SU7充满电从20%到80%最快多久？",
+    "web_query_hint": "小米SU7 充电 20% 80% 时间 快充",
+    "local_query_hint": "快充 时间"
+  },
+  {
+    "id": "charging_024",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米SU7的充电协议支持即插即充吗？",
+    "web_query_hint": "小米SU7 充电 即插即充 协议",
+    "local_query_hint": "充电 即插即充"
+  },
+  {
+    "id": "charging_025",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米SU7的电池预热功能充电前有用吗？",
+    "web_query_hint": "小米SU7 电池预热 充电 冬季",
+    "local_query_hint": "电池预热"
+  },
+  {
+    "id": "charging_026",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米SU7用特来电充电需要下载APP吗？",
+    "web_query_hint": "小米SU7 特来电 充电 APP 扫码",
+    "local_query_hint": "特来电 第三方"
+  },
+  {
+    "id": "charging_027",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米SU7在小区安装家充桩物业不批怎么办？",
+    "web_query_hint": "小米SU7 家用充电桩 小区 物业 安装",
+    "local_query_hint": "家充 安装 物业"
+  },
+  {
+    "id": "charging_028",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米SU7的电池健康度怎么看？在哪查？",
+    "web_query_hint": "小米SU7 电池健康度 SOH 查询",
+    "local_query_hint": "电池健康度"
+  },
+  {
+    "id": "charging_029",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米SU7长期快充会伤电池吗？官方怎么说？",
+    "web_query_hint": "小米SU7 快充 伤电池 官方 电池寿命",
+    "local_query_hint": "快充 电池寿命"
+  },
+  {
+    "id": "charging_030",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米SU7的充电会员和免费充电怎么领？",
+    "web_query_hint": "小米SU7 充电会员 免费充电 权益",
+    "local_query_hint": "充电会员 权益"
+  },
+  {
+    "id": "charging_031",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米SU7能不能用光伏太阳能板充电？",
+    "web_query_hint": "小米SU7 光伏 太阳能 充电",
+    "local_query_hint": "光伏 充电"
+  },
+  {
+    "id": "charging_032",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米SU7在高原地区充电有影响吗？",
+    "web_query_hint": "小米SU7 高原 充电 影响",
+    "local_query_hint": "高原 充电"
+  },
+  {
+    "id": "charging_033",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米SU7的对外放电能支持多久？费电吗？",
+    "web_query_hint": "小米SU7 对外放电 V2L 时长 耗电",
+    "local_query_hint": "V2L 放电"
+  },
+  {
+    "id": "charging_034",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米SU7的充电功率会随电量降低而下降吗？",
+    "web_query_hint": "小米SU7 充电功率 下降 电量 曲线",
+    "local_query_hint": "充电曲线"
+  },
+  {
+    "id": "charging_035",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米汽车自建超充桩功率最大多少千瓦？",
+    "web_query_hint": "小米汽车 超充桩 功率 千瓦 最大",
+    "local_query_hint": "超充 功率"
+  },
+  {
+    "id": "policy_013",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "小米SU7在北上广深上绿牌需要什么条件？",
+    "web_query_hint": "小米SU7 北京 上海 广州 深圳 绿牌 条件",
+    "local_query_hint": "绿牌 限牌"
+  },
+  {
+    "id": "policy_014",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "新能源车免征购置税2025年底到期后还有吗？",
+    "web_query_hint": "新能源车 购置税 免征 到期 2025 续",
+    "local_query_hint": "购置税 免征"
+  },
+  {
+    "id": "policy_015",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "买小米SU7以旧换新国补和地补能叠加吗？",
+    "web_query_hint": "小米SU7 以旧换新 国补 地补 叠加",
+    "local_query_hint": "以旧换新 补贴"
+  },
+  {
+    "id": "policy_016",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "小米SU7在天津、杭州摇号中签率高吗？",
+    "web_query_hint": "小米SU7 天津 杭州 摇号 中签 新能源",
+    "local_query_hint": "摇号 牌照"
+  },
+  {
+    "id": "policy_017",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "报废旧燃油车换小米SU7能拿多少补贴？",
+    "web_query_hint": "报废 燃油车 小米SU7 补贴 以旧换新",
+    "local_query_hint": "报废 补贴"
+  },
+  {
+    "id": "policy_018",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "小米SU7在西安、武汉、成都上牌有什么新能源优惠？",
+    "web_query_hint": "西安 武汉 成都 小米SU7 新能源 上牌 优惠",
+    "local_query_hint": "地方优惠 上牌"
+  },
+  {
+    "id": "policy_019",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "事业单位采购小米SU7有专门政策吗？",
+    "web_query_hint": "事业单位 采购 小米SU7 新能源 政策",
+    "local_query_hint": "采购 政策"
+  },
+  {
+    "id": "policy_020",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "新能源车下乡补贴买小米SU7能享受吗？",
+    "web_query_hint": "新能源车 下乡 补贴 小米SU7",
+    "local_query_hint": "下乡 补贴"
+  },
+  {
+    "id": "policy_021",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "小米SU7的交强险和车船税新能源有减免吗？",
+    "web_query_hint": "小米SU7 交强险 车船税 新能源 减免",
+    "local_query_hint": "车船税 交强险"
+  },
+  {
+    "id": "policy_022",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "外地买小米SU7回本地上牌有补贴限制吗？",
+    "web_query_hint": "小米SU7 异地购车 上牌 补贴 限制",
+    "local_query_hint": "异地购车 补贴"
+  },
+  {
+    "id": "policy_023",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "小米SU7在限行城市是不是不限号？",
+    "web_query_hint": "小米SU7 限行 不限号 新能源 城市",
+    "local_query_hint": "限行 牌照"
+  },
+  {
+    "id": "policy_024",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "买小米SU7能申请充电桩安装补贴吗？",
+    "web_query_hint": "小米SU7 充电桩安装 补贴 申请",
+    "local_query_hint": "充电桩 补贴"
+  },
+  {
+    "id": "policy_025",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "个人买小米SU7能享受车贷利息补贴吗？",
+    "web_query_hint": "小米SU7 车贷 利息 补贴 个人",
+    "local_query_hint": "车贷 补贴"
+  },
+  {
+    "id": "policy_026",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "小米SU7在海南自贸港购车有特殊优惠吗？",
+    "web_query_hint": "海南 自贸港 小米SU7 购车 优惠",
+    "local_query_hint": "海南 优惠"
+  },
+  {
+    "id": "policy_027",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "新能源指标过期了买小米SU7还能用吗？",
+    "web_query_hint": "新能源指标 过期 小米SU7 牌照",
+    "local_query_hint": "新能源指标"
+  },
+  {
+    "id": "policy_028",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "小米SU7的碳排放积分能交易吗？怎么算？",
+    "web_query_hint": "小米SU7 碳排放 积分 交易 新能源",
+    "local_query_hint": "碳积分"
+  },
+  {
+    "id": "policy_029",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "网约车/营运买小米SU7还能享受三包吗？",
+    "web_query_hint": "小米SU7 网约车 营运 三包 政策",
+    "local_query_hint": "营运 三包"
+  },
+  {
+    "id": "policy_030",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "小米SU7新能源补贴申请需要哪些材料？",
+    "web_query_hint": "小米SU7 新能源补贴 申请 材料 流程",
+    "local_query_hint": "补贴 申请"
+  },
+  {
+    "id": "price_017",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7 Pro版和Max版价格差多少？配置差在哪？",
+    "web_query_hint": "小米SU7 Pro Max 价格 配置 差异",
+    "local_query_hint": "Pro Max 配置"
+  },
+  {
+    "id": "price_018",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7 Ultra官方指导价是多少？有哪些版本？",
+    "web_query_hint": "小米SU7 Ultra 指导价 版本 配置",
+    "local_query_hint": "Ultra 价格"
+  },
+  {
+    "id": "price_019",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7现在锁单后多久能提车？",
+    "web_query_hint": "小米SU7 锁单 提车 周期 2025",
+    "local_query_hint": "锁单 提车"
+  },
+  {
+    "id": "price_020",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7二手车一年后大概贬值多少？",
+    "web_query_hint": "小米SU7 二手车 贬值 一年 残值",
+    "local_query_hint": "二手车 贬值"
+  },
+  {
+    "id": "price_021",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7选装Nappa真皮座椅加多少钱？",
+    "web_query_hint": "小米SU7 Nappa真皮 选装 价格",
+    "local_query_hint": "选装 真皮"
+  },
+  {
+    "id": "price_022",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7有大客户/集团购车优惠吗？",
+    "web_query_hint": "小米SU7 大客户 集团 购车 优惠",
+    "local_query_hint": "大客户 优惠"
+  },
+  {
+    "id": "price_023",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7的尾款有什么支付方式？支持花呗吗？",
+    "web_query_hint": "小米SU7 尾款 支付 花呗 分期",
+    "local_query_hint": "尾款 支付"
+  },
+  {
+    "id": "price_024",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7老带新有什么奖励？",
+    "web_query_hint": "小米SU7 老带新 奖励 推荐",
+    "local_query_hint": "老带新 奖励"
+  },
+  {
+    "id": "price_025",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7在双十一或618有购车优惠吗？",
+    "web_query_hint": "小米SU7 双十一 618 购车 优惠 活动",
+    "local_query_hint": "活动 优惠"
+  },
+  {
+    "id": "price_026",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7订金5000块退订要扣钱吗？",
+    "web_query_hint": "小米SU7 订金 退订 扣款 规则",
+    "local_query_hint": "订金 退订"
+  },
+  {
+    "id": "price_027",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7 Max版实测值不值那个差价？",
+    "web_query_hint": "小米SU7 Max 值不值 差价 评价",
+    "local_query_hint": "Max 价值"
+  },
+  {
+    "id": "price_028",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7的保险4S店上和外面上差多少钱？",
+    "web_query_hint": "小米SU7 保险 4S店 外面 差价",
+    "local_query_hint": "保险 渠道"
+  },
+  {
+    "id": "price_029",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7创始版现在二手车还能溢价吗？",
+    "web_query_hint": "小米SU7 创始版 二手车 溢价",
+    "local_query_hint": "创始版 二手"
+  },
+  {
+    "id": "price_030",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7全国统一价还是各地有差价？",
+    "web_query_hint": "小米SU7 全国 统一价 地区 差价",
+    "local_query_hint": "售价 地区"
+  },
+  {
+    "id": "price_031",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7有没有0首付或低首付方案？",
+    "web_query_hint": "小米SU7 0首付 低首付 金融 方案",
+    "local_query_hint": "金融 首付"
+  },
+  {
+    "id": "price_032",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7的金融贴息活动什么时候有？",
+    "web_query_hint": "小米SU7 金融 贴息 活动 时间",
+    "local_query_hint": "金融 贴息"
+  },
+  {
+    "id": "price_033",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7置换旧车官方估价低于市场怎么办？",
+    "web_query_hint": "小米SU7 置换 估价 低 市场",
+    "local_query_hint": "置换 估价"
+  },
+  {
+    "id": "price_034",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7的购车合同有哪些要注意的坑？",
+    "web_query_hint": "小米SU7 购车合同 注意 坑 维权",
+    "local_query_hint": "购车合同"
+  },
+  {
+    "id": "price_035",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7提车时要交哪些费用？有隐藏费用吗？",
+    "web_query_hint": "小米SU7 提车 费用 隐藏 上牌",
+    "local_query_hint": "提车 费用"
+  },
+  {
+    "id": "insurance_013",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7的人保、平安、太保车险报价差别大吗？",
+    "web_query_hint": "小米SU7 人保 平安 太保 车险 报价",
+    "local_query_hint": "车险 报价"
+  },
+  {
+    "id": "insurance_014",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7只买交强险和三者险够吗？",
+    "web_query_hint": "小米SU7 交强险 三者险 够用",
+    "local_query_hint": "交强险 三者"
+  },
+  {
+    "id": "insurance_015",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7的车损险保额按什么算？折旧吗？",
+    "web_query_hint": "小米SU7 车损险 保额 折旧",
+    "local_query_hint": "车损险 保额"
+  },
+  {
+    "id": "insurance_016",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7的无责也被拒赔的情况有哪些？",
+    "web_query_hint": "小米SU7 拒赔 无责 理赔 保险",
+    "local_query_hint": "理赔 拒赔"
+  },
+  {
+    "id": "insurance_017",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7三电终身质保二手车能延续吗？",
+    "web_query_hint": "小米SU7 三电 终身质保 二手车 延续",
+    "local_query_hint": "三电 质保 二手"
+  },
+  {
+    "id": "insurance_018",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7的玻璃险和轮胎险有必要买吗？",
+    "web_query_hint": "小米SU7 玻璃险 轮胎险 必要",
+    "local_query_hint": "玻璃险 轮胎险"
+  },
+  {
+    "id": "insurance_019",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7出过险还能享受续保优惠吗？",
+    "web_query_hint": "小米SU7 出险 续保 优惠 保费",
+    "local_query_hint": "续保 出险"
+  },
+  {
+    "id": "insurance_020",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7的座位险和驾乘险买哪个好？",
+    "web_query_hint": "小米SU7 座位险 驾乘险 推荐",
+    "local_query_hint": "座位险 驾乘险"
+  },
+  {
+    "id": "insurance_021",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7的全险一般都包含哪些险种？",
+    "web_query_hint": "小米SU7 全险 险种 包含",
+    "local_query_hint": "全险 险种"
+  },
+  {
+    "id": "insurance_022",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7贷款买车GPS费和服务费合理吗？",
+    "web_query_hint": "小米SU7 贷款 GPS费 服务费 合理",
+    "local_query_hint": "贷款 费用"
+  },
+  {
+    "id": "insurance_023",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7的残值担保或保值回购有吗？",
+    "web_query_hint": "小米SU7 残值担保 保值回购 政策",
+    "local_query_hint": "残值 回购"
+  },
+  {
+    "id": "insurance_024",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7融资租赁和银行贷款哪个划算？",
+    "web_query_hint": "小米SU7 融资租赁 银行贷款 划算",
+    "local_query_hint": "融资租赁 贷款"
+  },
+  {
+    "id": "insurance_025",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7的自然损失险有必要单独买吗？",
+    "web_query_hint": "小米SU7 自燃险 自然损失险 必要",
+    "local_query_hint": "自燃险"
+  },
+  {
+    "id": "insurance_026",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7的划痕险值得买吗？小剐蹭赔吗？",
+    "web_query_hint": "小米SU7 划痕险 值得 小剐蹭",
+    "local_query_hint": "划痕险"
+  },
+  {
+    "id": "insurance_027",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7的精神抚慰金附加险是什么？要买吗？",
+    "web_query_hint": "小米SU7 精神抚慰金 附加险",
+    "local_query_hint": "附加险"
+  },
+  {
+    "id": "insurance_028",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7的医保外用药责任险有用吗？",
+    "web_query_hint": "小米SU7 医保外用药 责任险",
+    "local_query_hint": "责任险 医保"
+  },
+  {
+    "id": "insurance_029",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7分期逾期会上征信吗？影响大吗？",
+    "web_query_hint": "小米SU7 分期 逾期 征信 影响",
+    "local_query_hint": "分期 征信"
+  },
+  {
+    "id": "maintenance_013",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7的首次保养什么时候做？免费吗？",
+    "web_query_hint": "小米SU7 首保 时间 免费 里程",
+    "local_query_hint": "首保 保养"
+  },
+  {
+    "id": "maintenance_014",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7的保养周期是按时间还是里程？",
+    "web_query_hint": "小米SU7 保养周期 时间 里程",
+    "local_query_hint": "保养周期"
+  },
+  {
+    "id": "maintenance_015",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7的刹车油多久换一次？多少钱？",
+    "web_query_hint": "小米SU7 刹车油 更换 周期 费用",
+    "local_query_hint": "刹车油 保养"
+  },
+  {
+    "id": "maintenance_016",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7的防冻液多久换？自己能加吗？",
+    "web_query_hint": "小米SU7 防冻液 更换 周期 自己加",
+    "local_query_hint": "防冻液"
+  },
+  {
+    "id": "maintenance_017",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7的空调清洗除味多少钱？",
+    "web_query_hint": "小米SU7 空调清洗 除味 价格",
+    "local_query_hint": "空调清洗"
+  },
+  {
+    "id": "maintenance_018",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7的内饰深度清洁多少钱？",
+    "web_query_hint": "小米SU7 内饰 深度清洁 价格",
+    "local_query_hint": "内饰清洁"
+  },
+  {
+    "id": "maintenance_019",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7的底盘装甲有必要做吗？多少钱？",
+    "web_query_hint": "小米SU7 底盘装甲 必要 价格",
+    "local_query_hint": "底盘装甲"
+  },
+  {
+    "id": "maintenance_020",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7的玻璃水用完了自己加买哪种？",
+    "web_query_hint": "小米SU7 玻璃水 哪种 自己加 推荐",
+    "local_query_hint": "玻璃水"
+  },
+  {
+    "id": "maintenance_021",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7的电机和电控需要保养吗？",
+    "web_query_hint": "小米SU7 电机 电控 保养",
+    "local_query_hint": "电机 电控"
+  },
+  {
+    "id": "maintenance_022",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7的轮胎一般几年或几万公里换？",
+    "web_query_hint": "小米SU7 轮胎 更换 周期 公里 年",
+    "local_query_hint": "轮胎 更换"
+  },
+  {
+    "id": "maintenance_023",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7的小毛病维修贵不贵？配件好买吗？",
+    "web_query_hint": "小米SU7 维修 配件 价格 供应",
+    "local_query_hint": "维修 配件"
+  },
+  {
+    "id": "maintenance_024",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7过保后维修费用高吗？",
+    "web_query_hint": "小米SU7 过保 维修 费用 自费",
+    "local_query_hint": "过保 维修"
+  },
+  {
+    "id": "maintenance_025",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7的三滤指什么？多久换？",
+    "web_query_hint": "小米SU7 三滤 空调滤 空气滤 更换",
+    "local_query_hint": "三滤 保养"
+  },
+  {
+    "id": "maintenance_026",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7的底盘要不要定期做四轮定位？",
+    "web_query_hint": "小米SU7 四轮定位 底盘 周期",
+    "local_query_hint": "四轮定位"
+  },
+  {
+    "id": "maintenance_027",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7长期不开电瓶会亏电吗？怎么维护？",
+    "web_query_hint": "小米SU7 长期停放 亏电 12V 维护",
+    "local_query_hint": "长期停放 亏电"
+  },
+  {
+    "id": "maintenance_028",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7的洗车和镀晶一年要花多少？",
+    "web_query_hint": "小米SU7 洗车 镀晶 年费用",
+    "local_query_hint": "洗车 镀晶"
+  },
+  {
+    "id": "maintenance_029",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7的保险一年比一年便宜吗？不出险降多少？",
+    "web_query_hint": "小米SU7 保险 逐年 降价 不出险",
+    "local_query_hint": "保险 降价"
+  },
+  {
+    "id": "user_feedback_019",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7的真实续航冬天打几折？车主怎么说？",
+    "web_query_hint": "小米SU7 冬季续航 折扣 车主 实测",
+    "local_query_hint": "冬季续航"
+  },
+  {
+    "id": "user_feedback_020",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7的空调制冷效果怎么样？夏天够冷吗？",
+    "web_query_hint": "小米SU7 空调 制冷 夏天 车主",
+    "local_query_hint": "空调 制冷"
+  },
+  {
+    "id": "user_feedback_021",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7的高速续航实测能跑多少公里？",
+    "web_query_hint": "小米SU7 高速续航 实测 公里 车主",
+    "local_query_hint": "高速续航"
+  },
+  {
+    "id": "user_feedback_022",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7的城市续航实测能跑多少？",
+    "web_query_hint": "小米SU7 城市续航 实测 车主",
+    "local_query_hint": "城市续航"
+  },
+  {
+    "id": "user_feedback_023",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7的辅助驾驶在雨雪天可靠吗？",
+    "web_query_hint": "小米SU7 辅助驾驶 雨雪 可靠 车主",
+    "local_query_hint": "辅助驾驶 雨雪"
+  },
+  {
+    "id": "user_feedback_024",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7的远程控制实际响应快吗？延迟大吗？",
+    "web_query_hint": "小米SU7 远程控制 响应 延迟 车主",
+    "local_query_hint": "远程控制"
+  },
+  {
+    "id": "user_feedback_025",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7的导航准吗？会绕路吗？",
+    "web_query_hint": "小米SU7 导航 准 绕路 车主",
+    "local_query_hint": "导航"
+  },
+  {
+    "id": "user_feedback_026",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7的音响效果怎么样？低音够吗？",
+    "web_query_hint": "小米SU7 音响 效果 低音 车主",
+    "local_query_hint": "音响"
+  },
+  {
+    "id": "user_feedback_027",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7的无线充电手机会发烫吗？",
+    "web_query_hint": "小米SU7 无线充电 手机 发烫 车主",
+    "local_query_hint": "无线充电 发烫"
+  },
+  {
+    "id": "user_feedback_028",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7的夜间行驶大灯够亮吗？",
+    "web_query_hint": "小米SU7 大灯 夜间 亮 车主",
+    "local_query_hint": "大灯 夜间"
+  },
+  {
+    "id": "user_feedback_029",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7的360环影清晰吗？夜间看得清吗？",
+    "web_query_hint": "小米SU7 360环影 清晰 夜间 车主",
+    "local_query_hint": "360环影"
+  },
+  {
+    "id": "user_feedback_030",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7的OTA升级过程车能用吗？要等多久？",
+    "web_query_hint": "小米SU7 OTA升级 过程 等待 车主",
+    "local_query_hint": "OTA升级"
+  },
+  {
+    "id": "user_feedback_031",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7的车主 app 远程查看车辆位置准吗？",
+    "web_query_hint": "小米SU7 车主APP 车辆位置 定位 车主",
+    "local_query_hint": "车辆定位"
+  },
+  {
+    "id": "user_feedback_032",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7的智能空气悬挂舒适度怎么样？",
+    "web_query_hint": "小米SU7 空气悬挂 舒适 车主",
+    "local_query_hint": "空气悬挂"
+  },
+  {
+    "id": "user_feedback_033",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7的轮胎噪音大吗？换静音胎有用吗？",
+    "web_query_hint": "小米SU7 轮胎噪音 静音胎 车主",
+    "local_query_hint": "轮胎噪音"
+  },
+  {
+    "id": "user_feedback_034",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7的后排中间座位舒服吗？长途坐人吗？",
+    "web_query_hint": "小米SU7 后排中间 座位 舒服 车主",
+    "local_query_hint": "后排 中间座"
+  },
+  {
+    "id": "user_feedback_035",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7的防晒隔热玻璃效果好吗？夏天烫吗？",
+    "web_query_hint": "小米SU7 防晒隔热玻璃 夏天 车主",
+    "local_query_hint": "隔热玻璃"
+  },
+  {
+    "id": "user_feedback_036",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7的电动尾门支持脚踢感应吗？好用吗？",
+    "web_query_hint": "小米SU7 电动尾门 脚踢感应 车主",
+    "local_query_hint": "电动尾门"
+  },
+  {
+    "id": "user_feedback_037",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7的手机蓝牙解锁比实体钥匙方便吗？",
+    "web_query_hint": "小米SU7 蓝牙解锁 实体钥匙 方便 车主",
+    "local_query_hint": "蓝牙解锁"
+  },
+  {
+    "id": "user_feedback_038",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7的座椅加热通风实际效果怎么样？",
+    "web_query_hint": "小米SU7 座椅加热 通风 效果 车主",
+    "local_query_hint": "座椅加热通风"
+  },
+  {
+    "id": "user_feedback_039",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7的车主最不满意的三个点是什么？",
+    "web_query_hint": "小米SU7 车主 不满意 缺点 槽点",
+    "local_query_hint": "车主 缺点"
+  },
+  {
+    "id": "user_feedback_040",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7的真实故障率在新能源里算高吗？",
+    "web_query_hint": "小米SU7 故障率 新能源 排名 可靠性",
+    "local_query_hint": "故障率 可靠性"
+  },
+  {
+    "id": "user_feedback_041",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7的售后服务态度和效率车主评价如何？",
+    "web_query_hint": "小米SU7 售后 服务 效率 车主评价",
+    "local_query_hint": "售后 评价"
+  },
+  {
+    "id": "user_feedback_042",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7的智能驾驶升级包值得买吗？车主怎么说？",
+    "web_query_hint": "小米SU7 智能驾驶 升级包 值得 车主",
+    "local_query_hint": "智驾 升级包"
+  },
+  {
+    "id": "user_feedback_043",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7的真实车主口碑在汽车之家评分多少？",
+    "web_query_hint": "小米SU7 车主口碑 汽车之家 评分",
+    "local_query_hint": "口碑 评分"
+  },
+  {
+    "id": "user_feedback_044",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7的新车味道大吗？多久散掉？",
+    "web_query_hint": "小米SU7 新车 味道 甲醛 车主",
+    "local_query_hint": "新车味道"
+  },
+  {
+    "id": "user_feedback_045",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7的油漆薄吗？小石子一蹦就掉漆吗？",
+    "web_query_hint": "小米SU7 油漆 掉漆 石子 车主",
+    "local_query_hint": "油漆 掉漆"
+  },
+  {
+    "id": "user_feedback_046",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7的二手车检测要注意什么？",
+    "web_query_hint": "小米SU7 二手车 检测 注意 电池",
+    "local_query_hint": "二手车 检测"
+  },
+  {
+    "id": "user_feedback_047",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7的车主社区有没有改装案例分享？",
+    "web_query_hint": "小米SU7 改装 案例 车主 社区",
+    "local_query_hint": "改装 案例"
+  },
+  {
+    "id": "user_feedback_048",
+    "category": "user_feedback",
+    "category_zh": "车主真实反馈",
+    "question": "小米SU7开三年后电池衰减多少？车主实测？",
+    "web_query_hint": "小米SU7 电池衰减 三年 车主 实测",
+    "local_query_hint": "电池衰减"
+  },
+  {
+    "id": "charging_036",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米SU7能不能边充电边用V2L给别的设备供电？",
+    "web_query_hint": "小米SU7 充电 V2L 同时 放电",
+    "local_query_hint": "充电 V2L"
+  },
+  {
+    "id": "charging_037",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米SU7家充桩安装需要多大容量的电表？",
+    "web_query_hint": "小米SU7 家用充电桩 电表 容量",
+    "local_query_hint": "家充 电表"
+  },
+  {
+    "id": "charging_038",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米SU7快充时电池温度会很高吗？有影响吗？",
+    "web_query_hint": "小米SU7 快充 电池温度 影响",
+    "local_query_hint": "快充 电池温度"
+  },
+  {
+    "id": "charging_039",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米SU7的充电枪拔不下来怎么办？",
+    "web_query_hint": "小米SU7 充电枪 拔不下来 应急",
+    "local_query_hint": "充电枪 故障"
+  },
+  {
+    "id": "charging_040",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米SU7的预约充电怎么设置？谷电时段怎么用？",
+    "web_query_hint": "小米SU7 预约充电 谷电 设置",
+    "local_query_hint": "预约充电 谷电"
+  },
+  {
+    "id": "charging_041",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米SU7在充电站扫码充不上电怎么办？",
+    "web_query_hint": "小米SU7 充电站 扫码 充不上 故障",
+    "local_query_hint": "充电站 扫码"
+  },
+  {
+    "id": "charging_042",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米SU7的电池充满后会自动断电吗？",
+    "web_query_hint": "小米SU7 充满 自动断电 满充",
+    "local_query_hint": "满充 断电"
+  },
+  {
+    "id": "charging_043",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米SU7的充电功率为什么有时达不到标称值？",
+    "web_query_hint": "小米SU7 充电功率 不达标 原因",
+    "local_query_hint": "充电功率"
+  },
+  {
+    "id": "charging_044",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米SU7能用家用插座应急慢充吗？",
+    "web_query_hint": "小米SU7 家用插座 应急 慢充 随车充",
+    "local_query_hint": "家用插座 慢充"
+  },
+  {
+    "id": "charging_045",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米SU7的充电口防水吗？下雨天能充吗？",
+    "web_query_hint": "小米SU7 充电口 防水 下雨 充电",
+    "local_query_hint": "充电口 防水"
+  },
+  {
+    "id": "charging_046",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米SU7的充电策略能设置为充到80%就停吗？",
+    "web_query_hint": "小米SU7 充电限制 80% 设置",
+    "local_query_hint": "充电限值"
+  },
+  {
+    "id": "charging_047",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米SU7直流快充和交流慢充接口是同一个吗？",
+    "web_query_hint": "小米SU7 直流 交流 充电接口 区别",
+    "local_query_hint": "充电接口"
+  },
+  {
+    "id": "charging_048",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米SU7在停车场找充电桩方便吗？车机有桩位导航吗？",
+    "web_query_hint": "小米SU7 停车场 充电桩 导航 找桩",
+    "local_query_hint": "找桩 导航"
+  },
+  {
+    "id": "charging_049",
+    "category": "charging_infra",
+    "category_zh": "充电网络与基础设施",
+    "question": "小米SU7长期不充电电池会饿坏吗？怎么维护？",
+    "web_query_hint": "小米SU7 长期不充电 电池 维护",
+    "local_query_hint": "电池 长期停放"
+  },
+  {
+    "id": "price_036",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7加装HUD抬头显示要多少钱？",
+    "web_query_hint": "小米SU7 HUD 加装 价格 选装",
+    "local_query_hint": "HUD 加装"
+  },
+  {
+    "id": "price_037",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7的电动尾门加装多少钱？",
+    "web_query_hint": "小米SU7 电动尾门 加装 价格",
+    "local_query_hint": "电动尾门 加装"
+  },
+  {
+    "id": "price_038",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7原厂行车记录仪和第三方哪个划算？",
+    "web_query_hint": "小米SU7 行车记录仪 原厂 第三方 价格",
+    "local_query_hint": "行车记录仪"
+  },
+  {
+    "id": "price_039",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7的官方脚垫和后备箱垫多少钱？",
+    "web_query_hint": "小米SU7 脚垫 后备箱垫 官方 价格",
+    "local_query_hint": "脚垫 配件"
+  },
+  {
+    "id": "price_040",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7玻璃贴膜4S店和外面差多少？",
+    "web_query_hint": "小米SU7 玻璃贴膜 4S店 外面 差价",
+    "local_query_hint": "贴膜 渠道"
+  },
+  {
+    "id": "price_041",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7底盘护板有必要装吗？多少钱？",
+    "web_query_hint": "小米SU7 底盘护板 必要 价格",
+    "local_query_hint": "底盘护板"
+  },
+  {
+    "id": "price_042",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7的儿童安全座椅接口是标配吗？",
+    "web_query_hint": "小米SU7 儿童座椅 ISOFIX 标配",
+    "local_query_hint": "儿童座椅 接口"
+  },
+  {
+    "id": "price_043",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7购车大礼包一般都送什么？值多少钱？",
+    "web_query_hint": "小米SU7 购车 大礼包 赠品",
+    "local_query_hint": "大礼包 赠品"
+  },
+  {
+    "id": "price_044",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7首付20%和30%月供差多少？",
+    "web_query_hint": "小米SU7 首付 20% 30% 月供 对比",
+    "local_query_hint": "首付 月供"
+  },
+  {
+    "id": "price_045",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7保值率三年后预计剩多少？",
+    "web_query_hint": "小米SU7 保值率 三年 残值 预测",
+    "local_query_hint": "保值率"
+  },
+  {
+    "id": "price_046",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7 Max版选装大尺寸轮毂加多少钱？",
+    "web_query_hint": "小米SU7 Max 轮毂 选装 价格",
+    "local_query_hint": "轮毂 选装"
+  },
+  {
+    "id": "price_047",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7提车有加价或捆绑销售的情况吗？",
+    "web_query_hint": "小米SU7 提车 加价 捆绑 销售",
+    "local_query_hint": "提车 加价"
+  },
+  {
+    "id": "price_048",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7购车能不能用数字人民币支付？",
+    "web_query_hint": "小米SU7 数字人民币 支付 购车",
+    "local_query_hint": "支付 数字人民币"
+  },
+  {
+    "id": "price_049",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7不同车身颜色有加价吗？哪些免费？",
+    "web_query_hint": "小米SU7 颜色 加价 免费 选装",
+    "local_query_hint": "颜色 选装"
+  },
+  {
+    "id": "price_050",
+    "category": "pricing",
+    "category_zh": "价格与购车优惠",
+    "question": "小米SU7的官方置换和外面二手车商哪个估价高？",
+    "web_query_hint": "小米SU7 官方置换 二手车商 估价 对比",
+    "local_query_hint": "置换 估价"
+  },
+  {
+    "id": "policy_031",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "小米SU7在限号城市周六日和节假日限行吗？",
+    "web_query_hint": "小米SU7 新能源 周末 节假日 限行",
+    "local_query_hint": "限行 周末"
+  },
+  {
+    "id": "policy_032",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "新能源车电池回收政策对小米SU7有什么要求？",
+    "web_query_hint": "新能源车 电池回收 政策 小米SU7",
+    "local_query_hint": "电池回收 政策"
+  },
+  {
+    "id": "policy_033",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "小米SU7上牌后多久能拿到绿牌？",
+    "web_query_hint": "小米SU7 上牌 绿牌 多久 流程",
+    "local_query_hint": "上牌 绿牌"
+  },
+  {
+    "id": "policy_034",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "小米SU7换车后绿牌能保留吗？怎么操作？",
+    "web_query_hint": "小米SU7 换车 绿牌 保留 流程",
+    "local_query_hint": "绿牌 保留"
+  },
+  {
+    "id": "policy_035",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "小米SU7的新能源补贴是直接抵车价还是购车后返还？",
+    "web_query_hint": "小米SU7 新能源补贴 抵扣 返还 方式",
+    "local_query_hint": "补贴 方式"
+  },
+  {
+    "id": "policy_036",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "买小米SU7外地户口需要居住证吗？",
+    "web_query_hint": "小米SU7 外地户口 居住证 上牌",
+    "local_query_hint": "居住证 上牌"
+  },
+  {
+    "id": "policy_037",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "小米SU7的新能源车船税减免要每年申请吗？",
+    "web_query_hint": "小米SU7 车船税 减免 申请 每年",
+    "local_query_hint": "车船税 减免"
+  },
+  {
+    "id": "policy_038",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "小米SU7的临时牌照能办几次？有效期多久？",
+    "web_query_hint": "小米SU7 临时牌照 次数 有效期",
+    "local_query_hint": "临牌"
+  },
+  {
+    "id": "policy_039",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "小米SU7上牌选号有什么技巧？能自编吗？",
+    "web_query_hint": "小米SU7 上牌 选号 自编 技巧",
+    "local_query_hint": "选号"
+  },
+  {
+    "id": "policy_040",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "小米SU7二手新能源车还能享受补贴吗？",
+    "web_query_hint": "小米SU7 二手 新能源 补贴 政策",
+    "local_query_hint": "二手 补贴"
+  },
+  {
+    "id": "policy_041",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "小米SU7在东北严寒地区有特殊的三包政策吗？",
+    "web_query_hint": "小米SU7 东北 严寒 三包 电池",
+    "local_query_hint": "严寒 三包"
+  },
+  {
+    "id": "policy_042",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "小米SU7的车辆环保清单在哪下载？上牌要用吗？",
+    "web_query_hint": "小米SU7 环保清单 下载 上牌",
+    "local_query_hint": "环保清单"
+  },
+  {
+    "id": "policy_043",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "小米SU7在港口城市有自贸区购车优惠吗？",
+    "web_query_hint": "小米SU7 自贸区 港口 购车 优惠",
+    "local_query_hint": "自贸区 优惠"
+  },
+  {
+    "id": "policy_044",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "小米SU7车牌邮寄一般要多久能收到？",
+    "web_query_hint": "小米SU7 车牌 邮寄 多久 选号",
+    "local_query_hint": "车牌 邮寄"
+  },
+  {
+    "id": "policy_045",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "小米SU7非营运改营运有什么政策影响？",
+    "web_query_hint": "小米SU7 非营运 营运 政策 变更",
+    "local_query_hint": "营运 政策"
+  },
+  {
+    "id": "policy_046",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "小米SU7的购置税完税证明怎么开？",
+    "web_query_hint": "小米SU7 购置税 完税证明 开具",
+    "local_query_hint": "购置税 完税"
+  },
+  {
+    "id": "policy_047",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "小米SU7车辆一致性证书有什么用？",
+    "web_query_hint": "小米SU7 车辆一致性证书 作用",
+    "local_query_hint": "一致性证书"
+  },
+  {
+    "id": "policy_048",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "买小米SU7能同时领国补地补和厂家优惠吗？",
+    "web_query_hint": "小米SU7 国补 地补 厂家优惠 叠加",
+    "local_query_hint": "补贴 叠加"
+  },
+  {
+    "id": "policy_049",
+    "category": "ev_policy",
+    "category_zh": "新能源政策与补贴",
+    "question": "小米SU7在县城和地级市上牌费用有区别吗？",
+    "web_query_hint": "小米SU7 县城 地级市 上牌 费用",
+    "local_query_hint": "上牌 费用"
+  },
+  {
+    "id": "insurance_030",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7的涉水险新能源车还需要买吗？",
+    "web_query_hint": "小米SU7 涉水险 新能源 必要",
+    "local_query_hint": "涉水险"
+  },
+  {
+    "id": "insurance_031",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7修理期间代步车费用险有吗？要买吗？",
+    "web_query_hint": "小米SU7 修理期间 代步车 险",
+    "local_query_hint": "代步车险"
+  },
+  {
+    "id": "insurance_032",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7的车上货物责任险要买吗？",
+    "web_query_hint": "小米SU7 车上货物 责任险 必要",
+    "local_query_hint": "货物责任险"
+  },
+  {
+    "id": "insurance_033",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7的指定专修厂险有必要加吗？",
+    "web_query_hint": "小米SU7 指定专修厂 险 必要",
+    "local_query_hint": "专修厂险"
+  },
+  {
+    "id": "insurance_034",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7出事故后拖车费保险给报销吗？",
+    "web_query_hint": "小米SU7 拖车费 保险 报销 救援",
+    "local_query_hint": "拖车费 救援"
+  },
+  {
+    "id": "insurance_035",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7车险第二年换保险公司能更便宜吗？",
+    "web_query_hint": "小米SU7 车险 换公司 续保 便宜",
+    "local_query_hint": "换保险 续保"
+  },
+  {
+    "id": "insurance_036",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7多次出险会被保险公司拒保吗？",
+    "web_query_hint": "小米SU7 多次出险 拒保 高风险",
+    "local_query_hint": "出险 拒保"
+  },
+  {
+    "id": "insurance_037",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7的全车盗抢险新能源车还需要吗？",
+    "web_query_hint": "小米SU7 全车盗抢险 新能源 必要",
+    "local_query_hint": "盗抢险"
+  },
+  {
+    "id": "insurance_038",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7的随车行李物品损失险要买吗？",
+    "web_query_hint": "小米SU7 随车行李 物品 损失险",
+    "local_query_hint": "行李物品险"
+  },
+  {
+    "id": "insurance_039",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7的法定节假日限额翻倍险有用吗？",
+    "web_query_hint": "小米SU7 法定节假日 限额翻倍 险",
+    "local_query_hint": "节假日翻倍险"
+  },
+  {
+    "id": "insurance_040",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7车险电子保单和纸质保单效力一样吗？",
+    "web_query_hint": "小米SU7 车险 电子保单 纸质 效力",
+    "local_query_hint": "电子保单"
+  },
+  {
+    "id": "insurance_041",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7保险理赔需要拍几张现场照片？",
+    "web_query_hint": "小米SU7 保险理赔 现场 照片 几张",
+    "local_query_hint": "理赔 照片"
+  },
+  {
+    "id": "insurance_042",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7小额理赔会影响次年保费吗？",
+    "web_query_hint": "小米SU7 小额理赔 次年 保费 影响",
+    "local_query_hint": "小额理赔 保费"
+  },
+  {
+    "id": "insurance_043",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7事故维修必须去官方4S店吗？",
+    "web_query_hint": "小米SU7 事故维修 官方 4S店 指定",
+    "local_query_hint": "事故维修 4S"
+  },
+  {
+    "id": "insurance_044",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7第三者责任险买100万还是200万合适？",
+    "web_query_hint": "小米SU7 三者险 100万 200万 保额",
+    "local_query_hint": "三者险 保额"
+  },
+  {
+    "id": "insurance_045",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7的医保外用药责任险买多少额度合适？",
+    "web_query_hint": "小米SU7 医保外用药 责任险 额度",
+    "local_query_hint": "医保外用药险"
+  },
+  {
+    "id": "insurance_046",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7的车险可以按月买吗？有短期险吗？",
+    "web_query_hint": "小米SU7 车险 按月 短期 临时",
+    "local_query_hint": "短期车险"
+  },
+  {
+    "id": "insurance_047",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7的发动机特别损失险新能源车用得上吗？",
+    "web_query_hint": "小米SU7 发动机特别损失险 新能源 涉水",
+    "local_query_hint": "发动机损失险"
+  },
+  {
+    "id": "insurance_048",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7的无过责补偿险是什么？有必要吗？",
+    "web_query_hint": "小米SU7 无过责补偿险 必要",
+    "local_query_hint": "无过责补偿险"
+  },
+  {
+    "id": "insurance_049",
+    "category": "insurance_finance",
+    "category_zh": "保险与金融服务",
+    "question": "小米SU7的精神损害抚慰金责任险要买吗？",
+    "web_query_hint": "小米SU7 精神损害 抚慰金 责任险",
+    "local_query_hint": "精神损害险"
+  },
+  {
+    "id": "maintenance_030",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7的轮毂剐蹭走保险还是自费划算？",
+    "web_query_hint": "小米SU7 轮毂剐蹭 保险 自费 划算",
+    "local_query_hint": "轮毂剐蹭"
+  },
+  {
+    "id": "maintenance_031",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7的前挡风玻璃被石子崩了能修复吗？",
+    "web_query_hint": "小米SU7 前挡风玻璃 石子 崩 修复",
+    "local_query_hint": "玻璃 牛眼"
+  },
+  {
+    "id": "maintenance_032",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7的内饰顶棚脏了怎么清洁？",
+    "web_query_hint": "小米SU7 内饰顶棚 清洁 方法",
+    "local_query_hint": "顶棚清洁"
+  },
+  {
+    "id": "maintenance_033",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7的真皮座椅保养用什么产品好？",
+    "web_query_hint": "小米SU7 真皮座椅 保养 皮革护理",
+    "local_query_hint": "真皮保养"
+  },
+  {
+    "id": "maintenance_034",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7的车漆打蜡和镀晶哪个更划算？",
+    "web_query_hint": "小米SU7 车漆 打蜡 镀晶 划算",
+    "local_query_hint": "打蜡 镀晶"
+  },
+  {
+    "id": "maintenance_035",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7的雨刮刮不干净是胶条问题吗？怎么换？",
+    "web_query_hint": "小米SU7 雨刮 刮不干净 胶条 更换",
+    "local_query_hint": "雨刮 胶条"
+  },
+  {
+    "id": "maintenance_036",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7的天窗轨道需要定期润滑保养吗？",
+    "web_query_hint": "小米SU7 天窗 轨道 润滑 保养",
+    "local_query_hint": "天窗 保养"
+  },
+  {
+    "id": "maintenance_037",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7的充电接口怎么清洁保养？",
+    "web_query_hint": "小米SU7 充电接口 清洁 保养",
+    "local_query_hint": "充电接口 清洁"
+  },
+  {
+    "id": "maintenance_038",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7的车门密封条老化了怎么办？",
+    "web_query_hint": "小米SU7 车门 密封条 老化 更换",
+    "local_query_hint": "密封条 老化"
+  },
+  {
+    "id": "maintenance_039",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7的真皮方向盘磨损了怎么修复？",
+    "web_query_hint": "小米SU7 真皮方向盘 磨损 修复",
+    "local_query_hint": "方向盘 磨损"
+  },
+  {
+    "id": "maintenance_040",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7的中控屏清洁用什么？会刮花吗？",
+    "web_query_hint": "小米SU7 中控屏 清洁 刮花 屏幕",
+    "local_query_hint": "中控屏 清洁"
+  },
+  {
+    "id": "maintenance_041",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7的脚垫哪种材质最好打理？",
+    "web_query_hint": "小米SU7 脚垫 材质 推荐 打理",
+    "local_query_hint": "脚垫 材质"
+  },
+  {
+    "id": "maintenance_042",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7后视镜外壳剐蹭换一个多少钱？",
+    "web_query_hint": "小米SU7 后视镜 外壳 剐蹭 更换 价格",
+    "local_query_hint": "后视镜 更换"
+  },
+  {
+    "id": "maintenance_043",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7有备胎吗？还是只有补胎液？",
+    "web_query_hint": "小米SU7 备胎 补胎液 随车工具",
+    "local_query_hint": "备胎 补胎液"
+  },
+  {
+    "id": "maintenance_044",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7随车带千斤顶和三角警示牌吗？",
+    "web_query_hint": "小米SU7 千斤顶 三角警示牌 随车",
+    "local_query_hint": "随车工具"
+  },
+  {
+    "id": "maintenance_045",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7需要随车配灭火器吗？官方送吗？",
+    "web_query_hint": "小米SU7 灭火器 随车 配备 官方",
+    "local_query_hint": "灭火器"
+  },
+  {
+    "id": "maintenance_046",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7的车身镀铬条发乌怎么处理？",
+    "web_query_hint": "小米SU7 镀铬条 发乌 氧化 清理",
+    "local_query_hint": "镀铬条 氧化"
+  },
+  {
+    "id": "maintenance_047",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7的空调管道多久清洗一次？多少钱？",
+    "web_query_hint": "小米SU7 空调管道 清洗 周期 价格",
+    "local_query_hint": "空调管道 清洗"
+  },
+  {
+    "id": "maintenance_048",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7的牌照架需要自己买吗？上牌送吗？",
+    "web_query_hint": "小米SU7 牌照架 购买 上牌 赠送",
+    "local_query_hint": "牌照架"
+  },
+  {
+    "id": "maintenance_049",
+    "category": "maintenance_cost",
+    "category_zh": "用车成本与保养",
+    "question": "小米SU7的刹车盘生锈正常吗？怎么处理？",
+    "web_query_hint": "小米SU7 刹车盘 生锈 处理 正常",
+    "local_query_hint": "刹车盘 生锈"
+  }
 ]
