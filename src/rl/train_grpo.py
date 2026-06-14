@@ -325,7 +325,7 @@ GRPO_HYPERPARAMS = {
     "gradient_accumulation_steps": 2,      # 有效batch=1×2×2=4（被 num_generations 整除）
     "learning_rate":            2e-5,      # 适度提高学习率
     "num_train_epochs":         3.0,       # 3 轮充分学习
-    "max_train_samples":        300,       # 从 1500 条采样 300（~100 web prompt）
+    "max_train_samples":        80,        # 从 1500 条采样 80（~26 web prompt，单卡 HF generate 3 小时）
     "lr_scheduler_type":        "cosine",
     "warmup_ratio":             0.1,
     "bf16":                     True,
