@@ -58,35 +58,10 @@ RELEVANCE_THRESHOLD = 0.35   # 低于此分数判定为"本地信息不足"
 MAX_WORKERS         = 8      # 并发线程数
 RETRY_TIMES         = 3      # 单条失败重试次数
 
-# ── 轨迹生成提示词 ─────────────────────────────────────────
-TRAJECTORY_GEN_PROMPT = """你是一个数据标注专家，需要为以下问题生成一条高质量的工具调用轨迹。
-
-问题：{question}
-
-本地知识库检索结果（相关性偏低，信息不足）：
-{local_result}
-
-网络搜索结果：
-{web_result}
-
-{page_content_section}
-
-请严格按照以下格式生成完整轨迹（只输出assistant的回复内容，不要有任何前缀说明）：
-
-<search_local>{local_query}</search_local>
-<information>{local_result_placeholder}</information>
-<search_web>{web_query}</search_web>
-<information>{web_result_placeholder}</information>
-{read_page_section}
-<answer>基于网络信息的准确回答，语言自然流畅，注明来源为网络信息</answer>
-
-要求：
-1. search_local的query要简洁精准，提取问题核心关键词
-2. search_web的query要加上"小米SU7"前缀确保搜索精度
-3. 如果有页面详细内容，需要用 <read_page>URL</read_page> + <information>详细内容</information> 的形式体现垂直搜索
-4. answer要直接回答问题，不重复问题，语言自然，结尾注明"（以上信息来源于网络，请以小米官方最新公告为准）"
-5. 如果网络搜索结果也没有有效信息，answer输出"根据目前可获取的信息，暂时无法回答此问题，建议访问小米汽车官网或联系官方客服获取最新信息。"
-"""
+# ── 轨迹生成提示词（已弃用）─────────────────────────────────
+# 轨迹结构现已改为确定性拼装（见 TrajectoryBuilder.build），LLM 只负责综合 <answer>
+# （见 _synthesize_answer）。原 TRAJECTORY_GEN_PROMPT 让 LLM 自由生成整条轨迹，导致
+# 漏掉本地 <information>、且该答却拒答，已移除。
 
 
 # ────────────────────────────────────────────────────────────
@@ -169,33 +144,44 @@ class WebSearchTool:
     """
 
     def __init__(self, backend: str = "auto"):
-        self.backend = self._detect_backend(backend)
-        print(f"[INFO] 网络搜索后端：{self.backend}")
+        self._backends = self._build_chain(backend)
+        print(f"[INFO] 网络搜索后端链：{' → '.join(self._backends)}")
 
-    def _detect_backend(self, backend: str) -> str:
+    def _build_chain(self, backend: str) -> list:
+        # 与 environment.WebSearchBackend 一致的多后端 fallback 链
         if backend != "auto":
-            return backend
-        if os.getenv("BING_SEARCH_KEY"):
-            return "bing"
+            return [backend]
+        chain = []
         if os.getenv("SERPAPI_KEY"):
-            return "serpapi"
-        return "doubao"  # 兜底：用 LLM 模拟
+            chain.append("serpapi")
+        if os.getenv("SERPER_API_KEY"):
+            chain.append("serper")
+        if os.getenv("BING_SEARCH_KEY"):
+            chain.append("bing")
+        if not chain:
+            chain.append("doubao")  # 无任何搜索 key 时用豆包模拟
+        return chain
 
     def search(self, query: str) -> str:
-        for attempt in range(RETRY_TIMES):
-            try:
-                if self.backend == "bing":
-                    return self._search_bing(query)
-                elif self.backend == "serpapi":
-                    return self._search_serpapi(query)
-                else:
-                    return self._search_via_doubao(query)
-            except Exception as e:
-                if attempt < RETRY_TIMES - 1:
-                    time.sleep(2 ** attempt)
-                else:
-                    print(f"[WARN] 网络搜索失败（{query}）: {e}")
-                    return ""
+        # 链式 fallback：每个后端重试 RETRY_TIMES 次，耗尽则顺延下一个后端
+        last_err = None
+        for be in self._backends:
+            for attempt in range(RETRY_TIMES):
+                try:
+                    if be == "bing":
+                        return self._search_bing(query)
+                    elif be == "serpapi":
+                        return self._search_serpapi(query)
+                    elif be == "serper":
+                        return self._search_serper(query)
+                    else:
+                        return self._search_via_doubao(query)
+                except Exception as e:
+                    last_err = e
+                    if attempt < RETRY_TIMES - 1:
+                        time.sleep(2 ** attempt)
+            print(f"[WARN] 搜索后端 {be} 重试{RETRY_TIMES}次仍失败（{last_err}），顺延下一个")
+        print(f"[WARN] 所有搜索后端均失败（{query}）：{last_err}")
         return ""
 
     def _search_bing(self, query: str) -> str:
@@ -235,6 +221,28 @@ class WebSearchTool:
             snippet = r.get("snippet", "")
             title   = r.get("title", "")
             link    = r.get("link", "")
+            parts.append(f"【{title}】\n{snippet}\n网址：{link}")
+        return "\n\n".join(parts)
+
+    def _search_serper(self, query: str) -> str:
+        # Serper (google.serper.dev) —— SerpAPI 额度耗尽时的兜底后端
+        import requests
+        resp = requests.post(
+            "https://google.serper.dev/search",
+            headers={"X-API-KEY": os.environ["SERPER_API_KEY"],
+                     "Content-Type": "application/json"},
+            json={"q": query, "hl": "zh-cn", "gl": "cn", "num": 5},
+            timeout=15,
+        )
+        resp.raise_for_status()
+        results = resp.json().get("organic", [])
+        if not results:
+            return ""
+        parts = []
+        for r in results[:5]:
+            title = r.get("title", "")
+            snippet = r.get("snippet", "")
+            link = r.get("link", "")
             parts.append(f"【{title}】\n{snippet}\n网址：{link}")
         return "\n\n".join(parts)
 
@@ -286,59 +294,58 @@ class TrajectoryBuilder:
         web_result:   str,
     ) -> str:
         """
-        生成完整的 assistant 轨迹文本。
-        格式：
-          <search_local>...</search_local>
-          <information>...</information>
-          <search_web>...</search_web>
-          <information>...</information>
-          <read_page>URL</read_page>          ← 可选，垂直搜索
-          <information>...</information>       ← 页面详情
-          <answer>...</answer>
+        生成完整的 assistant 轨迹文本（结构确定性拼装，答案由 LLM 基于 web 综合）。
+
+        关键改进：轨迹的 <search_local>/<information>/<search_web>/<information> 由代码固定拼装
+        （本地 info、web info 必在），不再交给 LLM 自由生成——避免 LLM 偷懒漏掉本地 <information>。
+        LLM 只负责综合 <answer>，并被强约束「web 信息里有的（版本号/数据/时间）必须答」。
         """
         local_result_str = self._format_local_docs(local_docs)
-
-        # 若网络搜索也为空，直接构造降级回复
         if not web_result.strip():
             web_result = "网络搜索暂时未获取到有效结果。"
 
-        # ── 尝试从 web_result 中提取 URL 并抓取页面 ──
+        # 可选：read_page 深度阅读
         page_url, page_content = self._try_fetch_best_page(web_result)
 
-        # 构建 read_page 段落
+        # LLM 基于 web 信息综合答案（结构不再交给 LLM，杜绝漏标签/乱拒答）
+        answer = self._synthesize_answer(question, web_result, page_content)
+
+        # 确定性拼装：本地 info / web info 必在，顺序固定
+        parts = [
+            f"<search_local>{local_query}</search_local>",
+            f"<information>{local_result_str}</information>",
+            f"<search_web>{web_query}</search_web>",
+            f"<information>{web_result}</information>",
+        ]
         if page_url and page_content:
-            page_content_section = f"页面深度阅读内容（来自 {page_url}）：\n{page_content}"
-            read_page_section = (
-                f"<read_page>{page_url}</read_page>\n"
-                f"<information>{page_content}</information>"
-            )
-        else:
-            page_content_section = ""
-            read_page_section = ""
+            parts.append(f"<read_page>{page_url}</read_page>")
+            parts.append(f"<information>{page_content}</information>")
+        parts.append(f"<answer>{answer}</answer>")
+        return "\n".join(parts)
 
-        prompt = TRAJECTORY_GEN_PROMPT.format(
-            question=question,
-            local_result=local_result_str,
-            web_result=web_result,
-            local_query=local_query,
-            web_query=web_query,
-            local_result_placeholder=local_result_str[:400] if local_result_str else "本地知识库中未检索到相关内容。",
-            web_result_placeholder=web_result[:800],
-            page_content_section=page_content_section,
-            read_page_section=read_page_section,
+    def _synthesize_answer(self, question: str, web_result: str, page_content: str = "") -> str:
+        """基于 web 信息综合 <answer>；强约束：信息有的（版本号/数据/时间）必须答，不轻易拒答。"""
+        context = web_result
+        if page_content:
+            context += "\n\n" + page_content
+        prompt = (
+            "根据以下网络检索信息回答用户问题。\n\n"
+            f"问题：{question}\n\n"
+            f"网络信息：\n{context}\n\n"
+            "要求：\n"
+            "1. 必须基于上述网络信息回答，提取关键数据/事实——版本号、数量、时间等具体内容必须给出。\n"
+            "2. 信息中包含答案就直接回答，语言自然流畅，不要重复问题。\n"
+            "3. 只有当信息完全不相关时，才输出：根据目前可获取的信息，暂时无法回答此问题，建议访问小米汽车官网。\n"
+            "4. 结尾注明：（以上信息来源于网络，请以小米官方最新公告为准）\n\n"
+            "直接输出答案正文（不要 <answer> 标签、不要任何前缀）："
         )
-
         completion = self.llm_client.chat.completions.create(
             model=os.environ["DOUBAO_MODEL_NAME"],
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=1200,
+            max_tokens=400,
             temperature=0.2,
         )
-        raw = completion.choices[0].message.content.strip()
-
-        # 后处理：确保格式完整
-        raw = self._postprocess(raw, local_query, web_query, local_result_str, web_result, page_url, page_content)
-        return raw
+        return completion.choices[0].message.content.strip()
 
     def _format_local_docs(self, docs: list) -> str:
         if not docs:
@@ -370,44 +377,7 @@ class TrajectoryBuilder:
         except Exception:
             return "", ""
 
-    def _postprocess(
-        self,
-        raw:          str,
-        local_query:  str,
-        web_query:    str,
-        local_result: str,
-        web_result:   str,
-        page_url:     str  = "",
-        page_content: str  = "",
-    ) -> str:
-        """确保关键标签齐全，缺失时补齐"""
-        if "<search_local>" not in raw:
-            raw = f"<search_local>{local_query}</search_local>\n" + raw
-        if "<information>" not in raw:
-            raw = raw.replace(
-                "</search_local>",
-                f"</search_local>\n<information>{local_result[:300]}</information>"
-            )
-        if "<search_web>" not in raw:
-            # 在 answer 前插入 web 搜索
-            raw = raw.replace(
-                "<answer>",
-                f"<search_web>{web_query}</search_web>\n"
-                f"<information>{web_result[:600]}</information>\n<answer>"
-            )
-        # 如果有页面内容但轨迹中没有 read_page，自动插入
-        if page_url and page_content and "<read_page>" not in raw:
-            raw = raw.replace(
-                "<answer>",
-                f"<read_page>{page_url}</read_page>\n"
-                f"<information>{page_content[:800]}</information>\n<answer>"
-            )
-        if "<answer>" not in raw:
-            raw += "\n<answer>根据目前可获取的信息，暂时无法给出准确回答，建议访问小米汽车官网获取最新信息。（以上信息来源于网络，请以小米官方最新公告为准）</answer>"
-        elif "<answer>" in raw and "</answer>" not in raw:
-            # max_tokens 截断导致 answer 开标签存在但闭标签缺失，补齐闭标签
-            raw += "</answer>"
-        return raw
+    # _postprocess 已移除：build() 改为确定性拼装结构后，标签不再缺失，无需后处理补齐。
 
 
 # ────────────────────────────────────────────────────────────
